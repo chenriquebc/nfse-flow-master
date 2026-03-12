@@ -471,6 +471,42 @@ export default function CompanyForm() {
           </div>
         </form>
       </div>
+
+      {/* Certificate Password Dialog */}
+      <Dialog open={certDialogOpen} onOpenChange={setCertDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+              Senha do Certificado Digital
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Informe a senha do certificado <strong>{pendingCertFile?.name}</strong> para extrair os dados da empresa.
+            </p>
+            <div className="space-y-2">
+              <Label>Senha</Label>
+              <Input
+                type="password"
+                value={certPassword}
+                onChange={(e) => setCertPassword(e.target.value)}
+                placeholder="Digite a senha do certificado..."
+                onKeyDown={(e) => e.key === "Enter" && handleCertificateSubmit()}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCertDialogOpen(false)} disabled={certLoading}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCertificateSubmit} disabled={certLoading || !certPassword.trim()}>
+              {certLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
+              {certLoading ? "Processando..." : "Importar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
