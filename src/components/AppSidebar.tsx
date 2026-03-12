@@ -27,13 +27,21 @@ const navItems = [
   { label: "Configurações", href: "/settings", icon: Settings },
 ];
 
-export default function AppSidebar() {
+interface AppSidebarProps {
+  onNavigate?: () => void;
+}
+
+export default function AppSidebar({ onNavigate }: AppSidebarProps) {
   const location = useLocation();
   const { signOut, user } = useAuth();
   const { tenant, tenants, setCurrentTenant } = useTenant();
 
+  const handleNav = () => {
+    onNavigate?.();
+  };
+
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 flex flex-col bg-sidebar border-r border-sidebar-border"
+    <div className="flex h-full w-full flex-col bg-sidebar"
       style={{ background: "var(--gradient-sidebar)" }}
     >
       {/* Logo */}
@@ -74,6 +82,7 @@ export default function AppSidebar() {
             <Link
               key={item.href}
               to={item.href}
+              onClick={handleNav}
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${
                 isActive
                   ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
@@ -90,7 +99,7 @@ export default function AppSidebar() {
       {/* User footer */}
       <div className="border-t border-sidebar-border px-3 py-3">
         <div className="flex items-center gap-3 rounded-lg px-3 py-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sidebar-accent text-xs font-semibold text-sidebar-foreground">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sidebar-accent text-xs font-semibold text-sidebar-foreground shrink-0">
             {user?.email?.charAt(0).toUpperCase() || "U"}
           </div>
           <div className="flex-1 min-w-0">
@@ -108,6 +117,6 @@ export default function AppSidebar() {
           </button>
         </div>
       </div>
-    </aside>
+    </div>
   );
 }
