@@ -315,13 +315,14 @@ export default function CompanyForm() {
                 </div>
                 <div className="relative">
                   <input
+                    ref={certInputRef}
                     type="file"
                     accept=".pfx,.p12"
                     onChange={handleCertificateImport}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   />
                   <Button type="button" variant="outline" className="w-full pointer-events-none">
-                    <Upload className="h-4 w-4 mr-2" />
+                    <ShieldCheck className="h-4 w-4 mr-2" />
                     Importar Certificado
                   </Button>
                 </div>
