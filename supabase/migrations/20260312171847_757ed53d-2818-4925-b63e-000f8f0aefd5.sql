@@ -1,0 +1,1 @@
+ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS secondary_cnae_codes text[] DEFAULT '{}'::text[];

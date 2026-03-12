@@ -150,6 +150,7 @@ export type Database = {
           legal_name: string
           municipal_registration: string | null
           phone: string | null
+          secondary_cnae_codes: string[] | null
           settings: Json | null
           state_registration: string | null
           tax_regime: number | null
@@ -176,6 +177,7 @@ export type Database = {
           legal_name: string
           municipal_registration?: string | null
           phone?: string | null
+          secondary_cnae_codes?: string[] | null
           settings?: Json | null
           state_registration?: string | null
           tax_regime?: number | null
@@ -202,6 +204,7 @@ export type Database = {
           legal_name?: string
           municipal_registration?: string | null
           phone?: string | null
+          secondary_cnae_codes?: string[] | null
           settings?: Json | null
           state_registration?: string | null
           tax_regime?: number | null
