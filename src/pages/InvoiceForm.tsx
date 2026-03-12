@@ -223,12 +223,17 @@ export default function InvoiceForm() {
       created_by: user.id,
     };
 
-    const { error } = await supabase.from("nfse_invoices").insert(payload);
+    let error;
+    if (isEditing) {
+      ({ error } = await supabase.from("nfse_invoices").update(payload).eq("id", id!));
+    } else {
+      ({ error } = await supabase.from("nfse_invoices").insert(payload));
+    }
 
     if (error) {
-      toast.error("Erro ao criar nota", { description: error.message });
+      toast.error("Erro ao salvar nota", { description: error.message });
     } else {
-      toast.success("Nota fiscal criada como rascunho!");
+      toast.success(isEditing ? "Nota fiscal atualizada!" : "Nota fiscal criada como rascunho!");
       navigate("/invoices");
     }
     setLoading(false);
