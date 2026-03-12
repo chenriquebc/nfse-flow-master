@@ -44,6 +44,11 @@ export default function CompanyForm() {
   const [loading, setLoading] = useState(false);
   const [cnpjLoading, setCnpjLoading] = useState(false);
   const [cepLoading, setCepLoading] = useState(false);
+  const [certLoading, setCertLoading] = useState(false);
+  const [certDialogOpen, setCertDialogOpen] = useState(false);
+  const [certPassword, setCertPassword] = useState("");
+  const [pendingCertFile, setPendingCertFile] = useState<File | null>(null);
+  const certInputRef = useRef<HTMLInputElement>(null);
   const isEdit = !!id;
 
   useEffect(() => {
