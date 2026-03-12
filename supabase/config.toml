@@ -1,1 +1,4 @@
 project_id = "fbflorbvlmvydovmdlqy"
+
+[functions.parse-certificate]
+verify_jwt = false

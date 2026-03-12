@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { useTenant } from "@/contexts/TenantContext";
@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, Search, Loader2, Upload } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { ArrowLeft, Save, Search, Loader2, Upload, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { fetchCnpj, fetchCep } from "@/lib/api/brasilapi";
 import { CnaeCombobox, CnaeMultiSelect } from "@/components/company/CnaeCombobox";
@@ -43,6 +44,11 @@ export default function CompanyForm() {
   const [loading, setLoading] = useState(false);
   const [cnpjLoading, setCnpjLoading] = useState(false);
   const [cepLoading, setCepLoading] = useState(false);
+  const [certLoading, setCertLoading] = useState(false);
+  const [certDialogOpen, setCertDialogOpen] = useState(false);
+  const [certPassword, setCertPassword] = useState("");
+  const [pendingCertFile, setPendingCertFile] = useState<File | null>(null);
+  const certInputRef = useRef<HTMLInputElement>(null);
   const isEdit = !!id;
 
   useEffect(() => {
@@ -142,10 +148,99 @@ export default function CompanyForm() {
     }
   };
 
-  const handleCertificateImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCertificateImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    toast.info("Importação via certificado digital será implementada em breve. Use a busca por CNPJ.");
+    setPendingCertFile(file);
+    setCertPassword("");
+    setCertDialogOpen(true);
+    // Reset input so same file can be re-selected
+    if (certInputRef.current) certInputRef.current.value = "";
+  };
+
+  const handleCertificateSubmit = async () => {
+    if (!pendingCertFile || !certPassword.trim()) {
+      toast.error("Informe a senha do certificado");
+      return;
+    }
+    setCertLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", pendingCertFile);
+      formData.append("password", certPassword);
+
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+      const res = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/parse-certificate`,
+        {
+          method: "POST",
+          headers: {
+            apikey: anonKey,
+          },
+          body: formData,
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || "Erro ao processar certificado");
+        return;
+      }
+
+      // Fill form with extracted data
+      setForm((f) => ({
+        ...f,
+        legal_name: data.legal_name || f.legal_name,
+        document: data.document || f.document,
+      }));
+
+      // If we got a CNPJ, also try to fetch full data from RFB
+      if (data.document) {
+        const cleanDoc = data.document.replace(/\D/g, "");
+        if (cleanDoc.length === 14) {
+          try {
+            const rfbData = await fetchCnpj(cleanDoc);
+            setForm((f) => ({
+              ...f,
+              legal_name: rfbData.razao_social || f.legal_name,
+              trade_name: rfbData.nome_fantasia || f.trade_name,
+              document: cleanDoc,
+              address_street: rfbData.logradouro || f.address_street,
+              address_number: rfbData.numero || f.address_number,
+              address_complement: rfbData.complemento || f.address_complement,
+              address_neighborhood: rfbData.bairro || f.address_neighborhood,
+              address_city: rfbData.municipio || f.address_city,
+              address_city_code: rfbData.codigo_municipio ? String(rfbData.codigo_municipio) : f.address_city_code,
+              address_state: rfbData.uf || f.address_state,
+              address_zip: rfbData.cep ? rfbData.cep.replace(/\D/g, "") : f.address_zip,
+              email: rfbData.email || f.email,
+              phone: rfbData.telefone || f.phone,
+              cnae_code: rfbData.cnae_fiscal ? String(rfbData.cnae_fiscal) : f.cnae_code,
+              secondary_cnae_codes: rfbData.cnaes_secundarios?.length
+                ? rfbData.cnaes_secundarios.map((c) => String(c.codigo))
+                : f.secondary_cnae_codes,
+            }));
+          } catch {
+            // RFB lookup failed, keep certificate data only
+          }
+        }
+      }
+
+      toast.success("Dados extraídos do certificado!", {
+        description: data.legal_name
+          ? `Empresa: ${data.legal_name}`
+          : "Certificado processado com sucesso",
+      });
+
+      setCertDialogOpen(false);
+    } catch (err: any) {
+      toast.error("Erro ao importar certificado", { description: err.message });
+    } finally {
+      setCertLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -220,13 +315,14 @@ export default function CompanyForm() {
                 </div>
                 <div className="relative">
                   <input
+                    ref={certInputRef}
                     type="file"
                     accept=".pfx,.p12"
                     onChange={handleCertificateImport}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   />
                   <Button type="button" variant="outline" className="w-full pointer-events-none">
-                    <Upload className="h-4 w-4 mr-2" />
+                    <ShieldCheck className="h-4 w-4 mr-2" />
                     Importar Certificado
                   </Button>
                 </div>
@@ -375,6 +471,42 @@ export default function CompanyForm() {
           </div>
         </form>
       </div>
+
+      {/* Certificate Password Dialog */}
+      <Dialog open={certDialogOpen} onOpenChange={setCertDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+              Senha do Certificado Digital
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Informe a senha do certificado <strong>{pendingCertFile?.name}</strong> para extrair os dados da empresa.
+            </p>
+            <div className="space-y-2">
+              <Label>Senha</Label>
+              <Input
+                type="password"
+                value={certPassword}
+                onChange={(e) => setCertPassword(e.target.value)}
+                placeholder="Digite a senha do certificado..."
+                onKeyDown={(e) => e.key === "Enter" && handleCertificateSubmit()}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCertDialogOpen(false)} disabled={certLoading}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCertificateSubmit} disabled={certLoading || !certPassword.trim()}>
+              {certLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
+              {certLoading ? "Processando..." : "Importar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
