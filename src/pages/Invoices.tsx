@@ -33,6 +33,7 @@ interface Invoice {
 
 export default function Invoices() {
   const { tenant } = useTenant();
+  const navigate = useNavigate();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
