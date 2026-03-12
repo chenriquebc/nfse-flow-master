@@ -102,13 +102,13 @@ export default function Dashboard() {
   return (
     <AppLayout>
       <div className="animate-fade-in">
-        <div className="flex items-center justify-between page-header">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 page-header">
           <div>
             <h1 className="page-title">Dashboard</h1>
             <p className="page-description">Visão geral do seu escritório</p>
           </div>
           <Link to="/invoices/new">
-            <Button>
+            <Button size="sm">
               <Plus className="mr-2 h-4 w-4" />
               Nova Nota
             </Button>

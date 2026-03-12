@@ -228,8 +228,8 @@ export default function Certificates() {
                 </Button>
               </div>
             ) : (
-              <div className="rounded-lg border border-border overflow-hidden">
-                <Table>
+              <div className="rounded-lg border border-border overflow-x-auto">
+                <Table className="min-w-[540px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Empresa</TableHead>

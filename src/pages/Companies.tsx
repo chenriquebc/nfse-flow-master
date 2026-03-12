@@ -99,8 +99,8 @@ export default function Companies() {
                 </Link>
               </div>
             ) : (
-              <div className="rounded-lg border border-border overflow-hidden">
-                <Table>
+              <div className="rounded-lg border border-border overflow-x-auto">
+                <Table className="min-w-[640px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Razão Social</TableHead>

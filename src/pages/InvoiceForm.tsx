@@ -336,9 +336,9 @@ export default function InvoiceForm() {
             </CardContent>
           </Card>
 
-          <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={() => navigate("/invoices")}>Cancelar</Button>
-            <Button type="submit" disabled={loading}>
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
+            <Button type="button" variant="outline" onClick={() => navigate("/invoices")} className="w-full sm:w-auto">Cancelar</Button>
+            <Button type="submit" disabled={loading} className="w-full sm:w-auto">
               <Send className="mr-2 h-4 w-4" />
               {loading ? "Salvando..." : "Salvar Rascunho"}
             </Button>
