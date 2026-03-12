@@ -70,7 +70,7 @@ export default function Invoices() {
   return (
     <AppLayout>
       <div className="animate-fade-in">
-        <div className="flex items-center justify-between page-header">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 page-header">
           <div>
             <h1 className="page-title">Notas Fiscais</h1>
             <p className="page-description">Gerencie suas NFS-e emitidas</p>
@@ -81,7 +81,7 @@ export default function Invoices() {
               Exportar
             </Button>
             <Link to="/invoices/new">
-              <Button>
+              <Button size="sm">
                 <Plus className="mr-2 h-4 w-4" />
                 Nova Nota
               </Button>
