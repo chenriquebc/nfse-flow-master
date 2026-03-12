@@ -48,7 +48,7 @@ export default function Reports() {
       .order("competence_date");
 
     if (companyId !== "all") query = query.eq("company_id", companyId);
-    if (status !== "all") query = query.eq("status", status);
+    if (status !== "all") query = query.eq("status", status as any);
 
     const { data } = await query;
     if (!data || data.length === 0) {
