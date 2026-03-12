@@ -5,19 +5,27 @@ import { useTenant } from "@/contexts/TenantContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, ArrowRight, Send } from "lucide-react";
 import { toast } from "sonner";
+import InvoiceWizardStepper from "@/components/invoice/InvoiceWizardStepper";
+import StepEmpresa from "@/components/invoice/StepEmpresa";
+import StepTomador from "@/components/invoice/StepTomador";
+import StepServico from "@/components/invoice/StepServico";
+import StepValores from "@/components/invoice/StepValores";
+import StepRevisao from "@/components/invoice/StepRevisao";
 
 interface Company {
   id: string;
   legal_name: string;
 }
+
+const STEPS = [
+  { label: "Empresa", description: "Selecione a empresa emitente" },
+  { label: "Tomador", description: "Dados de quem contrata o serviço" },
+  { label: "Serviço", description: "Descrição e códigos fiscais" },
+  { label: "Valores", description: "Valores e tributos" },
+  { label: "Revisão", description: "Confira os dados antes de salvar" },
+];
 
 export default function InvoiceForm() {
   const navigate = useNavigate();
@@ -25,6 +33,7 @@ export default function InvoiceForm() {
   const { user } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
 
   const [form, setForm] = useState({
     company_id: "",
@@ -69,6 +78,7 @@ export default function InvoiceForm() {
 
   const set = (key: string, value: string | boolean) => setForm((f) => ({ ...f, [key]: value }));
 
+  // Computed values
   const serviceValue = parseFloat(form.service_value) || 0;
   const deductionValue = parseFloat(form.deduction_value) || 0;
   const discountValue = parseFloat(form.discount_value) || 0;
@@ -84,19 +94,47 @@ export default function InvoiceForm() {
     (form.iss_retained ? issValue : 0);
   const netValue = serviceValue - discountValue - totalDeductions;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const formatCurrency = (v: number) =>
+    v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  // Step validation
+  const validateStep = (step: number): boolean => {
+    switch (step) {
+      case 0:
+        if (!form.company_id) { toast.error("Selecione uma empresa"); return false; }
+        return true;
+      case 1:
+        if (!form.taker_document.trim()) { toast.error("Informe o CPF/CNPJ do tomador"); return false; }
+        if (!form.taker_name.trim()) { toast.error("Informe o nome do tomador"); return false; }
+        return true;
+      case 2:
+        if (!form.service_description.trim()) { toast.error("Descreva o serviço"); return false; }
+        if (!form.tax_code.trim()) { toast.error("Informe o código de tributação"); return false; }
+        return true;
+      case 3:
+        if (serviceValue <= 0) { toast.error("Informe o valor do serviço"); return false; }
+        return true;
+      default:
+        return true;
+    }
+  };
+
+  const goNext = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep((s) => Math.min(s + 1, STEPS.length - 1));
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const goBack = () => {
+    setCurrentStep((s) => Math.max(s - 1, 0));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleSubmit = async () => {
     if (!tenant || !user) return;
 
-    if (!form.company_id) { toast.error("Selecione uma empresa"); return; }
-    if (!form.taker_document.trim()) { toast.error("Informe o CPF/CNPJ do tomador"); return; }
-    if (!form.taker_name.trim()) { toast.error("Informe o nome do tomador"); return; }
-    if (!form.service_description.trim()) { toast.error("Descreva o serviço"); return; }
-    if (!form.tax_code.trim()) { toast.error("Informe o código de tributação"); return; }
-    if (serviceValue <= 0) { toast.error("Informe o valor do serviço"); return; }
-
     setLoading(true);
-
     const payload = {
       tenant_id: tenant.id,
       company_id: form.company_id,
@@ -144,206 +182,74 @@ export default function InvoiceForm() {
     setLoading(false);
   };
 
-  const formatCurrency = (v: number) =>
-    v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const isLastStep = currentStep === STEPS.length - 1;
 
   return (
     <AppLayout>
-      <div className="animate-fade-in max-w-4xl">
-        <div className="page-header">
+      <div className="animate-fade-in max-w-2xl mx-auto">
+        <div className="mb-6">
           <Button variant="ghost" size="sm" onClick={() => navigate("/invoices")} className="mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar
           </Button>
-          <h1 className="page-title">Nova Nota Fiscal de Serviço</h1>
-          <p className="page-description">Preencha os dados para emissão da NFS-e</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Nova Nota Fiscal de Serviço</h1>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          {/* Empresa e Competência */}
-          <Card className="mb-6">
-            <CardHeader><CardTitle className="text-base">Dados da Nota</CardTitle></CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Empresa Emitente *</Label>
-                <Select value={form.company_id} onValueChange={(v) => set("company_id", v)}>
-                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                  <SelectContent>
-                    {companies.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.legal_name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Data de Competência *</Label>
-                <Input type="date" value={form.competence_date} onChange={(e) => set("competence_date", e.target.value)} required />
-              </div>
-            </CardContent>
-          </Card>
+        <InvoiceWizardStepper steps={STEPS} currentStep={currentStep} />
 
-          {/* Tomador */}
-          <Card className="mb-6">
-            <CardHeader><CardTitle className="text-base">Dados do Tomador</CardTitle></CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>CPF/CNPJ *</Label>
-                <Input value={form.taker_document} onChange={(e) => set("taker_document", e.target.value)} placeholder="000.000.000-00" required />
-              </div>
-              <div className="space-y-2">
-                <Label>Nome/Razão Social *</Label>
-                <Input value={form.taker_name} onChange={(e) => set("taker_name", e.target.value)} required />
-              </div>
-              <div className="space-y-2">
-                <Label>E-mail</Label>
-                <Input type="email" value={form.taker_email} onChange={(e) => set("taker_email", e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label>Telefone</Label>
-                <Input value={form.taker_phone} onChange={(e) => set("taker_phone", e.target.value)} />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label>Endereço</Label>
-                <div className="grid grid-cols-3 gap-2">
-                  <Input className="col-span-2" placeholder="Logradouro" value={form.taker_address_street} onChange={(e) => set("taker_address_street", e.target.value)} />
-                  <Input placeholder="Número" value={form.taker_address_number} onChange={(e) => set("taker_address_number", e.target.value)} />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Cidade</Label>
-                <Input value={form.taker_address_city} onChange={(e) => set("taker_address_city", e.target.value)} />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-2">
-                  <Label>UF</Label>
-                  <Input value={form.taker_address_state} onChange={(e) => set("taker_address_state", e.target.value)} maxLength={2} />
-                </div>
-                <div className="space-y-2">
-                  <Label>CEP</Label>
-                  <Input value={form.taker_address_zip} onChange={(e) => set("taker_address_zip", e.target.value)} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Step content */}
+        <div className="min-h-[300px]">
+          {currentStep === 0 && <StepEmpresa form={form} set={set} companies={companies} />}
+          {currentStep === 1 && <StepTomador form={form} set={set} />}
+          {currentStep === 2 && <StepServico form={form} set={set} />}
+          {currentStep === 3 && (
+            <StepValores
+              form={form}
+              set={set}
+              baseValue={baseValue}
+              issValue={issValue}
+              totalDeductions={totalDeductions}
+              netValue={netValue}
+              formatCurrency={formatCurrency}
+            />
+          )}
+          {currentStep === 4 && (
+            <StepRevisao
+              form={form as Record<string, string | boolean>}
+              companies={companies}
+              baseValue={baseValue}
+              issValue={issValue}
+              totalDeductions={totalDeductions}
+              netValue={netValue}
+              formatCurrency={formatCurrency}
+            />
+          )}
+        </div>
 
-          {/* Serviço */}
-          <Card className="mb-6">
-            <CardHeader><CardTitle className="text-base">Serviço</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Descrição do Serviço *</Label>
-                <Textarea value={form.service_description} onChange={(e) => set("service_description", e.target.value)} rows={3} required />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>Código de Tributação *</Label>
-                  <Input value={form.tax_code} onChange={(e) => set("tax_code", e.target.value)} required />
-                </div>
-                <div className="space-y-2">
-                  <Label>NBS</Label>
-                  <Input value={form.nbs_code} onChange={(e) => set("nbs_code", e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label>CNAE</Label>
-                  <Input value={form.cnae_code} onChange={(e) => set("cnae_code", e.target.value)} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Navigation buttons */}
+        <div className="flex justify-between mt-8 pb-8 gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={currentStep === 0 ? () => navigate("/invoices") : goBack}
+            className="w-auto"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            {currentStep === 0 ? "Cancelar" : "Voltar"}
+          </Button>
 
-          {/* Valores */}
-          <Card className="mb-6">
-            <CardHeader><CardTitle className="text-base">Valores</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>Valor do Serviço (R$) *</Label>
-                  <Input type="number" step="0.01" min="0" value={form.service_value} onChange={(e) => set("service_value", e.target.value)} required />
-                </div>
-                <div className="space-y-2">
-                  <Label>Deduções (R$)</Label>
-                  <Input type="number" step="0.01" min="0" value={form.deduction_value} onChange={(e) => set("deduction_value", e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Desconto (R$)</Label>
-                  <Input type="number" step="0.01" min="0" value={form.discount_value} onChange={(e) => set("discount_value", e.target.value)} />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>Alíquota ISS (%)</Label>
-                  <Input type="number" step="0.01" min="0" max="100" value={form.iss_rate} onChange={(e) => set("iss_rate", e.target.value)} />
-                </div>
-                <div className="flex items-center gap-3 pt-6">
-                  <Switch checked={form.iss_retained} onCheckedChange={(v) => set("iss_retained", v)} />
-                  <Label>ISS Retido</Label>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <div className="space-y-2">
-                  <Label>PIS (R$)</Label>
-                  <Input type="number" step="0.01" min="0" value={form.pis_value} onChange={(e) => set("pis_value", e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label>COFINS (R$)</Label>
-                  <Input type="number" step="0.01" min="0" value={form.cofins_value} onChange={(e) => set("cofins_value", e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label>INSS (R$)</Label>
-                  <Input type="number" step="0.01" min="0" value={form.inss_value} onChange={(e) => set("inss_value", e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label>IR (R$)</Label>
-                  <Input type="number" step="0.01" min="0" value={form.ir_value} onChange={(e) => set("ir_value", e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label>CSLL (R$)</Label>
-                  <Input type="number" step="0.01" min="0" value={form.csll_value} onChange={(e) => set("csll_value", e.target.value)} />
-                </div>
-              </div>
-
-              {/* Summary */}
-              <div className="rounded-lg bg-muted p-4 mt-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">Base de Cálculo</p>
-                    <p className="font-semibold text-foreground">{formatCurrency(baseValue)}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">ISS ({form.iss_rate}%)</p>
-                    <p className="font-semibold text-foreground">{formatCurrency(issValue)}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Retenções</p>
-                    <p className="font-semibold text-foreground">{formatCurrency(totalDeductions)}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Valor Líquido</p>
-                    <p className="font-bold text-lg text-foreground">{formatCurrency(netValue)}</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Observações */}
-          <Card className="mb-6">
-            <CardHeader><CardTitle className="text-base">Observações</CardTitle></CardHeader>
-            <CardContent>
-              <Textarea value={form.notes} onChange={(e) => set("notes", e.target.value)} rows={2} placeholder="Observações adicionais..." />
-            </CardContent>
-          </Card>
-
-          <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
-            <Button type="button" variant="outline" onClick={() => navigate("/invoices")} className="w-full sm:w-auto">Cancelar</Button>
-            <Button type="submit" disabled={loading} className="w-full sm:w-auto">
+          {isLastStep ? (
+            <Button onClick={handleSubmit} disabled={loading} className="w-auto">
               <Send className="mr-2 h-4 w-4" />
               {loading ? "Salvando..." : "Salvar Rascunho"}
             </Button>
-          </div>
-        </form>
+          ) : (
+            <Button onClick={goNext} className="w-auto">
+              Próximo
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
     </AppLayout>
   );
