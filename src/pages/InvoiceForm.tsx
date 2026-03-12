@@ -29,10 +29,13 @@ const STEPS = [
 
 export default function InvoiceForm() {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const isEditing = Boolean(id);
   const { tenant } = useTenant();
   const { user } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingInvoice, setLoadingInvoice] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
 
   const [form, setForm] = useState({
