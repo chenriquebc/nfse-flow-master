@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import StatusBadge from "@/components/StatusBadge";
 import { useTenant } from "@/contexts/TenantContext";
@@ -33,6 +33,7 @@ interface Invoice {
 
 export default function Invoices() {
   const { tenant } = useTenant();
+  const navigate = useNavigate();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -146,7 +147,7 @@ export default function Invoices() {
                   </TableHeader>
                   <TableBody>
                     {filtered.map((inv) => (
-                      <TableRow key={inv.id} className="cursor-pointer hover:bg-muted/50">
+                      <TableRow key={inv.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/invoices/${inv.id}`)}>
                         <TableCell className="font-mono text-sm">
                           {inv.invoice_number || inv.rps_number || "—"}
                         </TableCell>

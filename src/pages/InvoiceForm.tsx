@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { useTenant } from "@/contexts/TenantContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -29,10 +29,13 @@ const STEPS = [
 
 export default function InvoiceForm() {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const isEditing = Boolean(id);
   const { tenant } = useTenant();
   const { user } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingInvoice, setLoadingInvoice] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
 
   const [form, setForm] = useState({
@@ -75,6 +78,55 @@ export default function InvoiceForm() {
       .order("legal_name")
       .then(({ data }) => setCompanies((data as Company[]) || []));
   }, [tenant]);
+
+  // Load existing invoice for editing
+  useEffect(() => {
+    if (!id || !tenant) return;
+    setLoadingInvoice(true);
+    supabase
+      .from("nfse_invoices")
+      .select("*")
+      .eq("id", id)
+      .eq("tenant_id", tenant.id)
+      .single()
+      .then(({ data, error }) => {
+        if (error || !data) {
+          toast.error("Nota não encontrada");
+          navigate("/invoices");
+          return;
+        }
+        setForm({
+          company_id: data.company_id || "",
+          competence_date: data.competence_date || new Date().toISOString().split("T")[0],
+          taker_document: data.taker_document || "",
+          taker_name: data.taker_name || "",
+          taker_email: data.taker_email || "",
+          taker_phone: data.taker_phone || "",
+          taker_address_street: data.taker_address_street || "",
+          taker_address_number: data.taker_address_number || "",
+          taker_address_city: data.taker_address_city || "",
+          taker_address_city_code: data.taker_address_city_code || "",
+          taker_address_state: data.taker_address_state || "",
+          taker_address_zip: data.taker_address_zip || "",
+          service_description: data.service_description || "",
+          tax_code: data.tax_code || "",
+          nbs_code: data.nbs_code || "",
+          cnae_code: data.cnae_code || "",
+          service_value: String(data.service_value || ""),
+          deduction_value: String(data.deduction_value || 0),
+          discount_value: String(data.discount_value || 0),
+          iss_rate: String((data.iss_rate || 0) * 100),
+          iss_retained: data.iss_retained || false,
+          pis_value: String(data.pis_value || 0),
+          cofins_value: String(data.cofins_value || 0),
+          inss_value: String(data.inss_value || 0),
+          ir_value: String(data.ir_value || 0),
+          csll_value: String(data.csll_value || 0),
+          notes: data.notes || "",
+        });
+        setLoadingInvoice(false);
+      });
+  }, [id, tenant]);
 
   const set = (key: string, value: string | boolean) => setForm((f) => ({ ...f, [key]: value }));
 
@@ -171,12 +223,17 @@ export default function InvoiceForm() {
       created_by: user.id,
     };
 
-    const { error } = await supabase.from("nfse_invoices").insert(payload);
+    let error;
+    if (isEditing) {
+      ({ error } = await supabase.from("nfse_invoices").update(payload).eq("id", id!));
+    } else {
+      ({ error } = await supabase.from("nfse_invoices").insert(payload));
+    }
 
     if (error) {
-      toast.error("Erro ao criar nota", { description: error.message });
+      toast.error("Erro ao salvar nota", { description: error.message });
     } else {
-      toast.success("Nota fiscal criada como rascunho!");
+      toast.success(isEditing ? "Nota fiscal atualizada!" : "Nota fiscal criada como rascunho!");
       navigate("/invoices");
     }
     setLoading(false);
@@ -192,7 +249,9 @@ export default function InvoiceForm() {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar
           </Button>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Nova Nota Fiscal de Serviço</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+            {isEditing ? "Editar Nota Fiscal" : "Nova Nota Fiscal de Serviço"}
+          </h1>
         </div>
 
         <InvoiceWizardStepper steps={STEPS} currentStep={currentStep} />
