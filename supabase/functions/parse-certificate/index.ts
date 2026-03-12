@@ -1,5 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { forge } from "npm:node-forge@1.3.1";
+import forge from "npm:node-forge@1.3.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
