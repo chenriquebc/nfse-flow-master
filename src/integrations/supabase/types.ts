@@ -14,16 +14,641 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          ip_address: string | null
+          new_values: Json | null
+          old_values: Json | null
+          tenant_id: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          tenant_id: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          tenant_id?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      certificates: {
+        Row: {
+          company_id: string
+          created_at: string
+          file_name: string
+          file_path: string
+          id: string
+          is_active: boolean
+          issuer: string | null
+          password_encrypted: string
+          serial_number: string | null
+          subject: string | null
+          tenant_id: string
+          updated_at: string
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          id?: string
+          is_active?: boolean
+          issuer?: string | null
+          password_encrypted?: string
+          serial_number?: string | null
+          subject?: string | null
+          tenant_id: string
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          id?: string
+          is_active?: boolean
+          issuer?: string | null
+          password_encrypted?: string
+          serial_number?: string | null
+          subject?: string | null
+          tenant_id?: string
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificates_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      companies: {
+        Row: {
+          address_city: string | null
+          address_city_code: string | null
+          address_complement: string | null
+          address_neighborhood: string | null
+          address_number: string | null
+          address_state: string | null
+          address_street: string | null
+          address_zip: string | null
+          cnae_code: string | null
+          created_at: string
+          document: string
+          email: string | null
+          environment: number
+          id: string
+          is_active: boolean
+          legal_name: string
+          municipal_registration: string | null
+          phone: string | null
+          settings: Json | null
+          state_registration: string | null
+          tax_regime: number | null
+          tenant_id: string
+          trade_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          address_city?: string | null
+          address_city_code?: string | null
+          address_complement?: string | null
+          address_neighborhood?: string | null
+          address_number?: string | null
+          address_state?: string | null
+          address_street?: string | null
+          address_zip?: string | null
+          cnae_code?: string | null
+          created_at?: string
+          document: string
+          email?: string | null
+          environment?: number
+          id?: string
+          is_active?: boolean
+          legal_name: string
+          municipal_registration?: string | null
+          phone?: string | null
+          settings?: Json | null
+          state_registration?: string | null
+          tax_regime?: number | null
+          tenant_id: string
+          trade_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address_city?: string | null
+          address_city_code?: string | null
+          address_complement?: string | null
+          address_neighborhood?: string | null
+          address_number?: string | null
+          address_state?: string | null
+          address_street?: string | null
+          address_zip?: string | null
+          cnae_code?: string | null
+          created_at?: string
+          document?: string
+          email?: string | null
+          environment?: number
+          id?: string
+          is_active?: boolean
+          legal_name?: string
+          municipal_registration?: string | null
+          phone?: string | null
+          settings?: Json | null
+          state_registration?: string | null
+          tax_regime?: number | null
+          tenant_id?: string
+          trade_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "companies_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nfse_events: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          error_code: string | null
+          error_message: string | null
+          event_type: Database["public"]["Enums"]["nfse_event_type"]
+          id: string
+          invoice_id: string
+          metadata: Json | null
+          request_xml: string | null
+          response_xml: string | null
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          event_type: Database["public"]["Enums"]["nfse_event_type"]
+          id?: string
+          invoice_id: string
+          metadata?: Json | null
+          request_xml?: string | null
+          response_xml?: string | null
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          event_type?: Database["public"]["Enums"]["nfse_event_type"]
+          id?: string
+          invoice_id?: string
+          metadata?: Json | null
+          request_xml?: string | null
+          response_xml?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nfse_events_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "nfse_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nfse_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nfse_invoices: {
+        Row: {
+          base_value: number | null
+          batch_number: string | null
+          cnae_code: string | null
+          cofins_value: number | null
+          company_id: string
+          competence_date: string
+          created_at: string
+          created_by: string | null
+          csll_value: number | null
+          danfse_path: string | null
+          deduction_value: number | null
+          discount_value: number | null
+          external_reference: string | null
+          id: string
+          inss_value: number | null
+          invoice_number: number | null
+          ir_value: number | null
+          iss_rate: number | null
+          iss_retained: boolean | null
+          iss_value: number | null
+          issued_at: string | null
+          metadata: Json | null
+          nbs_code: string | null
+          net_value: number | null
+          notes: string | null
+          other_deductions: number | null
+          pis_value: number | null
+          protocol_number: string | null
+          replaced_invoice_id: string | null
+          rps_number: number | null
+          rps_series: string | null
+          rps_type: number | null
+          service_description: string
+          service_value: number
+          status: Database["public"]["Enums"]["nfse_status"]
+          taker_address_city: string | null
+          taker_address_city_code: string | null
+          taker_address_number: string | null
+          taker_address_state: string | null
+          taker_address_street: string | null
+          taker_address_zip: string | null
+          taker_document: string
+          taker_email: string | null
+          taker_name: string
+          taker_phone: string | null
+          tax_code: string
+          tenant_id: string
+          updated_at: string
+          verification_code: string | null
+          xml_authorized: string | null
+          xml_response: string | null
+          xml_rps: string | null
+          xml_signed: string | null
+        }
+        Insert: {
+          base_value?: number | null
+          batch_number?: string | null
+          cnae_code?: string | null
+          cofins_value?: number | null
+          company_id: string
+          competence_date?: string
+          created_at?: string
+          created_by?: string | null
+          csll_value?: number | null
+          danfse_path?: string | null
+          deduction_value?: number | null
+          discount_value?: number | null
+          external_reference?: string | null
+          id?: string
+          inss_value?: number | null
+          invoice_number?: number | null
+          ir_value?: number | null
+          iss_rate?: number | null
+          iss_retained?: boolean | null
+          iss_value?: number | null
+          issued_at?: string | null
+          metadata?: Json | null
+          nbs_code?: string | null
+          net_value?: number | null
+          notes?: string | null
+          other_deductions?: number | null
+          pis_value?: number | null
+          protocol_number?: string | null
+          replaced_invoice_id?: string | null
+          rps_number?: number | null
+          rps_series?: string | null
+          rps_type?: number | null
+          service_description?: string
+          service_value?: number
+          status?: Database["public"]["Enums"]["nfse_status"]
+          taker_address_city?: string | null
+          taker_address_city_code?: string | null
+          taker_address_number?: string | null
+          taker_address_state?: string | null
+          taker_address_street?: string | null
+          taker_address_zip?: string | null
+          taker_document?: string
+          taker_email?: string | null
+          taker_name?: string
+          taker_phone?: string | null
+          tax_code?: string
+          tenant_id: string
+          updated_at?: string
+          verification_code?: string | null
+          xml_authorized?: string | null
+          xml_response?: string | null
+          xml_rps?: string | null
+          xml_signed?: string | null
+        }
+        Update: {
+          base_value?: number | null
+          batch_number?: string | null
+          cnae_code?: string | null
+          cofins_value?: number | null
+          company_id?: string
+          competence_date?: string
+          created_at?: string
+          created_by?: string | null
+          csll_value?: number | null
+          danfse_path?: string | null
+          deduction_value?: number | null
+          discount_value?: number | null
+          external_reference?: string | null
+          id?: string
+          inss_value?: number | null
+          invoice_number?: number | null
+          ir_value?: number | null
+          iss_rate?: number | null
+          iss_retained?: boolean | null
+          iss_value?: number | null
+          issued_at?: string | null
+          metadata?: Json | null
+          nbs_code?: string | null
+          net_value?: number | null
+          notes?: string | null
+          other_deductions?: number | null
+          pis_value?: number | null
+          protocol_number?: string | null
+          replaced_invoice_id?: string | null
+          rps_number?: number | null
+          rps_series?: string | null
+          rps_type?: number | null
+          service_description?: string
+          service_value?: number
+          status?: Database["public"]["Enums"]["nfse_status"]
+          taker_address_city?: string | null
+          taker_address_city_code?: string | null
+          taker_address_number?: string | null
+          taker_address_state?: string | null
+          taker_address_street?: string | null
+          taker_address_zip?: string | null
+          taker_document?: string
+          taker_email?: string | null
+          taker_name?: string
+          taker_phone?: string | null
+          tax_code?: string
+          tenant_id?: string
+          updated_at?: string
+          verification_code?: string | null
+          xml_authorized?: string | null
+          xml_response?: string | null
+          xml_rps?: string | null
+          xml_signed?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nfse_invoices_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nfse_invoices_replaced_invoice_id_fkey"
+            columns: ["replaced_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "nfse_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nfse_invoices_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tenant_members: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_members_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenants: {
+        Row: {
+          created_at: string
+          document: string
+          email: string
+          id: string
+          is_active: boolean
+          name: string
+          phone: string | null
+          plan: string
+          settings: Json | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          document?: string
+          email?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          phone?: string | null
+          plan?: string
+          settings?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          document?: string
+          email?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          phone?: string | null
+          plan?: string
+          settings?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_tenant_for_user: {
+        Args: {
+          _tenant_document?: string
+          _tenant_email?: string
+          _tenant_name: string
+        }
+        Returns: string
+      }
+      get_user_tenant_ids: { Args: never; Returns: string[] }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "operator" | "viewer"
+      job_status: "pending" | "processing" | "completed" | "failed" | "retrying"
+      job_type:
+        | "emit"
+        | "cancel"
+        | "substitute"
+        | "query_batch"
+        | "query_status"
+      nfse_event_type:
+        | "created"
+        | "xml_generated"
+        | "xml_signed"
+        | "submitted"
+        | "protocol_received"
+        | "batch_queried"
+        | "authorized"
+        | "rejected"
+        | "cancelled"
+        | "substituted"
+        | "error"
+      nfse_status:
+        | "draft"
+        | "processing"
+        | "authorized"
+        | "rejected"
+        | "cancelled"
+        | "substituted"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +775,31 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "operator", "viewer"],
+      job_status: ["pending", "processing", "completed", "failed", "retrying"],
+      job_type: ["emit", "cancel", "substitute", "query_batch", "query_status"],
+      nfse_event_type: [
+        "created",
+        "xml_generated",
+        "xml_signed",
+        "submitted",
+        "protocol_received",
+        "batch_queried",
+        "authorized",
+        "rejected",
+        "cancelled",
+        "substituted",
+        "error",
+      ],
+      nfse_status: [
+        "draft",
+        "processing",
+        "authorized",
+        "rejected",
+        "cancelled",
+        "substituted",
+      ],
+    },
   },
 } as const
