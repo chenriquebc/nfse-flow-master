@@ -147,7 +147,7 @@ export default function Invoices() {
                   </TableHeader>
                   <TableBody>
                     {filtered.map((inv) => (
-                      <TableRow key={inv.id} className="cursor-pointer hover:bg-muted/50" onClick={() => window.location.href = `/invoices/${inv.id}`}>
+                      <TableRow key={inv.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/invoices/${inv.id}`)}>
                         <TableCell className="font-mono text-sm">
                           {inv.invoice_number || inv.rps_number || "—"}
                         </TableCell>
