@@ -249,7 +249,9 @@ export default function InvoiceForm() {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar
           </Button>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Nova Nota Fiscal de Serviço</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+            {isEditing ? "Editar Nota Fiscal" : "Nova Nota Fiscal de Serviço"}
+          </h1>
         </div>
 
         <InvoiceWizardStepper steps={STEPS} currentStep={currentStep} />
