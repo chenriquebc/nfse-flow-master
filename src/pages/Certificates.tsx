@@ -148,7 +148,7 @@ export default function Certificates() {
   return (
     <AppLayout>
       <div className="animate-fade-in">
-        <div className="flex items-center justify-between page-header">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 page-header">
           <div>
             <h1 className="page-title">Certificados Digitais</h1>
             <p className="page-description">Gerencie os certificados A1 das empresas</p>
