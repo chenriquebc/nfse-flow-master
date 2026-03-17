@@ -16,32 +16,66 @@ const NATIONAL_TAX_CODES = [
   { code: "01.01", desc: "Análise e desenvolvimento de sistemas." },
   { code: "01.02", desc: "Programação." },
   { code: "01.03", desc: "Processamento, armazenamento ou hospedagem de dados, textos, imagens, vídeos, páginas eletrônicas, aplicativos e sistemas de informação, entre outros formatos, e congêneres." },
-  { code: "01.04", desc: "Elaboração de programas de computadores, inclusive de jogos eletrônicos, independentemente da arquitetura construtiva da máquina em que o programa será executado, incluindo tablets, smartphones e congêneres." },
+  { code: "01.04", desc: "Elaboração de programas de computadores, inclusive de jogos eletrônicos." },
   { code: "01.05", desc: "Licenciamento ou cessão de direito de uso de programas de computação." },
   { code: "01.06", desc: "Assessoria e consultoria em informática." },
   { code: "01.07", desc: "Suporte técnico em informática, inclusive instalação, configuração e manutenção de programas de computação e bancos de dados." },
   { code: "01.08", desc: "Planejamento, confecção, manutenção e atualização de páginas eletrônicas." },
-  { code: "01.09", desc: "Disponibilização de conteúdos de áudio, vídeo, imagem e texto por meio da internet, respeitada a imunidade de livros, jornais e periódicos." },
+  { code: "01.09", desc: "Disponibilização de conteúdos de áudio, vídeo, imagem e texto por meio da internet." },
   { code: "02.01", desc: "Serviços de pesquisas e desenvolvimento de qualquer natureza." },
   { code: "07.01", desc: "Engenharia, agronomia, agrimensura, arquitetura, geologia, urbanismo, paisagismo e congêneres." },
-  { code: "07.02", desc: "Execução, por administração, empreitada ou subempreitada, de obras de construção civil, hidráulica ou elétrica e de outras obras semelhantes." },
+  { code: "07.02", desc: "Execução, por administração, empreitada ou subempreitada, de obras de construção civil." },
   { code: "07.03", desc: "Elaboração de planos diretores, estudos de viabilidade, estudos organizacionais e outros." },
-  { code: "10.01", desc: "Agenciamento, corretagem ou intermediação de câmbio, de seguros, de cartões de crédito, de planos de saúde e de planos de previdência privada." },
-  { code: "10.02", desc: "Agenciamento, corretagem ou intermediação de títulos em geral, valores mobiliários e contratos quaisquer." },
+  { code: "10.01", desc: "Agenciamento, corretagem ou intermediação de câmbio, de seguros, de cartões de crédito." },
+  { code: "10.02", desc: "Agenciamento, corretagem ou intermediação de títulos em geral." },
   { code: "10.05", desc: "Agenciamento, corretagem ou intermediação de bens móveis ou imóveis." },
-  { code: "14.01", desc: "Lubrificação, limpeza, lustração, revisão, carga e recarga, conserto, restauração, blindagem, manutenção e conservação de máquinas, veículos, aparelhos, equipamentos." },
-  { code: "17.01", desc: "Assessoria ou consultoria de qualquer natureza, não contida em outros itens desta lista." },
-  { code: "17.02", desc: "Datilografia, digitação, estenografia, expediente, secretaria em geral, resposta audível, redação, edição, interpretação, revisão, tradução, apoio e infra-estrutura administrativa e congêneres." },
+  { code: "14.01", desc: "Lubrificação, limpeza, lustração, revisão, carga e recarga, conserto, restauração, blindagem." },
+  { code: "17.01", desc: "Assessoria ou consultoria de qualquer natureza." },
+  { code: "17.02", desc: "Datilografia, digitação, estenografia, expediente, secretaria em geral." },
   { code: "17.04", desc: "Recrutamento, agenciamento, seleção e colocação de mão-de-obra." },
   { code: "17.05", desc: "Fornecimento de mão-de-obra, mesmo em caráter temporário." },
-  { code: "17.06", desc: "Propaganda e publicidade, inclusive promoção de vendas, planejamento de campanhas ou sistemas de publicidade, elaboração de desenhos, textos e demais materiais publicitários." },
+  { code: "17.06", desc: "Propaganda e publicidade, inclusive promoção de vendas." },
   { code: "17.19", desc: "Contabilidade, inclusive serviços técnicos e auxiliares." },
   { code: "17.20", desc: "Auditoria." },
-  { code: "17.22", desc: "Assessoria, análise, avaliação, atendimento, consulta, cadastro, seleção, gerenciamento de informações, administração de contas a receber ou a pagar e em geral." },
-  { code: "25.01", desc: "Funerais, inclusive fornecimento de caixão, urna ou esquife; aluguel de capela; transporte do corpo cadavérico; fornecimento de flores, coroas e outros paramentos; desembaraço de certidão de óbito; fornecimento de véu, essa e outros adornos; embalsamento, embelezamento, conservação ou restauração de cadáveres." },
+  { code: "17.22", desc: "Assessoria, análise, avaliação, atendimento, consulta, cadastro, seleção, gerenciamento de informações." },
+  { code: "25.01", desc: "Funerais, inclusive fornecimento de caixão, urna ou esquife." },
   { code: "25.02", desc: "Translado intramunicipal e cremação de corpos e partes de corpos cadavéricos." },
   { code: "25.03", desc: "Planos ou convênio funerários." },
   { code: "25.04", desc: "Manutenção e conservação de jazigos e cemitérios." },
+];
+
+// Lista de códigos NBS (Nomenclatura Brasileira de Serviços) — mais comuns
+const NBS_CODES = [
+  { code: "1.0101.10.00", desc: "Serviços de pesquisa e desenvolvimento em ciências físicas" },
+  { code: "1.0101.20.00", desc: "Serviços de pesquisa e desenvolvimento em ciências naturais e engenharia" },
+  { code: "1.0102.10.00", desc: "Serviços de pesquisa e desenvolvimento em ciências sociais e humanas" },
+  { code: "1.0201.10.00", desc: "Serviços de design de software sob encomenda" },
+  { code: "1.0201.20.00", desc: "Serviços de design de software para uso particular" },
+  { code: "1.0202.10.00", desc: "Serviços de programação de software sob encomenda" },
+  { code: "1.0202.20.00", desc: "Serviços de manutenção e suporte de software" },
+  { code: "1.0301.10.00", desc: "Serviços de processamento de dados" },
+  { code: "1.0301.20.00", desc: "Serviços de hospedagem de sites e aplicativos" },
+  { code: "1.0301.30.00", desc: "Serviços de infraestrutura de TI e computação em nuvem" },
+  { code: "1.0302.10.00", desc: "Serviços de consultoria em tecnologia da informação" },
+  { code: "1.0302.20.00", desc: "Serviços de gerenciamento de redes e sistemas" },
+  { code: "1.0401.10.00", desc: "Serviços de contabilidade e auditoria" },
+  { code: "1.0401.20.00", desc: "Serviços de consultoria tributária e fiscal" },
+  { code: "1.0402.10.00", desc: "Serviços de consultoria em gestão e administração" },
+  { code: "1.0402.20.00", desc: "Serviços de assessoria empresarial" },
+  { code: "1.0501.10.00", desc: "Serviços de arquitetura" },
+  { code: "1.0501.20.00", desc: "Serviços de engenharia" },
+  { code: "1.0501.30.00", desc: "Serviços de engenharia integrada" },
+  { code: "1.0601.10.00", desc: "Serviços de publicidade" },
+  { code: "1.0601.20.00", desc: "Serviços de marketing e promoção" },
+  { code: "1.0701.10.00", desc: "Serviços jurídicos" },
+  { code: "1.0702.10.00", desc: "Serviços de tradução e interpretação" },
+  { code: "1.0801.10.00", desc: "Serviços de construção civil" },
+  { code: "1.0901.10.00", desc: "Serviços de transporte de passageiros" },
+  { code: "1.0902.10.00", desc: "Serviços de transporte de cargas" },
+  { code: "1.1001.10.00", desc: "Serviços de educação e treinamento" },
+  { code: "1.1101.10.00", desc: "Serviços de saúde humana" },
+  { code: "1.1201.10.00", desc: "Serviços de limpeza e manutenção predial" },
+  { code: "1.1301.10.00", desc: "Serviços de segurança e vigilância" },
 ];
 
 interface StepServicoProps {
@@ -155,10 +189,13 @@ export default function StepServico({ form, set }: StepServicoProps) {
             placeholder={form.tax_code ? "Selecione o código complementar..." : "Selecione primeiro o código nacional"}
           />
 
-          <div className="space-y-2">
-            <Label>NBS</Label>
-            <Input className="h-12" value={form.nbs_code} onChange={(e) => set("nbs_code", e.target.value)} placeholder="Código NBS (opcional)" />
-          </div>
+          <TaxCodeCombobox
+            value={form.nbs_code}
+            onChange={(v) => set("nbs_code", v)}
+            label="NBS (Nomenclatura Brasileira de Serviços) *"
+            codes={NBS_CODES}
+            placeholder="Selecione o código NBS..."
+          />
 
           <div className="space-y-3">
             <Label>O serviço prestado é um caso de: imunidade, exportação de serviço ou não incidência do ISSQN? *</Label>
