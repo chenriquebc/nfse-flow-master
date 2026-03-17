@@ -41,6 +41,7 @@ export default function InvoiceForm() {
   const [form, setForm] = useState({
     company_id: "",
     competence_date: new Date().toISOString().split("T")[0],
+    tax_assessment_regime: "1",
     taker_document: "",
     taker_name: "",
     taker_email: "",

@@ -9,8 +9,14 @@ interface Company {
   legal_name: string;
 }
 
+const REGIMES_APURACAO = [
+  { value: "1", label: "Regime de apuração dos tributos federais e municipal pelo Simples Nacional" },
+  { value: "2", label: "Regime de apuração dos tributos federais pelo Simples Nacional e ISSQN por fora" },
+  { value: "3", label: "Regime de apuração dos tributos federais e municipal por fora do Simples Nacional" },
+];
+
 interface StepEmpresaProps {
-  form: { company_id: string; competence_date: string };
+  form: { company_id: string; competence_date: string; tax_assessment_regime: string };
   set: (key: string, value: string | boolean) => void;
   companies: Company[];
 }
@@ -52,6 +58,20 @@ export default function StepEmpresa({ form, set, companies }: StepEmpresaProps) 
               onChange={(e) => set("competence_date", e.target.value)}
               required
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Regime de Apuração dos Tributos no Simples Nacional *</Label>
+            <Select value={form.tax_assessment_regime} onValueChange={(v) => set("tax_assessment_regime", v)}>
+              <SelectTrigger className="h-12">
+                <SelectValue placeholder="Selecione o regime de apuração..." />
+              </SelectTrigger>
+              <SelectContent>
+                {REGIMES_APURACAO.map((r) => (
+                  <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
