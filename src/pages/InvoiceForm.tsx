@@ -166,6 +166,7 @@ export default function InvoiceForm() {
       case 2:
         if (!form.service_description.trim()) { toast.error("Descreva o serviço"); return false; }
         if (!form.tax_code.trim()) { toast.error("Informe o código de tributação"); return false; }
+        if (!form.nbs_code.trim()) { toast.error("Informe o código NBS"); return false; }
         return true;
       case 3:
         if (serviceValue <= 0) { toast.error("Informe o valor do serviço"); return false; }

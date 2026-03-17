@@ -189,10 +189,13 @@ export default function StepServico({ form, set }: StepServicoProps) {
             placeholder={form.tax_code ? "Selecione o código complementar..." : "Selecione primeiro o código nacional"}
           />
 
-          <div className="space-y-2">
-            <Label>NBS</Label>
-            <Input className="h-12" value={form.nbs_code} onChange={(e) => set("nbs_code", e.target.value)} placeholder="Código NBS (opcional)" />
-          </div>
+          <TaxCodeCombobox
+            value={form.nbs_code}
+            onChange={(v) => set("nbs_code", v)}
+            label="NBS (Nomenclatura Brasileira de Serviços) *"
+            codes={NBS_CODES}
+            placeholder="Selecione o código NBS..."
+          />
 
           <div className="space-y-3">
             <Label>O serviço prestado é um caso de: imunidade, exportação de serviço ou não incidência do ISSQN? *</Label>
