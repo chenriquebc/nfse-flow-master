@@ -198,6 +198,7 @@ export default function InvoiceForm() {
       tenant_id: tenant.id,
       company_id: form.company_id,
       competence_date: form.competence_date,
+      tax_assessment_regime: form.tax_assessment_regime,
       taker_document: form.taker_document,
       taker_name: form.taker_name,
       taker_email: form.taker_email || null,
