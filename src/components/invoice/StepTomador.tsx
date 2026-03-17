@@ -3,6 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { UserRound, Search, Loader2 } from "lucide-react";
 import { fetchCnpj } from "@/lib/api/brasilapi";
 import { fetchCep } from "@/lib/api/brasilapi";
@@ -20,6 +21,12 @@ interface StepTomadorProps {
     taker_address_city_code: string;
     taker_address_state: string;
     taker_address_zip: string;
+    intermediary_type: string;
+    intermediary_document: string;
+    intermediary_name: string;
+    intermediary_city: string;
+    intermediary_city_code: string;
+    intermediary_state: string;
   };
   set: (key: string, value: string | boolean) => void;
 }
