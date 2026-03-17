@@ -168,6 +168,64 @@ export default function StepTomador({ form, set }: StepTomadorProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Intermediário do Serviço */}
+      <Card>
+        <CardContent className="pt-6 space-y-4">
+          <h3 className="text-sm font-semibold text-primary uppercase tracking-wide">Intermediário do Serviço</h3>
+
+          <div className="space-y-3">
+            <Label>Onde está localizado o estabelecimento/domicílio? *</Label>
+            <RadioGroup
+              value={form.intermediary_type}
+              onValueChange={(v) => set("intermediary_type", v)}
+              className="flex flex-col gap-2"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="none" id="int-none" />
+                <Label htmlFor="int-none" className="font-normal cursor-pointer">Intermediário não informado</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="brasil" id="int-brasil" />
+                <Label htmlFor="int-brasil" className="font-normal cursor-pointer">Brasil</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="exterior" id="int-exterior" />
+                <Label htmlFor="int-exterior" className="font-normal cursor-pointer">Exterior</Label>
+              </div>
+            </RadioGroup>
+          </div>
+
+          {form.intermediary_type !== "none" && (
+            <div className="space-y-4 pt-2 animate-fade-in">
+              <div className="space-y-2">
+                <Label>CPF/CNPJ do Intermediário *</Label>
+                <Input className="h-12" value={form.intermediary_document} onChange={(e) => set("intermediary_document", e.target.value)} placeholder="Documento do intermediário" />
+              </div>
+              <div className="space-y-2">
+                <Label>Nome / Razão Social *</Label>
+                <Input className="h-12" value={form.intermediary_name} onChange={(e) => set("intermediary_name", e.target.value)} />
+              </div>
+              {form.intermediary_type === "brasil" && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Cidade</Label>
+                    <Input value={form.intermediary_city} onChange={(e) => set("intermediary_city", e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>UF</Label>
+                    <Input value={form.intermediary_state} onChange={(e) => set("intermediary_state", e.target.value)} maxLength={2} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Cód. Município</Label>
+                    <Input value={form.intermediary_city_code} onChange={(e) => set("intermediary_city_code", e.target.value)} />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
