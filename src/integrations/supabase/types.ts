@@ -299,6 +299,12 @@ export type Database = {
           external_reference: string | null
           id: string
           inss_value: number | null
+          intermediary_city: string | null
+          intermediary_city_code: string | null
+          intermediary_document: string | null
+          intermediary_name: string | null
+          intermediary_state: string | null
+          intermediary_type: string | null
           invoice_number: number | null
           ir_value: number | null
           iss_rate: number | null
@@ -358,6 +364,12 @@ export type Database = {
           external_reference?: string | null
           id?: string
           inss_value?: number | null
+          intermediary_city?: string | null
+          intermediary_city_code?: string | null
+          intermediary_document?: string | null
+          intermediary_name?: string | null
+          intermediary_state?: string | null
+          intermediary_type?: string | null
           invoice_number?: number | null
           ir_value?: number | null
           iss_rate?: number | null
@@ -417,6 +429,12 @@ export type Database = {
           external_reference?: string | null
           id?: string
           inss_value?: number | null
+          intermediary_city?: string | null
+          intermediary_city_code?: string | null
+          intermediary_document?: string | null
+          intermediary_name?: string | null
+          intermediary_state?: string | null
+          intermediary_type?: string | null
           invoice_number?: number | null
           ir_value?: number | null
           iss_rate?: number | null
