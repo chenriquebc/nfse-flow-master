@@ -304,8 +304,11 @@ export type Database = {
           iss_rate: number | null
           iss_retained: boolean | null
           iss_value: number | null
+          issqn_city: string | null
+          issqn_exemption: boolean
           issued_at: string | null
           metadata: Json | null
+          municipal_tax_code: string | null
           nbs_code: string | null
           net_value: number | null
           notes: string | null
@@ -359,8 +362,11 @@ export type Database = {
           iss_rate?: number | null
           iss_retained?: boolean | null
           iss_value?: number | null
+          issqn_city?: string | null
+          issqn_exemption?: boolean
           issued_at?: string | null
           metadata?: Json | null
+          municipal_tax_code?: string | null
           nbs_code?: string | null
           net_value?: number | null
           notes?: string | null
@@ -414,8 +420,11 @@ export type Database = {
           iss_rate?: number | null
           iss_retained?: boolean | null
           iss_value?: number | null
+          issqn_city?: string | null
+          issqn_exemption?: boolean
           issued_at?: string | null
           metadata?: Json | null
+          municipal_tax_code?: string | null
           nbs_code?: string | null
           net_value?: number | null
           notes?: string | null
