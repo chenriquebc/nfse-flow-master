@@ -132,7 +132,10 @@ export function CnaeMultiSelect({ values, onChange }: CnaeMultiSelectProps) {
     }
   };
 
-  const selectedItems = cnaes.filter((c) => values.includes(c.id));
+  const selectedItems = values.map((v) => {
+    const found = cnaes.find((c) => c.id === v);
+    return found || { id: v, descricao: "" };
+  });
 
   return (
     <div className="space-y-2">
