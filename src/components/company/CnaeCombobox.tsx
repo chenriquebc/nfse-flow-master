@@ -36,6 +36,11 @@ export function CnaeCombobox({ value, onChange, label }: CnaeComboboxProps) {
   }, [cnaes, search]);
 
   const selected = cnaes.find((c) => c.id === value);
+  const displayValue = selected
+    ? `${selected.id} - ${selected.descricao}`
+    : value
+    ? `${value}`
+    : "";
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
