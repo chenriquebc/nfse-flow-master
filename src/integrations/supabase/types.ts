@@ -284,12 +284,14 @@ export type Database = {
       }
       nfse_invoices: {
         Row: {
+          approx_tax_mode: string | null
           base_value: number | null
           batch_number: string | null
           cnae_code: string | null
           cofins_value: number | null
           company_id: string
           competence_date: string
+          conditional_discount: number | null
           created_at: string
           created_by: string | null
           csll_value: number | null
@@ -305,20 +307,28 @@ export type Database = {
           intermediary_name: string | null
           intermediary_state: string | null
           intermediary_type: string | null
+          intermediary_value: number | null
           invoice_number: number | null
           ir_value: number | null
+          irrf_value: number | null
           iss_rate: number | null
           iss_retained: boolean | null
           iss_value: number | null
           issqn_city: string | null
           issqn_exemption: boolean
+          issqn_retained_by_taker: boolean | null
+          issqn_suspended: boolean | null
+          issqn_taxation: string | null
           issued_at: string | null
           metadata: Json | null
+          municipal_benefit: boolean | null
           municipal_tax_code: string | null
           nbs_code: string | null
           net_value: number | null
           notes: string | null
           other_deductions: number | null
+          pis_cofins_csll_retention_type: string | null
+          pis_cofins_situation: string | null
           pis_value: number | null
           protocol_number: string | null
           replaced_invoice_id: string | null
@@ -327,6 +337,10 @@ export type Database = {
           rps_type: number | null
           service_description: string
           service_value: number
+          simples_nacional_rate: number | null
+          social_contributions_retained: number | null
+          social_security_retained: number | null
+          special_tax_regime: string | null
           status: Database["public"]["Enums"]["nfse_status"]
           taker_address_city: string | null
           taker_address_city_code: string | null
@@ -341,6 +355,7 @@ export type Database = {
           tax_assessment_regime: string | null
           tax_code: string
           tenant_id: string
+          unconditional_discount: number | null
           updated_at: string
           verification_code: string | null
           xml_authorized: string | null
@@ -349,12 +364,14 @@ export type Database = {
           xml_signed: string | null
         }
         Insert: {
+          approx_tax_mode?: string | null
           base_value?: number | null
           batch_number?: string | null
           cnae_code?: string | null
           cofins_value?: number | null
           company_id: string
           competence_date?: string
+          conditional_discount?: number | null
           created_at?: string
           created_by?: string | null
           csll_value?: number | null
@@ -370,20 +387,28 @@ export type Database = {
           intermediary_name?: string | null
           intermediary_state?: string | null
           intermediary_type?: string | null
+          intermediary_value?: number | null
           invoice_number?: number | null
           ir_value?: number | null
+          irrf_value?: number | null
           iss_rate?: number | null
           iss_retained?: boolean | null
           iss_value?: number | null
           issqn_city?: string | null
           issqn_exemption?: boolean
+          issqn_retained_by_taker?: boolean | null
+          issqn_suspended?: boolean | null
+          issqn_taxation?: string | null
           issued_at?: string | null
           metadata?: Json | null
+          municipal_benefit?: boolean | null
           municipal_tax_code?: string | null
           nbs_code?: string | null
           net_value?: number | null
           notes?: string | null
           other_deductions?: number | null
+          pis_cofins_csll_retention_type?: string | null
+          pis_cofins_situation?: string | null
           pis_value?: number | null
           protocol_number?: string | null
           replaced_invoice_id?: string | null
@@ -392,6 +417,10 @@ export type Database = {
           rps_type?: number | null
           service_description?: string
           service_value?: number
+          simples_nacional_rate?: number | null
+          social_contributions_retained?: number | null
+          social_security_retained?: number | null
+          special_tax_regime?: string | null
           status?: Database["public"]["Enums"]["nfse_status"]
           taker_address_city?: string | null
           taker_address_city_code?: string | null
@@ -406,6 +435,7 @@ export type Database = {
           tax_assessment_regime?: string | null
           tax_code?: string
           tenant_id: string
+          unconditional_discount?: number | null
           updated_at?: string
           verification_code?: string | null
           xml_authorized?: string | null
@@ -414,12 +444,14 @@ export type Database = {
           xml_signed?: string | null
         }
         Update: {
+          approx_tax_mode?: string | null
           base_value?: number | null
           batch_number?: string | null
           cnae_code?: string | null
           cofins_value?: number | null
           company_id?: string
           competence_date?: string
+          conditional_discount?: number | null
           created_at?: string
           created_by?: string | null
           csll_value?: number | null
@@ -435,20 +467,28 @@ export type Database = {
           intermediary_name?: string | null
           intermediary_state?: string | null
           intermediary_type?: string | null
+          intermediary_value?: number | null
           invoice_number?: number | null
           ir_value?: number | null
+          irrf_value?: number | null
           iss_rate?: number | null
           iss_retained?: boolean | null
           iss_value?: number | null
           issqn_city?: string | null
           issqn_exemption?: boolean
+          issqn_retained_by_taker?: boolean | null
+          issqn_suspended?: boolean | null
+          issqn_taxation?: string | null
           issued_at?: string | null
           metadata?: Json | null
+          municipal_benefit?: boolean | null
           municipal_tax_code?: string | null
           nbs_code?: string | null
           net_value?: number | null
           notes?: string | null
           other_deductions?: number | null
+          pis_cofins_csll_retention_type?: string | null
+          pis_cofins_situation?: string | null
           pis_value?: number | null
           protocol_number?: string | null
           replaced_invoice_id?: string | null
@@ -457,6 +497,10 @@ export type Database = {
           rps_type?: number | null
           service_description?: string
           service_value?: number
+          simples_nacional_rate?: number | null
+          social_contributions_retained?: number | null
+          social_security_retained?: number | null
+          special_tax_regime?: string | null
           status?: Database["public"]["Enums"]["nfse_status"]
           taker_address_city?: string | null
           taker_address_city_code?: string | null
@@ -471,6 +515,7 @@ export type Database = {
           tax_assessment_regime?: string | null
           tax_code?: string
           tenant_id?: string
+          unconditional_discount?: number | null
           updated_at?: string
           verification_code?: string | null
           xml_authorized?: string | null
