@@ -268,7 +268,7 @@ export default function StepValores({ form, set, baseValue, issValue, totalDeduc
               <Label>BC ISSQN</Label>
               <div className="flex">
                 <span className="inline-flex items-center px-3 bg-muted border border-r-0 border-input rounded-l-md text-sm text-muted-foreground">R$</span>
-                <Input type="text" readOnly className="h-10 rounded-l-none bg-muted/50" value={baseValue.toFixed(2)} />
+                <Input type="number" step="0.01" min="0" className="h-10 rounded-l-none" value={baseValue.toFixed(2)} onChange={(e) => set("deduction_value", String((parseFloat(form.service_value) || 0) - (parseFloat(e.target.value) || 0)))} />
               </div>
             </div>
             <div className="space-y-2">
