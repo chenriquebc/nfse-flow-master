@@ -1,0 +1,16 @@
+ALTER TABLE public.nfse_invoices
+  ADD COLUMN IF NOT EXISTS intermediary_value numeric DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS unconditional_discount numeric DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS conditional_discount numeric DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS issqn_taxation text DEFAULT 'tributavel',
+  ADD COLUMN IF NOT EXISTS special_tax_regime text DEFAULT 'nenhum',
+  ADD COLUMN IF NOT EXISTS issqn_suspended boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS issqn_retained_by_taker boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS municipal_benefit boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS pis_cofins_situation text,
+  ADD COLUMN IF NOT EXISTS pis_cofins_csll_retention_type text,
+  ADD COLUMN IF NOT EXISTS irrf_value numeric DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS social_contributions_retained numeric DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS social_security_retained numeric DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS approx_tax_mode text DEFAULT 'simples_nacional',
+  ADD COLUMN IF NOT EXISTS simples_nacional_rate numeric DEFAULT 0;
