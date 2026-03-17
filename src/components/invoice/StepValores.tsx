@@ -4,9 +4,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Calculator, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useMemo } from "react";
 
 const ISSQN_TAXATION_OPTIONS = [
   { value: "tributavel", label: "Operação Tributável" },
@@ -16,7 +16,7 @@ const ISSQN_TAXATION_OPTIONS = [
   { value: "nao_incidencia", label: "Não Incidência" },
 ];
 
-const SPECIAL_TAX_REGIME_OPTIONS = [
+const SPECIAL_TAX_REGIME_OPTIONS_FULL = [
   { value: "nenhum", label: "Nenhum" },
   { value: "microempresa_municipal", label: "Microempresa Municipal" },
   { value: "estimativa", label: "Estimativa" },
@@ -26,7 +26,14 @@ const SPECIAL_TAX_REGIME_OPTIONS = [
   { value: "me_epp", label: "Microempresa ou Empresa de Pequeno Porte (ME/EPP)" },
 ];
 
+const SPECIAL_TAX_REGIME_SIMPLES = [
+  { value: "nenhum", label: "Nenhum" },
+  { value: "mei", label: "Microempreendedor Individual (MEI)" },
+  { value: "me_epp", label: "Microempresa ou Empresa de Pequeno Porte (ME/EPP)" },
+];
+
 const PIS_COFINS_SITUATIONS = [
+  { value: "00", label: "00 - Nenhum" },
   { value: "01", label: "01 - Operação Tributável com Alíquota Básica" },
   { value: "02", label: "02 - Operação Tributável com Alíquota Diferenciada" },
   { value: "03", label: "03 - Operação Tributável com Alíquota por Unidade de Medida" },
@@ -40,10 +47,11 @@ const PIS_COFINS_SITUATIONS = [
 ];
 
 const PIS_COFINS_RETENTION_TYPES = [
-  { value: "nao_retido", label: "Não Retido" },
-  { value: "retido_tomador", label: "Retido pelo Tomador" },
-  { value: "retido_intermediario", label: "Retido pelo Intermediário" },
-  { value: "retido_orgao_publico", label: "Retido pelo Órgão Público" },
+  { value: "nao_retido", label: "PIS/COFINS/CSLL Não Retidos" },
+  { value: "retido", label: "PIS/COFINS/CSLL Retidos" },
+  { value: "pis_cofins_retido_csll_nao", label: "PIS/COFINS Retidos, CSLL Não Retido" },
+  { value: "pis_retido_cofins_csll_nao", label: "PIS Retido, COFINS/CSLL Não Retido" },
+  { value: "cofins_retido_pis_csll_nao", label: "COFINS Retido, PIS/CSLL Não Retido" },
 ];
 
 interface StepValoresProps {
@@ -74,6 +82,9 @@ interface StepValoresProps {
     ir_value: string;
     csll_value: string;
     notes: string;
+    intermediary_type: string;
+    issqn_exemption: boolean;
+    tax_assessment_regime: string;
   };
   set: (key: string, value: string | boolean) => void;
   baseValue: number;
@@ -84,6 +95,20 @@ interface StepValoresProps {
 }
 
 export default function StepValores({ form, set, baseValue, issValue, totalDeductions, netValue, formatCurrency }: StepValoresProps) {
+  const hasIntermediary = form.intermediary_type !== "none";
+  
+  // When issqn_exemption is false ("Não"), lock ISSQN taxation to "tributavel"
+  const issqnTaxationLocked = !form.issqn_exemption;
+
+  // Special tax regime options depend on tax_assessment_regime
+  const specialTaxRegimeOptions = useMemo(() => {
+    // Regime 1 = full simples, regime 2 = simples + ISSQN fora
+    if (form.tax_assessment_regime === "1" || form.tax_assessment_regime === "2") {
+      return SPECIAL_TAX_REGIME_SIMPLES;
+    }
+    return SPECIAL_TAX_REGIME_OPTIONS_FULL;
+  }, [form.tax_assessment_regime]);
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="text-center mb-6">
@@ -96,24 +121,34 @@ export default function StepValores({ form, set, baseValue, issValue, totalDeduc
       <Card>
         <CardContent className="pt-6 space-y-4">
           <h3 className="text-sm font-semibold text-primary uppercase tracking-wide">Valores do Serviço Prestado</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Valor do serviço prestado * </Label>
+              <Label>Valor do serviço prestado *</Label>
               <div className="flex">
                 <span className="inline-flex items-center px-3 bg-muted border border-r-0 border-input rounded-l-md text-sm text-muted-foreground">R$</span>
                 <Input type="number" step="0.01" min="0" className="h-10 rounded-l-none text-lg font-semibold" value={form.service_value} onChange={(e) => set("service_value", e.target.value)} />
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="flex items-center gap-2">
+              <Label className="text-muted-foreground">
                 Valor recebido pelo intermediário
-                <Checkbox checked={parseFloat(form.intermediary_value) > 0} onCheckedChange={() => {}} className="h-4 w-4" />
+                {!hasIntermediary && <span className="text-xs ml-1">(ative o intermediário no passo Tomador)</span>}
               </Label>
               <div className="flex">
                 <span className="inline-flex items-center px-3 bg-muted border border-r-0 border-input rounded-l-md text-sm text-muted-foreground">R$</span>
-                <Input type="number" step="0.01" min="0" className="h-10 rounded-l-none" value={form.intermediary_value} onChange={(e) => set("intermediary_value", e.target.value)} />
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className="h-10 rounded-l-none"
+                  value={form.intermediary_value}
+                  onChange={(e) => set("intermediary_value", e.target.value)}
+                  disabled={!hasIntermediary}
+                />
               </div>
             </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Desconto incondicionado</Label>
               <div className="flex">
@@ -148,7 +183,11 @@ export default function StepValores({ form, set, baseValue, issValue, totalDeduc
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Tributação do ISSQN sobre o serviço prestado</Label>
-              <Select value={form.issqn_taxation} onValueChange={(v) => set("issqn_taxation", v)}>
+              <Select
+                value={issqnTaxationLocked ? "tributavel" : form.issqn_taxation}
+                onValueChange={(v) => set("issqn_taxation", v)}
+                disabled={issqnTaxationLocked}
+              >
                 <SelectTrigger className="h-10">
                   <SelectValue />
                 </SelectTrigger>
@@ -166,7 +205,7 @@ export default function StepValores({ form, set, baseValue, issValue, totalDeduc
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {SPECIAL_TAX_REGIME_OPTIONS.map((o) => (
+                  {specialTaxRegimeOptions.map((o) => (
                     <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
                   ))}
                 </SelectContent>
@@ -324,7 +363,7 @@ export default function StepValores({ form, set, baseValue, issValue, totalDeduc
 
           {form.approx_tax_mode === "simples_nacional" && (
             <div className="space-y-2 max-w-xs animate-fade-in">
-              <Label>Alíquota no Simples Nacional * </Label>
+              <Label>Alíquota no Simples Nacional *</Label>
               <div className="flex">
                 <Input type="number" step="0.01" min="0" max="100" className="h-10 rounded-r-none" value={form.simples_nacional_rate} onChange={(e) => set("simples_nacional_rate", e.target.value)} />
                 <span className="inline-flex items-center px-3 bg-muted border border-l-0 border-input rounded-r-md text-sm text-muted-foreground">%</span>

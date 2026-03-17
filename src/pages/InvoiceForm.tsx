@@ -317,7 +317,7 @@ export default function InvoiceForm() {
 
   return (
     <AppLayout>
-      <div className="animate-fade-in max-w-2xl mx-auto">
+      <div className="animate-fade-in max-w-3xl mx-auto">
         <div className="mb-6">
           <Button variant="ghost" size="sm" onClick={() => navigate("/invoices")} className="mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" />
