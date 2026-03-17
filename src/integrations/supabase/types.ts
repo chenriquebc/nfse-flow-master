@@ -332,6 +332,7 @@ export type Database = {
           taker_email: string | null
           taker_name: string
           taker_phone: string | null
+          tax_assessment_regime: string | null
           tax_code: string
           tenant_id: string
           updated_at: string
@@ -390,6 +391,7 @@ export type Database = {
           taker_email?: string | null
           taker_name?: string
           taker_phone?: string | null
+          tax_assessment_regime?: string | null
           tax_code?: string
           tenant_id: string
           updated_at?: string
@@ -448,6 +450,7 @@ export type Database = {
           taker_email?: string | null
           taker_name?: string
           taker_phone?: string | null
+          tax_assessment_regime?: string | null
           tax_code?: string
           tenant_id?: string
           updated_at?: string
