@@ -36,13 +36,18 @@ export function CnaeCombobox({ value, onChange, label }: CnaeComboboxProps) {
   }, [cnaes, search]);
 
   const selected = cnaes.find((c) => c.id === value);
+  const displayValue = selected
+    ? `${selected.id} - ${selected.descricao}`
+    : value
+    ? `${value}`
+    : "";
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="outline" role="combobox" className="w-full justify-between font-normal h-10 text-left">
           <span className="truncate text-sm">
-            {selected ? `${selected.id} - ${selected.descricao}` : label || "Selecione o CNAE..."}
+            {displayValue || label || "Selecione o CNAE..."}
           </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -127,7 +132,10 @@ export function CnaeMultiSelect({ values, onChange }: CnaeMultiSelectProps) {
     }
   };
 
-  const selectedItems = cnaes.filter((c) => values.includes(c.id));
+  const selectedItems = values.map((v) => {
+    const found = cnaes.find((c) => c.id === v);
+    return found || { id: v, descricao: "" };
+  });
 
   return (
     <div className="space-y-2">

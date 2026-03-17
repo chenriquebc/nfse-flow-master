@@ -51,7 +51,7 @@ let cnaeCache: CnaeItem[] | null = null;
 
 export async function fetchCnaeList(): Promise<CnaeItem[]> {
   if (cnaeCache) return cnaeCache;
-  const res = await fetch("https://brasilapi.com.br/api/cnae/v2");
+  const res = await fetch("https://brasilapi.com.br/api/cnae/v1");
   if (!res.ok) throw new Error("Erro ao buscar CNAEs");
   const data: { id: string; descricao: string }[] = await res.json();
   cnaeCache = data.map((c) => ({ id: c.id, descricao: c.descricao }));
