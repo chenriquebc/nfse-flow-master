@@ -47,7 +47,7 @@ export function CnaeCombobox({ value, onChange, label }: CnaeComboboxProps) {
       <PopoverTrigger asChild>
         <Button variant="outline" role="combobox" className="w-full justify-between font-normal h-10 text-left">
           <span className="truncate text-sm">
-            {selected ? `${selected.id} - ${selected.descricao}` : label || "Selecione o CNAE..."}
+            {displayValue || label || "Selecione o CNAE..."}
           </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
