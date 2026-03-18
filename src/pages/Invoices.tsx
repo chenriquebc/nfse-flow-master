@@ -286,6 +286,7 @@ export default function Invoices() {
                                   navigate(`/invoices/${inv.id}/edit`);
                                 }}
                               >
+                                Editar
                               </Button>
                             )}
                           </div>
