@@ -283,8 +283,7 @@ export default function Invoices() {
                                 className="h-7 text-xs"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  navigate(`/invoices/${inv.id}`);
-                                }}
+                                  navigate(`/invoices/${inv.id}/edit`);
                               >
                                 Editar
                               </Button>
