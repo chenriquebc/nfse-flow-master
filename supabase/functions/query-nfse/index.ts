@@ -9,7 +9,7 @@ const corsHeaders = {
 
 const SEFIN_HOST = "sefin.nfse.gov.br";
 
-// ─── mTLS fetch using Deno HttpClient (edge-runtime compatible) ─────────────
+// ─── mTLS fetch via external proxy ─────────────────────────────────────────
 
 async function mtlsFetch(
   method: string,
@@ -19,37 +19,40 @@ async function mtlsFetch(
   keyPem: string,
   contentType = "application/xml",
 ): Promise<{ status: number; body: string }> {
-  const httpClient = Deno.createHttpClient({
-    cert: certPem,
-    key: keyPem,
-    http1: true,
-    http2: false,
+  const proxyUrl = Deno.env.get("MTLS_PROXY_URL");
+  const proxyToken = Deno.env.get("MTLS_PROXY_TOKEN");
+
+  if (!proxyUrl || !proxyToken) {
+    throw new Error("MTLS_PROXY_URL and MTLS_PROXY_TOKEN must be configured");
+  }
+
+  const proxyResponse = await fetch(`${proxyUrl}/proxy`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${proxyToken}`,
+    },
+    body: JSON.stringify({
+      method,
+      hostname: SEFIN_HOST,
+      path,
+      body,
+      certPem,
+      keyPem,
+      contentType,
+    }),
   });
 
-  try {
-    const headers: Record<string, string> = {
-      "Accept": "application/xml",
-    };
-    if (contentType && body) headers["Content-Type"] = contentType;
+  const result = await proxyResponse.json();
 
-    const requestInit: RequestInit & { client: Deno.HttpClient } = {
-      method,
-      headers,
-      client: httpClient,
-    };
-
-    if (body) requestInit.body = body;
-
-    const response = await fetch(`https://${SEFIN_HOST}${path}`, requestInit);
-    const responseBody = await response.text();
-
-    return {
-      status: response.status,
-      body: responseBody,
-    };
-  } finally {
-    httpClient.close();
+  if (!proxyResponse.ok) {
+    throw new Error(`Proxy error: ${result.error || proxyResponse.statusText}`);
   }
+
+  return {
+    status: result.status,
+    body: result.body,
+  };
 }
 
 function decryptPassword(encrypted: string, masterKey: string): string {
