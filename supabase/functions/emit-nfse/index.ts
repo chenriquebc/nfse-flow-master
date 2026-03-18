@@ -428,15 +428,19 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Decrypt password
+    // Decrypt password (supports both encrypted and plain text)
     let certPassword: string;
-    try {
-      certPassword = decryptPassword(certRecord.password_encrypted, masterKey);
-    } catch (e) {
-      return new Response(JSON.stringify({ error: "Failed to decrypt certificate password" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    const encParts = certRecord.password_encrypted.split(":");
+    if (encParts.length === 3) {
+      try {
+        certPassword = decryptPassword(certRecord.password_encrypted, masterKey);
+      } catch (e) {
+        console.warn("Failed to decrypt password, trying as plain text");
+        certPassword = certRecord.password_encrypted;
+      }
+    } else {
+      console.warn("Certificate password is not encrypted, using as plain text");
+      certPassword = certRecord.password_encrypted;
     }
 
     // Load certificate and key
