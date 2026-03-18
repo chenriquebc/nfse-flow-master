@@ -86,10 +86,15 @@ function extractFromSubject(subject: any): { legal_name: string | null; document
 }
 
 function encryptPassword(password: string, masterKeyHex: string): string {
-  const keyBytes = forge.util.hexToBytes(masterKeyHex);
+  // Ensure key is exactly 64 hex chars (32 bytes for AES-256)
+  const cleanKey = masterKeyHex.trim();
+  if (cleanKey.length !== 64) {
+    throw new Error(`Invalid master key length: expected 64 hex chars, got ${cleanKey.length}`);
+  }
+  const key = forge.util.hexToBytes(cleanKey);
   const iv = forge.random.getBytesSync(12);
-  const cipher = forge.cipher.createCipher("AES-GCM", forge.util.createBuffer(keyBytes));
-  cipher.start({ iv: forge.util.createBuffer(iv), tagLength: 128 });
+  const cipher = forge.cipher.createCipher("AES-GCM", key);
+  cipher.start({ iv, tagLength: 128 });
   cipher.update(forge.util.createBuffer(password, "utf8"));
   cipher.finish();
   const encrypted = cipher.output.toHex();
