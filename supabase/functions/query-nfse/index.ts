@@ -20,11 +20,12 @@ async function mtlsFetch(
   contentType = "application/xml",
 ): Promise<{ status: number; body: string }> {
   const { default: https } = await import("node:https");
+  const { Buffer: NodeBuffer } = await import("node:buffer");
 
   return new Promise((resolve, reject) => {
     const headers: Record<string, string | number> = {};
     if (contentType) headers["Content-Type"] = contentType;
-    if (body) headers["Content-Length"] = Buffer.byteLength(body, "utf-8");
+    if (body) headers["Content-Length"] = new TextEncoder().encode(body).byteLength;
     if (!body) headers["Accept"] = "application/xml";
 
     const options = {
@@ -39,12 +40,13 @@ async function mtlsFetch(
     };
 
     const req = https.request(options, (res: any) => {
-      const chunks: Buffer[] = [];
-      res.on("data", (chunk: Buffer) => chunks.push(chunk));
+      const chunks: Uint8Array[] = [];
+      res.on("data", (chunk: Uint8Array) => chunks.push(chunk));
       res.on("end", () => {
+        const combined = NodeBuffer.concat(chunks);
         resolve({
           status: res.statusCode ?? 0,
-          body: Buffer.concat(chunks).toString("utf-8"),
+          body: new TextDecoder().decode(combined),
         });
       });
     });
