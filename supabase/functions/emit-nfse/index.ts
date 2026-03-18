@@ -1,12 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import forge from "npm:node-forge@1.3.1";
-import { Buffer } from "node:buffer";
-
-// Make Buffer available globally for node:https internals
-if (typeof globalThis.Buffer === "undefined") {
-  (globalThis as any).Buffer = Buffer;
-}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,7 +10,7 @@ const corsHeaders = {
 const SEFIN_HOST = "sefin.nfse.gov.br";
 const SEFIN_PATH = "/SefinNacional/nfse";
 
-// ─── mTLS fetch using node:https (OpenSSL, supports TLS renegotiation) ──────
+// ─── mTLS fetch using Deno HttpClient (edge-runtime compatible) ─────────────
 
 async function mtlsFetch(
   method: string,
@@ -26,43 +20,34 @@ async function mtlsFetch(
   keyPem: string,
   contentType = "application/xml",
 ): Promise<{ status: number; body: string }> {
-  const { default: https } = await import("node:https");
-  const { Buffer: NodeBuffer } = await import("node:buffer");
+  const httpClient = Deno.createHttpClient({
+    cert: certPem,
+    key: keyPem,
+    http1: true,
+    http2: false,
+  });
 
-  return new Promise((resolve, reject) => {
-    const options = {
-      hostname: SEFIN_HOST,
-      port: 443,
-      path,
+  try {
+    const requestInit: RequestInit & { client: Deno.HttpClient } = {
       method,
-      cert: certPem,
-      key: keyPem,
       headers: {
         "Content-Type": contentType,
-        "Content-Length": new TextEncoder().encode(body).byteLength,
+        "Accept": "application/xml",
       },
-      minVersion: "TLSv1.2" as const,
+      body,
+      client: httpClient,
     };
 
-    const req = https.request(options, (res: any) => {
-      const chunks: Uint8Array[] = [];
-      res.on("data", (chunk: Uint8Array) => chunks.push(chunk));
-      res.on("end", () => {
-        const combined = NodeBuffer.concat(chunks);
-        resolve({
-          status: res.statusCode ?? 0,
-          body: new TextDecoder().decode(combined),
-        });
-      });
-    });
+    const response = await fetch(`https://${SEFIN_HOST}${path}`, requestInit);
+    const responseBody = await response.text();
 
-    req.on("error", (err: Error) => reject(err));
-    req.setTimeout(30000, () => {
-      req.destroy(new Error("Request timeout (30s)"));
-    });
-    req.write(body);
-    req.end();
-  });
+    return {
+      status: response.status,
+      body: responseBody,
+    };
+  } finally {
+    httpClient.close();
+  }
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -539,9 +524,9 @@ Deno.serve(async (req) => {
       created_by: userData.user.id,
     });
 
-    // ─── Send via node:https (OpenSSL – supports TLS renegotiation) ─────
+    // ─── Send via Deno HttpClient (mTLS) ────────────────────────────────
     try {
-      console.log(`Sending to SEFIN via node:https: POST ${SEFIN_HOST}${SEFIN_PATH}`);
+      console.log(`Sending to SEFIN via Deno HttpClient: POST ${SEFIN_HOST}${SEFIN_PATH}`);
 
       const result = await mtlsFetch("POST", SEFIN_PATH, signedXml, certPem, keyPem);
 
