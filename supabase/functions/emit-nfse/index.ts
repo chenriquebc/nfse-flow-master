@@ -524,9 +524,9 @@ Deno.serve(async (req) => {
       created_by: userData.user.id,
     });
 
-    // ─── Send via node:https (OpenSSL – supports TLS renegotiation) ─────
+    // ─── Send via Deno HttpClient (mTLS) ────────────────────────────────
     try {
-      console.log(`Sending to SEFIN via node:https: POST ${SEFIN_HOST}${SEFIN_PATH}`);
+      console.log(`Sending to SEFIN via Deno HttpClient: POST ${SEFIN_HOST}${SEFIN_PATH}`);
 
       const result = await mtlsFetch("POST", SEFIN_PATH, signedXml, certPem, keyPem);
 
