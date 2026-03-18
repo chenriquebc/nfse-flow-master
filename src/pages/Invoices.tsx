@@ -285,7 +285,7 @@ export default function Invoices() {
                                   e.stopPropagation();
                                   navigate(`/invoices/${inv.id}/edit`);
                                 }}
-                                Editar
+                              >
                               </Button>
                             )}
                           </div>
