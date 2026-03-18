@@ -1,0 +1,12 @@
+{
+  "name": "mtls-proxy",
+  "version": "1.0.0",
+  "description": "mTLS proxy for NFS-e SEFIN communication",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
