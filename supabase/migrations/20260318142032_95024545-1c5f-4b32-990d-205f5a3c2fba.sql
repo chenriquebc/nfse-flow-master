@@ -1,0 +1,1 @@
+UPDATE public.nfse_invoices SET status = 'draft' WHERE status = 'rejected';
