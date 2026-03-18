@@ -1,0 +1,21 @@
+version: "3.8"
+
+services:
+  nfse-api:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - NODE_ENV=production
+      - MTLS_PROXY_TOKEN=${MTLS_PROXY_TOKEN}
+      - CERT_PFX_BASE64=${CERT_PFX_BASE64}
+      - CERT_PASSWORD=${CERT_PASSWORD}
+      - SEFAZ_AMBIENTE=${SEFAZ_AMBIENTE:-2}
+      - SEFAZ_UF_CODIGO=${SEFAZ_UF_CODIGO:-35}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
