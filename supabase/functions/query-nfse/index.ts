@@ -1,0 +1,326 @@
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "jsr:@supabase/supabase-js@2";
+import forge from "npm:node-forge@1.3.1";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+};
+
+const SEFIN_BASE_URL = "https://sefin.nfse.gov.br/SefinNacional";
+
+function decryptPassword(encrypted: string, masterKey: string): string {
+  const parts = encrypted.split(":");
+  if (parts.length !== 3) throw new Error("Invalid encrypted password format");
+  const [ivHex, authTagHex, encryptedHex] = parts;
+  const iv = forge.util.hexToBytes(ivHex);
+  const authTag = forge.util.hexToBytes(authTagHex);
+  const encData = forge.util.hexToBytes(encryptedHex);
+  const keyBytes = forge.util.hexToBytes(masterKey);
+  const decipher = forge.cipher.createDecipher("AES-GCM", keyBytes);
+  decipher.start({ iv, tag: forge.util.createBuffer(authTag) });
+  decipher.update(forge.util.createBuffer(encData));
+  const pass = decipher.finish();
+  if (!pass) throw new Error("Failed to decrypt certificate password");
+  return decipher.output.toString();
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  try {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const masterKey = Deno.env.get("CERTIFICATE_MASTER_KEY");
+
+    if (!masterKey) {
+      return new Response(JSON.stringify({ error: "CERTIFICATE_MASTER_KEY not configured" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const userSupabase = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: userData, error: userError } = await userSupabase.auth.getUser();
+    if (userError || !userData.user) {
+      return new Response(JSON.stringify({ error: "Invalid token" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const body = await req.json();
+    const { action, invoice_id, chave_acesso } = body;
+
+    if (action === "query_by_key" && chave_acesso) {
+      // Query NFS-e by access key
+      const { data: invoice } = await supabase
+        .from("nfse_invoices")
+        .select("*, companies(id, address_city_code, document), certificates(file_path, password_encrypted)")
+        .eq("id", invoice_id)
+        .single();
+
+      if (!invoice) {
+        return new Response(JSON.stringify({ error: "Invoice not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Get certificate for mTLS
+      const { data: certRecord } = await supabase
+        .from("certificates")
+        .select("*")
+        .eq("company_id", invoice.company_id)
+        .eq("is_active", true)
+        .limit(1)
+        .single();
+
+      if (!certRecord) {
+        return new Response(JSON.stringify({ error: "No certificate found" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: fileData } = await supabase.storage
+        .from("certificates")
+        .download(certRecord.file_path);
+
+      if (!fileData) {
+        return new Response(JSON.stringify({ error: "Failed to download certificate" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const certPassword = decryptPassword(certRecord.password_encrypted, masterKey);
+      const arrayBuffer = await fileData.arrayBuffer();
+      const pfxBinary = String.fromCharCode(...new Uint8Array(arrayBuffer));
+      const asn1 = forge.asn1.fromDer(pfxBinary);
+      const p12 = forge.pkcs12.pkcs12FromAsn1(asn1, certPassword);
+      
+      const certBags = p12.getBags({ bagType: forge.pki.oids.certBag });
+      const certs = certBags[forge.pki.oids.certBag];
+      const keyBags = p12.getBags({ bagType: forge.pki.oids.pkcs8ShroudedKeyBag });
+      const keys = keyBags[forge.pki.oids.pkcs8ShroudedKeyBag];
+
+      if (!certs?.length || !keys?.length) {
+        return new Response(JSON.stringify({ error: "Invalid certificate" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const certPem = forge.pki.certificateToPem(certs[0].cert!);
+      const keyPem = forge.pki.privateKeyToPem(keys[0].key as forge.pki.rsa.PrivateKey);
+
+      const httpClient = Deno.createHttpClient({
+        certChain: certPem,
+        privateKey: keyPem,
+      });
+
+      try {
+        const response = await fetch(`${SEFIN_BASE_URL}/nfse/${chave_acesso}`, {
+          method: "GET",
+          headers: { "Accept": "application/xml" },
+          client: httpClient,
+        } as any);
+
+        const responseText = await response.text();
+
+        await supabase.from("nfse_events").insert({
+          invoice_id,
+          tenant_id: invoice.tenant_id,
+          event_type: "batch_queried",
+          description: `Consulta NFS-e por chave. Status: ${response.status}`,
+          response_xml: responseText,
+          created_by: userData.user.id,
+        });
+
+        if (response.ok) {
+          // Update invoice with fresh data
+          const statusMatch = responseText.match(/<cStat>([^<]+)<\/cStat>/);
+          
+          return new Response(JSON.stringify({
+            success: true,
+            status: response.status,
+            data: responseText,
+          }), {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        return new Response(JSON.stringify({
+          success: false,
+          status: response.status,
+          error: responseText,
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      } finally {
+        httpClient.close();
+      }
+    }
+
+    if (action === "cancel" && invoice_id) {
+      // Cancel NFS-e via event
+      const { data: invoice } = await supabase
+        .from("nfse_invoices")
+        .select("*")
+        .eq("id", invoice_id)
+        .single();
+
+      if (!invoice || invoice.status !== "authorized") {
+        return new Response(JSON.stringify({ error: "Only authorized invoices can be cancelled" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const chave = (invoice.metadata as any)?.chave_acesso;
+      if (!chave) {
+        return new Response(JSON.stringify({ error: "No access key found for this invoice" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Get certificate
+      const { data: certRecord } = await supabase
+        .from("certificates")
+        .select("*")
+        .eq("company_id", invoice.company_id)
+        .eq("is_active", true)
+        .limit(1)
+        .single();
+
+      if (!certRecord) {
+        return new Response(JSON.stringify({ error: "No certificate found" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: fileData } = await supabase.storage
+        .from("certificates")
+        .download(certRecord.file_path);
+      if (!fileData) {
+        return new Response(JSON.stringify({ error: "Failed to download certificate" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const certPassword = decryptPassword(certRecord.password_encrypted, masterKey);
+      const arrayBuffer = await fileData.arrayBuffer();
+      const pfxBinary = String.fromCharCode(...new Uint8Array(arrayBuffer));
+      const asn1 = forge.asn1.fromDer(pfxBinary);
+      const p12 = forge.pkcs12.pkcs12FromAsn1(asn1, certPassword);
+      const certBags = p12.getBags({ bagType: forge.pki.oids.certBag });
+      const certs = certBags[forge.pki.oids.certBag];
+      const keyBags = p12.getBags({ bagType: forge.pki.oids.pkcs8ShroudedKeyBag });
+      const keys = keyBags[forge.pki.oids.pkcs8ShroudedKeyBag];
+
+      const certPem = forge.pki.certificateToPem(certs![0].cert!);
+      const keyPem = forge.pki.privateKeyToPem(keys![0].key as forge.pki.rsa.PrivateKey);
+
+      // Build cancellation event XML
+      const cancelXml = `<?xml version="1.0" encoding="UTF-8"?>
+<pedRegEvento xmlns="http://www.sped.fazenda.gov.br/nfse" versao="1.00">
+  <infPedReg>
+    <tpAmb>1</tpAmb>
+    <verAplic>NFSE-FLOW-1.0</verAplic>
+    <dhEvento>${new Date().toISOString()}</dhEvento>
+    <nSeqEvento>1</nSeqEvento>
+    <chNFSe>${chave}</chNFSe>
+    <tpEvento>e101101</tpEvento>
+    <detEvento>
+      <e101101>
+        <xMotivo>${body.reason || "Cancelamento solicitado pelo emitente"}</xMotivo>
+      </e101101>
+    </detEvento>
+  </infPedReg>
+</pedRegEvento>`;
+
+      const httpClient = Deno.createHttpClient({
+        certChain: certPem,
+        privateKey: keyPem,
+      });
+
+      try {
+        const response = await fetch(`${SEFIN_BASE_URL}/nfse/${chave}/eventos`, {
+          method: "POST",
+          headers: { "Content-Type": "application/xml" },
+          body: cancelXml,
+          client: httpClient,
+        } as any);
+
+        const responseText = await response.text();
+
+        if (response.ok) {
+          await supabase.from("nfse_invoices").update({
+            status: "cancelled",
+          }).eq("id", invoice_id);
+
+          await supabase.from("nfse_events").insert({
+            invoice_id,
+            tenant_id: invoice.tenant_id,
+            event_type: "cancelled",
+            description: "NFS-e cancelada com sucesso",
+            response_xml: responseText,
+            created_by: userData.user.id,
+          });
+        } else {
+          await supabase.from("nfse_events").insert({
+            invoice_id,
+            tenant_id: invoice.tenant_id,
+            event_type: "error",
+            error_message: `Cancel failed: ${response.status}`,
+            response_xml: responseText,
+            created_by: userData.user.id,
+          });
+        }
+
+        return new Response(JSON.stringify({
+          success: response.ok,
+          status: response.status,
+          data: responseText,
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      } finally {
+        httpClient.close();
+      }
+    }
+
+    return new Response(JSON.stringify({ error: "Invalid action. Use 'query_by_key' or 'cancel'" }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (error: unknown) {
+    console.error("Error in query-nfse:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return new Response(JSON.stringify({ error: message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
