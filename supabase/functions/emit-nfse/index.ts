@@ -547,12 +547,14 @@ Deno.serve(async (req) => {
     }
 
     try {
+      console.log(`Sending to SEFIN: POST ${SEFIN_BASE_URL}/nfse`);
       const response = await fetch(`${SEFIN_BASE_URL}/nfse`, {
         method: "POST",
         headers: { "Content-Type": "application/xml" },
         body: signedXml,
         client: httpClient,
       } as any);
+      console.log(`SEFIN response status: ${response.status}`);
 
       const responseText = await response.text();
 
