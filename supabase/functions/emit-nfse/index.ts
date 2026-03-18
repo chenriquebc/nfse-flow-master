@@ -522,13 +522,16 @@ Deno.serve(async (req) => {
     });
 
     // Send to Sefin Nacional via mTLS
+    console.log("Creating mTLS HTTP client...");
     let httpClient: Deno.HttpClient;
     try {
       httpClient = Deno.createHttpClient({
         cert: certPem,
         key: keyPem,
       });
+      console.log("mTLS client created successfully");
     } catch (e) {
+      console.error("Failed to create mTLS client:", e);
       await supabase.from("nfse_invoices").update({ status: "rejected" }).eq("id", invoice_id);
       await supabase.from("nfse_events").insert({
         invoice_id,
@@ -537,7 +540,7 @@ Deno.serve(async (req) => {
         error_message: `Failed to create mTLS client: ${e instanceof Error ? e.message : "Unknown"}`,
         created_by: userData.user.id,
       });
-      return new Response(JSON.stringify({ error: "Failed to create mTLS client" }), {
+      return new Response(JSON.stringify({ error: `Failed to create mTLS client: ${e instanceof Error ? e.message : "Unknown"}` }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
