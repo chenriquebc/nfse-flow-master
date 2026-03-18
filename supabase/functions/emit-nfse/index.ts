@@ -14,7 +14,11 @@ const SEFIN_BASE_URL = "https://sefin.nfse.gov.br/SefinNacional";
 function decryptPassword(encrypted: string, masterKey: string): string {
   // Format: iv:authTag:encrypted (hex)
   const parts = encrypted.split(":");
-  if (parts.length !== 3) throw new Error("Invalid encrypted password format");
+  if (parts.length !== 3) {
+    // Fallback: password stored as plain text (not yet encrypted)
+    console.warn("Certificate password is not encrypted, using as plain text");
+    return encrypted;
+  }
   const [ivHex, authTagHex, encryptedHex] = parts;
   const iv = forge.util.hexToBytes(ivHex);
   const authTag = forge.util.hexToBytes(authTagHex);
