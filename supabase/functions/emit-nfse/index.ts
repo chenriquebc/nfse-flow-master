@@ -533,9 +533,17 @@ Deno.serve(async (req) => {
     }
 
     try {
+      console.log("Sending to SEFIN Nacional...");
+      console.log("URL:", `${SEFIN_BASE_URL}/nfse`);
+      console.log("Cert PEM length:", certPem.length);
+      console.log("Key PEM length:", keyPem.length);
+      
       const response = await fetch(`${SEFIN_BASE_URL}/nfse`, {
         method: "POST",
-        headers: { "Content-Type": "application/xml" },
+        headers: { 
+          "Content-Type": "application/xml",
+          "Accept": "application/xml",
+        },
         body: signedXml,
         client: httpClient,
       } as any);
