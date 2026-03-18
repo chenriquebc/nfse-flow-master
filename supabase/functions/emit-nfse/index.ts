@@ -7,12 +7,60 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const SEFIN_BASE_URL = "https://sefin.nfse.gov.br/SefinNacional";
+const SEFIN_HOST = "sefin.nfse.gov.br";
+const SEFIN_PATH = "/SefinNacional/nfse";
+
+// ─── mTLS fetch using node:https (OpenSSL, supports TLS renegotiation) ──────
+
+async function mtlsFetch(
+  method: string,
+  path: string,
+  body: string,
+  certPem: string,
+  keyPem: string,
+  contentType = "application/xml",
+): Promise<{ status: number; body: string }> {
+  const { default: https } = await import("node:https");
+
+  return new Promise((resolve, reject) => {
+    const options = {
+      hostname: SEFIN_HOST,
+      port: 443,
+      path,
+      method,
+      cert: certPem,
+      key: keyPem,
+      headers: {
+        "Content-Type": contentType,
+        "Content-Length": Buffer.byteLength(body, "utf-8"),
+      },
+      // Force TLS 1.2 minimum (SEFIN requirement)
+      minVersion: "TLSv1.2" as const,
+    };
+
+    const req = https.request(options, (res: any) => {
+      const chunks: Buffer[] = [];
+      res.on("data", (chunk: Buffer) => chunks.push(chunk));
+      res.on("end", () => {
+        resolve({
+          status: res.statusCode ?? 0,
+          body: Buffer.concat(chunks).toString("utf-8"),
+        });
+      });
+    });
+
+    req.on("error", (err: Error) => reject(err));
+    req.setTimeout(30000, () => {
+      req.destroy(new Error("Request timeout (30s)"));
+    });
+    req.write(body);
+    req.end();
+  });
+}
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function decryptPassword(encrypted: string, masterKey: string): string {
-  // Format: iv:authTag:encrypted (hex)
   const parts = encrypted.split(":");
   if (parts.length !== 3) throw new Error("Invalid encrypted password format");
   const [ivHex, authTagHex, encryptedHex] = parts;
@@ -31,21 +79,25 @@ function decryptPassword(encrypted: string, masterKey: string): string {
 function loadCertificate(pfxBinary: string, password: string) {
   const asn1 = forge.asn1.fromDer(pfxBinary);
   const p12 = forge.pkcs12.pkcs12FromAsn1(asn1, password);
-  
-  // Extract certificate
+
   const certBags = p12.getBags({ bagType: forge.pki.oids.certBag });
   const certs = certBags[forge.pki.oids.certBag];
   if (!certs || certs.length === 0) throw new Error("No certificate found in PFX");
-  
-  // Extract private key
+
   const keyBags = p12.getBags({ bagType: forge.pki.oids.pkcs8ShroudedKeyBag });
   const keys = keyBags[forge.pki.oids.pkcs8ShroudedKeyBag];
   if (!keys || keys.length === 0) throw new Error("No private key found in PFX");
-  
+
+  // Build full certificate chain PEM (end-entity + intermediaries)
+  const allCertsPem = certs
+    .filter((b: any) => b.cert)
+    .map((b: any) => forge.pki.certificateToPem(b.cert))
+    .join("\n");
+
   return {
     cert: certs[0].cert,
     key: keys[0].key,
-    certPem: forge.pki.certificateToPem(certs[0].cert!),
+    certPem: allCertsPem,
     keyPem: forge.pki.privateKeyToPem(keys[0].key as forge.pki.rsa.PrivateKey),
   };
 }
@@ -63,11 +115,10 @@ function generateDPSId(
   docType: string,
   document: string,
   series: string,
-  number: number
+  number: number,
 ): string {
-  // DPS ID: Código IBGE (7) + Tipo Inscrição (1) + Inscrição Federal (14) + Série (5) + Número (15)
   const ibge = padLeft(cityCode, 7);
-  const tipo = docType; // 1=CNPJ, 2=CPF
+  const tipo = docType;
   const inscricao = padLeft(formatDocument(document), 14);
   const serie = padLeft(series, 5);
   const num = padLeft(number, 15);
@@ -85,15 +136,10 @@ function generateDPSXml(invoice: any, company: any, dpsId: string): string {
   const issRate = Number(invoice.iss_rate || 0).toFixed(4);
   const issValue = Number(invoice.iss_value || 0).toFixed(2);
   const baseValue = Number(invoice.base_value || 0).toFixed(2);
-  const netValue = Number(invoice.net_value || 0).toFixed(2);
-
-  // Tax regime mapping
-  const taxRegimeMap: Record<number, string> = { 1: "1", 2: "2", 3: "3", 4: "4" };
   const regEspTrib = invoice.special_tax_regime || "0";
 
-  // ISSQN exemption type
-  let issqnExigType = "1"; // Exigível
-  if (invoice.issqn_suspended) issqnExigType = "3"; // Suspensa judicialmente
+  let issqnExigType = "1";
+  if (invoice.issqn_suspended) issqnExigType = "3";
   else if (invoice.issqn_taxation === "imune") issqnExigType = "4";
   else if (invoice.issqn_taxation === "isenta") issqnExigType = "5";
   else if (invoice.issqn_taxation === "exportacao") issqnExigType = "6";
@@ -105,36 +151,21 @@ function generateDPSXml(invoice: any, company: any, dpsId: string): string {
   let xml = `<?xml version="1.0" encoding="UTF-8"?>`;
   xml += `<DPS xmlns="${ns}" versao="1.00">`;
   xml += `<infDPS Id="DPS${dpsId}">`;
-  
-  // Identification
-  xml += `<tpAmb>1</tpAmb>`; // 1=Produção
+
+  xml += `<tpAmb>1</tpAmb>`;
   xml += `<dhEmi>${new Date().toISOString()}</dhEmi>`;
   xml += `<verAplic>NFSE-FLOW-1.0</verAplic>`;
   xml += `<dCompet>${competenceDate}</dCompet>`;
-  
-  // Subitem LC 116
   xml += `<subItemListaServico>${invoice.tax_code || ""}</subItemListaServico>`;
-  
-  // CNAE
-  if (company.cnae_code) {
-    xml += `<cCnae>${company.cnae_code}</cCnae>`;
-  }
-  
-  // NBS
-  if (invoice.nbs_code) {
-    xml += `<CNBS>${invoice.nbs_code.replace(/\D/g, "")}</CNBS>`;
-  }
 
-  // Service description
+  if (company.cnae_code) xml += `<cCnae>${company.cnae_code}</cCnae>`;
+  if (invoice.nbs_code) xml += `<CNBS>${invoice.nbs_code.replace(/\D/g, "")}</CNBS>`;
+
   xml += `<xDescServ>${escapeXml(invoice.service_description || "")}</xDescServ>`;
-
-  // Municipality
   xml += `<cMunPrestacao>${cityCode}</cMunPrestacao>`;
-  if (invoice.issqn_city) {
-    xml += `<cMunIncid>${invoice.issqn_city}</cMunIncid>`;
-  }
-  
-  // Provider (prestador)
+  if (invoice.issqn_city) xml += `<cMunIncid>${invoice.issqn_city}</cMunIncid>`;
+
+  // Provider
   xml += `<prest>`;
   xml += `<CNPJ>${formatDocument(company.document)}</CNPJ>`;
   xml += `<IM>${company.municipal_registration || ""}</IM>`;
@@ -157,19 +188,15 @@ function generateDPSXml(invoice: any, company: any, dpsId: string): string {
   xml += `<regApTribSN>${invoice.tax_assessment_regime || "1"}</regApTribSN>`;
   if (regEspTrib !== "nenhum" && regEspTrib !== "0") {
     const regEspMap: Record<string, string> = {
-      microempresa_municipal: "1",
-      estimativa: "2",
-      sociedade_profissionais: "3",
-      cooperativa: "4",
-      mei: "5",
-      me_epp: "6",
+      microempresa_municipal: "1", estimativa: "2", sociedade_profissionais: "3",
+      cooperativa: "4", mei: "5", me_epp: "6",
     };
     xml += `<regEspTrib>${regEspMap[regEspTrib] || "0"}</regEspTrib>`;
   }
   xml += `</regTrib>`;
   xml += `</prest>`;
 
-  // Taker (tomador)
+  // Taker
   xml += `<toma>`;
   const takerDoc = formatDocument(invoice.taker_document);
   if (takerDoc.length <= 11) {
@@ -212,7 +239,7 @@ function generateDPSXml(invoice: any, company: any, dpsId: string): string {
   if (Number(unconditionalDiscount) > 0) xml += `<vDescIncond>${unconditionalDiscount}</vDescIncond>`;
   if (Number(conditionalDiscount) > 0) xml += `<vDescCond>${conditionalDiscount}</vDescCond>`;
   xml += `</vServPrest>`;
-  
+
   xml += `<trib>`;
   xml += `<tribMun>`;
   xml += `<tribISSQN>${issqnExigType}</tribISSQN>`;
@@ -221,13 +248,10 @@ function generateDPSXml(invoice: any, company: any, dpsId: string): string {
   xml += `<vBCISS>${baseValue}</vBCISS>`;
   xml += `<pAliq>${issRate}</pAliq>`;
   xml += `<vISS>${issValue}</vISS>`;
-  if (invoice.issqn_retained_by_taker || invoice.iss_retained) {
-    xml += `<tpRetISSQN>1</tpRetISSQN>`;
-  }
+  if (invoice.issqn_retained_by_taker || invoice.iss_retained) xml += `<tpRetISSQN>1</tpRetISSQN>`;
   xml += `</BM>`;
   xml += `</tribMun>`;
-  
-  // Federal taxes
+
   xml += `<tribFed>`;
   if (Number(invoice.pis_value || 0) > 0) xml += `<vPIS>${Number(invoice.pis_value).toFixed(2)}</vPIS>`;
   if (Number(invoice.cofins_value || 0) > 0) xml += `<vCOFINS>${Number(invoice.cofins_value).toFixed(2)}</vCOFINS>`;
@@ -235,15 +259,14 @@ function generateDPSXml(invoice: any, company: any, dpsId: string): string {
   if (Number(invoice.ir_value || 0) > 0) xml += `<vIR>${Number(invoice.ir_value).toFixed(2)}</vIR>`;
   if (Number(invoice.csll_value || 0) > 0) xml += `<vCSLL>${Number(invoice.csll_value).toFixed(2)}</vCSLL>`;
   xml += `</tribFed>`;
-  
-  // Approximate total tax
+
   if (invoice.approx_tax_mode === "simples_nacional" && Number(invoice.simples_nacional_rate || 0) > 0) {
     const approxTax = (Number(invoice.service_value) * Number(invoice.simples_nacional_rate) / 100).toFixed(2);
     xml += `<totTrib>`;
     xml += `<vTotTrib>${approxTax}</vTotTrib>`;
     xml += `</totTrib>`;
   }
-  
+
   xml += `</trib>`;
   xml += `</valores>`;
 
@@ -265,23 +288,19 @@ function escapeXml(str: string): string {
 // ─── XML Signing ────────────────────────────────────────────────────────────
 
 function signXml(xml: string, privateKey: forge.pki.rsa.PrivateKey, cert: forge.pki.Certificate): string {
-  // Calculate digest of infDPS
   const infDpsMatch = xml.match(/<infDPS[^>]*>[\s\S]*<\/infDPS>/);
   if (!infDpsMatch) throw new Error("infDPS element not found in XML");
-  
+
   const infDps = infDpsMatch[0];
   const idMatch = infDps.match(/Id="([^"]+)"/);
   const referenceUri = idMatch ? `#${idMatch[1]}` : "";
-  
-  // Canonicalize (simplified - in production use proper C14N)
+
   const canonicalized = infDps;
-  
-  // SHA-256 digest
+
   const md = forge.md.sha256.create();
   md.update(canonicalized, "utf8");
   const digestValue = forge.util.encode64(md.digest().bytes());
-  
-  // Build SignedInfo
+
   const signedInfo = `<SignedInfo xmlns="http://www.w3.org/2000/09/xmldsig#">` +
     `<CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>` +
     `<SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>` +
@@ -294,18 +313,15 @@ function signXml(xml: string, privateKey: forge.pki.rsa.PrivateKey, cert: forge.
     `<DigestValue>${digestValue}</DigestValue>` +
     `</Reference>` +
     `</SignedInfo>`;
-  
-  // Sign
+
   const signMd = forge.md.sha256.create();
   signMd.update(signedInfo, "utf8");
   const signature = privateKey.sign(signMd);
   const signatureValue = forge.util.encode64(signature);
-  
-  // Certificate in base64 (DER)
+
   const certDer = forge.asn1.toDer(forge.pki.certificateToAsn1(cert)).bytes();
   const x509Certificate = forge.util.encode64(certDer);
-  
-  // Build Signature element
+
   const signatureXml = `<Signature xmlns="http://www.w3.org/2000/09/xmldsig#">` +
     signedInfo +
     `<SignatureValue>${signatureValue}</SignatureValue>` +
@@ -315,8 +331,7 @@ function signXml(xml: string, privateKey: forge.pki.rsa.PrivateKey, cert: forge.
     `</X509Data>` +
     `</KeyInfo>` +
     `</Signature>`;
-  
-  // Insert before </DPS>
+
   return xml.replace("</DPS>", signatureXml + "</DPS>");
 }
 
@@ -328,7 +343,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -340,7 +354,7 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const masterKey = Deno.env.get("CERTIFICATE_MASTER_KEY");
-    
+
     if (!masterKey) {
       return new Response(JSON.stringify({ error: "CERTIFICATE_MASTER_KEY not configured" }), {
         status: 500,
@@ -350,7 +364,6 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Validate user
     const userSupabase = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -416,7 +429,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Download PFX from storage
+    // Download PFX
     const { data: fileData, error: fileError } = await supabase.storage
       .from("certificates")
       .download(certRecord.file_path);
@@ -428,13 +441,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Decrypt password (supports both encrypted and plain text)
+    // Decrypt password
     let certPassword: string;
     const encParts = certRecord.password_encrypted.split(":");
     if (encParts.length === 3) {
       try {
         certPassword = decryptPassword(certRecord.password_encrypted, masterKey);
-      } catch (e) {
+      } catch {
         console.warn("Failed to decrypt password, trying as plain text");
         certPassword = certRecord.password_encrypted;
       }
@@ -447,6 +460,7 @@ Deno.serve(async (req) => {
     console.log("Loading PFX certificate...");
     const arrayBuffer = await fileData.arrayBuffer();
     const pfxBinary = String.fromCharCode(...new Uint8Array(arrayBuffer));
+
     let certData: { cert: any; key: any; certPem: string; keyPem: string };
     try {
       certData = loadCertificate(pfxBinary, certPassword);
@@ -470,10 +484,10 @@ Deno.serve(async (req) => {
     // Generate DPS ID
     const dpsId = generateDPSId(
       company.address_city_code || "0000000",
-      "1", // CNPJ
+      "1",
       company.document,
       invoice.rps_series || "RPS",
-      rpsNumber
+      rpsNumber,
     );
 
     // Update RPS number
@@ -482,7 +496,6 @@ Deno.serve(async (req) => {
       status: "processing",
     }).eq("id", invoice_id);
 
-    // Log event: started
     await supabase.from("nfse_events").insert({
       invoice_id,
       tenant_id: invoice.tenant_id,
@@ -494,7 +507,6 @@ Deno.serve(async (req) => {
     // Generate XML
     const dpsXml = generateDPSXml(invoice, company, dpsId);
 
-    // Log event: XML generated
     await supabase.from("nfse_events").insert({
       invoice_id,
       tenant_id: invoice.tenant_id,
@@ -507,7 +519,6 @@ Deno.serve(async (req) => {
     // Sign XML
     const signedXml = signXml(dpsXml, key as forge.pki.rsa.PrivateKey, cert!);
 
-    // Store signed XML
     await supabase.from("nfse_invoices").update({
       xml_rps: dpsXml,
       xml_signed: signedXml,
@@ -521,65 +532,34 @@ Deno.serve(async (req) => {
       created_by: userData.user.id,
     });
 
-    // Send to Sefin Nacional via mTLS
-    console.log("Creating mTLS HTTP client (HTTP/1.1 + mTLS)...");
-    let httpClient: Deno.HttpClient;
+    // ─── Send via node:https (OpenSSL – supports TLS renegotiation) ─────
     try {
-      httpClient = Deno.createHttpClient({
-        cert: certPem,
-        key: keyPem,
-        http1: true,
-        http2: false,
-      });
-      console.log("mTLS client created successfully");
-    } catch (e) {
-      console.error("Failed to create mTLS client:", e);
-      await supabase.from("nfse_invoices").update({ status: "rejected" }).eq("id", invoice_id);
-      await supabase.from("nfse_events").insert({
-        invoice_id,
-        tenant_id: invoice.tenant_id,
-        event_type: "error",
-        error_message: `Failed to create mTLS client: ${e instanceof Error ? e.message : "Unknown"}`,
-        created_by: userData.user.id,
-      });
-      return new Response(JSON.stringify({ error: `Failed to create mTLS client: ${e instanceof Error ? e.message : "Unknown"}` }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+      console.log(`Sending to SEFIN via node:https: POST ${SEFIN_HOST}${SEFIN_PATH}`);
 
-    try {
-      console.log(`Sending to SEFIN: POST ${SEFIN_BASE_URL}/nfse`);
-      const response = await fetch(`${SEFIN_BASE_URL}/nfse`, {
-        method: "POST",
-        headers: { "Content-Type": "application/xml" },
-        body: signedXml,
-        client: httpClient,
-      } as any);
-      console.log(`SEFIN response status: ${response.status}`);
+      const result = await mtlsFetch("POST", SEFIN_PATH, signedXml, certPem, keyPem);
 
-      const responseText = await response.text();
+      console.log(`SEFIN response status: ${result.status}`);
+      console.log(`SEFIN response body (first 500 chars): ${result.body.substring(0, 500)}`);
 
       await supabase.from("nfse_events").insert({
         invoice_id,
         tenant_id: invoice.tenant_id,
         event_type: "submitted",
-        description: `Enviado à Sefin Nacional. Status HTTP: ${response.status}`,
-        response_xml: responseText,
+        description: `Enviado à Sefin Nacional. Status HTTP: ${result.status}`,
+        response_xml: result.body,
         created_by: userData.user.id,
       });
 
-      if (response.ok) {
-        // Parse response to extract chaveAcesso, protocol, etc.
-        const chaveMatch = responseText.match(/<chNFSe>([^<]+)<\/chNFSe>/);
-        const protocolMatch = responseText.match(/<nProt>([^<]+)<\/nProt>/);
-        const nfseNumMatch = responseText.match(/<nNFSe>([^<]+)<\/nNFSe>/);
-        const verCodeMatch = responseText.match(/<cVerif>([^<]+)<\/cVerif>/);
+      if (result.status >= 200 && result.status < 300) {
+        const chaveMatch = result.body.match(/<chNFSe>([^<]+)<\/chNFSe>/);
+        const protocolMatch = result.body.match(/<nProt>([^<]+)<\/nProt>/);
+        const nfseNumMatch = result.body.match(/<nNFSe>([^<]+)<\/nNFSe>/);
+        const verCodeMatch = result.body.match(/<cVerif>([^<]+)<\/cVerif>/);
 
         await supabase.from("nfse_invoices").update({
           status: "authorized",
-          xml_authorized: responseText,
-          xml_response: responseText,
+          xml_authorized: result.body,
+          xml_response: result.body,
           protocol_number: protocolMatch ? protocolMatch[1] : null,
           invoice_number: nfseNumMatch ? parseInt(nfseNumMatch[1]) : null,
           verification_code: verCodeMatch ? verCodeMatch[1] : null,
@@ -610,31 +590,30 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       } else {
-        // Parse rejection
-        const errorMatch = responseText.match(/<xMotivo>([^<]+)<\/xMotivo>/);
-        const errorCodeMatch = responseText.match(/<cStat>([^<]+)<\/cStat>/);
+        const errorMatch = result.body.match(/<xMotivo>([^<]+)<\/xMotivo>/);
+        const errorCodeMatch = result.body.match(/<cStat>([^<]+)<\/cStat>/);
 
         await supabase.from("nfse_invoices").update({
           status: "rejected",
-          xml_response: responseText,
+          xml_response: result.body,
         }).eq("id", invoice_id);
 
         await supabase.from("nfse_events").insert({
           invoice_id,
           tenant_id: invoice.tenant_id,
           event_type: "rejected",
-          error_code: errorCodeMatch ? errorCodeMatch[1] : String(response.status),
-          error_message: errorMatch ? errorMatch[1] : responseText.substring(0, 500),
-          response_xml: responseText,
+          error_code: errorCodeMatch ? errorCodeMatch[1] : String(result.status),
+          error_message: errorMatch ? errorMatch[1] : result.body.substring(0, 500),
+          response_xml: result.body,
           created_by: userData.user.id,
         });
 
         return new Response(JSON.stringify({
           success: false,
           status: "rejected",
-          error_code: errorCodeMatch ? errorCodeMatch[1] : String(response.status),
+          error_code: errorCodeMatch ? errorCodeMatch[1] : String(result.status),
           error_message: errorMatch ? errorMatch[1] : "Rejeição da DPS pela Sefin Nacional",
-          response: responseText,
+          response: result.body,
         }), {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -642,7 +621,8 @@ Deno.serve(async (req) => {
       }
     } catch (fetchError: unknown) {
       const errorMsg = fetchError instanceof Error ? fetchError.message : "Unknown fetch error";
-      
+      console.error("mTLS fetch error:", errorMsg);
+
       await supabase.from("nfse_invoices").update({ status: "rejected" }).eq("id", invoice_id);
       await supabase.from("nfse_events").insert({
         invoice_id,
@@ -656,8 +636,6 @@ Deno.serve(async (req) => {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
-    } finally {
-      httpClient.close();
     }
   } catch (error: unknown) {
     console.error("Error in emit-nfse:", error);
