@@ -444,9 +444,21 @@ Deno.serve(async (req) => {
     }
 
     // Load certificate and key
+    console.log("Loading PFX certificate...");
     const arrayBuffer = await fileData.arrayBuffer();
     const pfxBinary = String.fromCharCode(...new Uint8Array(arrayBuffer));
-    const { cert, key, certPem, keyPem } = loadCertificate(pfxBinary, certPassword);
+    let certData: { cert: any; key: any; certPem: string; keyPem: string };
+    try {
+      certData = loadCertificate(pfxBinary, certPassword);
+      console.log("Certificate loaded successfully");
+    } catch (loadErr) {
+      console.error("Failed to load certificate:", loadErr);
+      return new Response(JSON.stringify({ error: `Failed to load certificate: ${loadErr instanceof Error ? loadErr.message : "Unknown"}` }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { cert, key, certPem, keyPem } = certData;
 
     // Generate RPS number
     const { count } = await supabase
@@ -510,13 +522,16 @@ Deno.serve(async (req) => {
     });
 
     // Send to Sefin Nacional via mTLS
+    console.log("Creating mTLS HTTP client...");
     let httpClient: Deno.HttpClient;
     try {
       httpClient = Deno.createHttpClient({
         cert: certPem,
         key: keyPem,
       });
+      console.log("mTLS client created successfully");
     } catch (e) {
+      console.error("Failed to create mTLS client:", e);
       await supabase.from("nfse_invoices").update({ status: "rejected" }).eq("id", invoice_id);
       await supabase.from("nfse_events").insert({
         invoice_id,
@@ -525,19 +540,21 @@ Deno.serve(async (req) => {
         error_message: `Failed to create mTLS client: ${e instanceof Error ? e.message : "Unknown"}`,
         created_by: userData.user.id,
       });
-      return new Response(JSON.stringify({ error: "Failed to create mTLS client" }), {
+      return new Response(JSON.stringify({ error: `Failed to create mTLS client: ${e instanceof Error ? e.message : "Unknown"}` }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     try {
+      console.log(`Sending to SEFIN: POST ${SEFIN_BASE_URL}/nfse`);
       const response = await fetch(`${SEFIN_BASE_URL}/nfse`, {
         method: "POST",
         headers: { "Content-Type": "application/xml" },
         body: signedXml,
         client: httpClient,
       } as any);
+      console.log(`SEFIN response status: ${response.status}`);
 
       const responseText = await response.text();
 
