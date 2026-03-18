@@ -97,7 +97,7 @@ function encryptPassword(password: string, masterKeyHex: string): string {
   const ivHex = forge.util.bytesToHex(iv);
   return `${ivHex}:${tag}:${encrypted}`;
 }
-
+Deno.serve(async (req) => {
 
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
