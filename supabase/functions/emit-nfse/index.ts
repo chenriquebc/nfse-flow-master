@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 // ADN API base URL (Ambiente de Dados Nacional)
-const ADN_BASE_URL = "https://sefin.nfse.gov.br/adn";
+const ADN_BASE_URL = "https://adn.nfse.gov.br/adn";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
