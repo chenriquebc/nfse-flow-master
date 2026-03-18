@@ -135,6 +135,7 @@ Deno.serve(async (req) => {
       const httpClient = Deno.createHttpClient({
         certChain: certPem,
         privateKey: keyPem,
+        http2: false,
       });
 
       try {
@@ -265,6 +266,7 @@ Deno.serve(async (req) => {
       const httpClient = Deno.createHttpClient({
         certChain: certPem,
         privateKey: keyPem,
+        http2: false,
       });
 
       try {
