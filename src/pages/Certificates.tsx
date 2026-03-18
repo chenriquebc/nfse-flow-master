@@ -90,6 +90,26 @@ export default function Certificates() {
     }
 
     setUploading(true);
+
+    // 1. Parse certificate and encrypt password server-side
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("password", password);
+
+    const { data: certData, error: parseError } = await supabase.functions.invoke(
+      "parse-certificate",
+      { body: formData }
+    );
+
+    if (parseError || certData?.error) {
+      toast.error("Erro ao processar certificado", {
+        description: certData?.error || parseError?.message,
+      });
+      setUploading(false);
+      return;
+    }
+
+    // 2. Upload file to storage
     const filePath = `${tenant.id}/${companyId}/${Date.now()}_${file.name}`;
 
     const { error: uploadError } = await supabase.storage
@@ -102,13 +122,18 @@ export default function Certificates() {
       return;
     }
 
-    // Store cert record (password would be encrypted server-side in production)
+    // 3. Save cert record with encrypted password and parsed metadata
     const { error } = await supabase.from("certificates").insert({
       tenant_id: tenant.id,
       company_id: companyId,
       file_name: file.name,
       file_path: filePath,
-      password_encrypted: password, // In production, encrypt via edge function
+      password_encrypted: certData.password_encrypted,
+      serial_number: certData.serial_number || null,
+      subject: certData.subject || null,
+      issuer: certData.issuer || null,
+      valid_from: certData.valid_from || null,
+      valid_until: certData.valid_until || null,
       is_active: true,
     });
 
