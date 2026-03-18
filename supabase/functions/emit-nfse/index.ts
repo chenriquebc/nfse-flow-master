@@ -522,12 +522,14 @@ Deno.serve(async (req) => {
     });
 
     // Send to Sefin Nacional via mTLS
-    console.log("Creating mTLS HTTP client...");
+    console.log("Creating mTLS HTTP client (HTTP/1.1 + mTLS)...");
     let httpClient: Deno.HttpClient;
     try {
       httpClient = Deno.createHttpClient({
         cert: certPem,
         key: keyPem,
+        http1: true,
+        http2: false,
       });
       console.log("mTLS client created successfully");
     } catch (e) {
