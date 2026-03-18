@@ -1,11 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import forge from "npm:node-forge@1.3.1";
-import { Buffer } from "node:buffer";
-
-if (typeof globalThis.Buffer === "undefined") {
-  (globalThis as any).Buffer = Buffer;
-}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,7 +9,7 @@ const corsHeaders = {
 
 const SEFIN_HOST = "sefin.nfse.gov.br";
 
-// ─── mTLS fetch using node:https (OpenSSL, supports TLS renegotiation) ──────
+// ─── mTLS fetch using Deno HttpClient (edge-runtime compatible) ─────────────
 
 async function mtlsFetch(
   method: string,
@@ -24,45 +19,37 @@ async function mtlsFetch(
   keyPem: string,
   contentType = "application/xml",
 ): Promise<{ status: number; body: string }> {
-  const { default: https } = await import("node:https");
-  const { Buffer: NodeBuffer } = await import("node:buffer");
+  const httpClient = Deno.createHttpClient({
+    cert: certPem,
+    key: keyPem,
+    http1: true,
+    http2: false,
+  });
 
-  return new Promise((resolve, reject) => {
-    const headers: Record<string, string | number> = {};
-    if (contentType) headers["Content-Type"] = contentType;
-    if (body) headers["Content-Length"] = new TextEncoder().encode(body).byteLength;
-    if (!body) headers["Accept"] = "application/xml";
+  try {
+    const headers: Record<string, string> = {
+      "Accept": "application/xml",
+    };
+    if (contentType && body) headers["Content-Type"] = contentType;
 
-    const options = {
-      hostname: SEFIN_HOST,
-      port: 443,
-      path,
+    const requestInit: RequestInit & { client: Deno.HttpClient } = {
       method,
-      cert: certPem,
-      key: keyPem,
       headers,
-      minVersion: "TLSv1.2" as const,
+      client: httpClient,
     };
 
-    const req = https.request(options, (res: any) => {
-      const chunks: Uint8Array[] = [];
-      res.on("data", (chunk: Uint8Array) => chunks.push(chunk));
-      res.on("end", () => {
-        const combined = NodeBuffer.concat(chunks);
-        resolve({
-          status: res.statusCode ?? 0,
-          body: new TextDecoder().decode(combined),
-        });
-      });
-    });
+    if (body) requestInit.body = body;
 
-    req.on("error", (err: Error) => reject(err));
-    req.setTimeout(30000, () => {
-      req.destroy(new Error("Request timeout (30s)"));
-    });
-    if (body) req.write(body);
-    req.end();
-  });
+    const response = await fetch(`https://${SEFIN_HOST}${path}`, requestInit);
+    const responseBody = await response.text();
+
+    return {
+      status: response.status,
+      body: responseBody,
+    };
+  } finally {
+    httpClient.close();
+  }
 }
 
 function decryptPassword(encrypted: string, masterKey: string): string {
