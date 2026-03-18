@@ -214,7 +214,7 @@ export default function Invoices() {
                   </TableHeader>
                   <TableBody>
                     {filtered.map((inv) => (
-                      <TableRow key={inv.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => navigate(`/invoices/${inv.id}`)}>
+                      <TableRow key={inv.id} className="hover:bg-muted/50">
                         <TableCell className="font-mono text-sm">
                           {inv.invoice_number || inv.rps_number || "—"}
                         </TableCell>
@@ -283,7 +283,7 @@ export default function Invoices() {
                                 className="h-7 text-xs"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  navigate(`/invoices/${inv.id}/edit`);
+                                  navigate(`/invoices/${inv.id}`);
                                 }}
                               >
                                 Editar

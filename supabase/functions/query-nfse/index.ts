@@ -7,20 +7,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-// ADN API base URL — query and event endpoints use SefinNacional
 const SEFIN_BASE_URL = "https://sefin.nfse.gov.br/SefinNacional";
 
 function decryptPassword(encrypted: string, masterKey: string): string {
   const parts = encrypted.split(":");
-  if (parts.length !== 3) {
-    console.warn("Certificate password is not encrypted, using as plain text");
-    return encrypted;
-  }
+  if (parts.length !== 3) throw new Error("Invalid encrypted password format");
   const [ivHex, authTagHex, encryptedHex] = parts;
   const iv = forge.util.hexToBytes(ivHex);
   const authTag = forge.util.hexToBytes(authTagHex);
   const encData = forge.util.hexToBytes(encryptedHex);
-  const keyBytes = forge.util.hexToBytes(masterKey.trim());
+  const keyBytes = forge.util.hexToBytes(masterKey);
   const decipher = forge.cipher.createDecipher("AES-GCM", keyBytes);
   decipher.start({ iv, tag: forge.util.createBuffer(authTag) });
   decipher.update(forge.util.createBuffer(encData));
@@ -136,7 +132,6 @@ Deno.serve(async (req) => {
       const httpClient = Deno.createHttpClient({
         certChain: certPem,
         privateKey: keyPem,
-        http2: false,
       });
 
       try {
@@ -267,7 +262,6 @@ Deno.serve(async (req) => {
       const httpClient = Deno.createHttpClient({
         certChain: certPem,
         privateKey: keyPem,
-        http2: false,
       });
 
       try {
