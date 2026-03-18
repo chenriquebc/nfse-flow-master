@@ -88,8 +88,8 @@ function extractFromSubject(subject: any): { legal_name: string | null; document
 function encryptPassword(password: string, masterKeyHex: string): string {
   const keyBytes = forge.util.hexToBytes(masterKeyHex);
   const iv = forge.random.getBytesSync(12);
-  const cipher = forge.cipher.createCipher("AES-GCM", keyBytes);
-  cipher.start({ iv, tagLength: 128 });
+  const cipher = forge.cipher.createCipher("AES-GCM", forge.util.createBuffer(keyBytes));
+  cipher.start({ iv: forge.util.createBuffer(iv), tagLength: 128 });
   cipher.update(forge.util.createBuffer(password, "utf8"));
   cipher.finish();
   const encrypted = cipher.output.toHex();

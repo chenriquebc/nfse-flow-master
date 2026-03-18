@@ -20,8 +20,8 @@ function decryptPassword(encrypted: string, masterKey: string): string {
   const authTag = forge.util.hexToBytes(authTagHex);
   const encData = forge.util.hexToBytes(encryptedHex);
   const keyBytes = forge.util.hexToBytes(masterKey);
-  const decipher = forge.cipher.createDecipher("AES-GCM", keyBytes);
-  decipher.start({ iv, tag: forge.util.createBuffer(authTag) });
+  const decipher = forge.cipher.createDecipher("AES-GCM", forge.util.createBuffer(keyBytes));
+  decipher.start({ iv: forge.util.createBuffer(iv), tag: forge.util.createBuffer(authTag) });
   decipher.update(forge.util.createBuffer(encData));
   const pass = decipher.finish();
   if (!pass) throw new Error("Failed to decrypt certificate password");
