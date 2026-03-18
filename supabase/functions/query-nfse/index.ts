@@ -7,6 +7,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+// ADN API base URL — query and event endpoints use SefinNacional
 const SEFIN_BASE_URL = "https://sefin.nfse.gov.br/SefinNacional";
 
 function decryptPassword(encrypted: string, masterKey: string): string {
