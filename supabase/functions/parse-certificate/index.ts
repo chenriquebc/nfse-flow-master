@@ -104,6 +104,14 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const masterKey = Deno.env.get("CERTIFICATE_MASTER_KEY");
+    if (!masterKey) {
+      return new Response(
+        JSON.stringify({ error: "CERTIFICATE_MASTER_KEY not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
     const password = formData.get("password") as string | null;
