@@ -16,7 +16,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Search, FileText, Download } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Plus, Search, FileText, Download, Send, XCircle, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface Invoice {
   id: string;
@@ -38,26 +49,81 @@ export default function Invoices() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [emitting, setEmitting] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState<string | null>(null);
+  const [confirmEmit, setConfirmEmit] = useState<string | null>(null);
+  const [confirmCancel, setConfirmCancel] = useState<string | null>(null);
+
+  const fetchInvoices = async () => {
+    if (!tenant) return;
+    let query = supabase
+      .from("nfse_invoices")
+      .select("*, companies(legal_name)")
+      .eq("tenant_id", tenant.id)
+      .order("created_at", { ascending: false });
+
+    if (statusFilter !== "all") {
+      query = query.eq("status", statusFilter as any);
+    }
+
+    const { data } = await query;
+    setInvoices((data as unknown as Invoice[]) || []);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    if (!tenant) return;
-    const fetch = async () => {
-      let query = supabase
-        .from("nfse_invoices")
-        .select("*, companies(legal_name)")
-        .eq("tenant_id", tenant.id)
-        .order("created_at", { ascending: false });
-
-      if (statusFilter !== "all") {
-        query = query.eq("status", statusFilter as any);
-      }
-
-      const { data } = await query;
-      setInvoices((data as unknown as Invoice[]) || []);
-      setLoading(false);
-    };
-    fetch();
+    fetchInvoices();
   }, [tenant, statusFilter]);
+
+  const handleEmit = async (invoiceId: string) => {
+    setConfirmEmit(null);
+    setEmitting(invoiceId);
+    try {
+      const { data, error } = await supabase.functions.invoke("emit-nfse", {
+        body: { invoice_id: invoiceId },
+      });
+
+      if (error) {
+        toast.error("Erro ao emitir nota", { description: error.message });
+      } else if (data?.success) {
+        toast.success("NFS-e autorizada com sucesso!", {
+          description: data.chave_acesso ? `Chave: ${data.chave_acesso}` : undefined,
+        });
+      } else {
+        toast.error("Nota rejeitada", {
+          description: data?.error_message || "Verifique os dados e tente novamente",
+        });
+      }
+      await fetchInvoices();
+    } catch (e) {
+      toast.error("Erro de comunicação ao emitir nota");
+    } finally {
+      setEmitting(null);
+    }
+  };
+
+  const handleCancel = async (invoiceId: string) => {
+    setConfirmCancel(null);
+    setCancelling(invoiceId);
+    try {
+      const { data, error } = await supabase.functions.invoke("query-nfse", {
+        body: { action: "cancel", invoice_id: invoiceId, reason: "Cancelamento solicitado pelo emitente" },
+      });
+
+      if (error) {
+        toast.error("Erro ao cancelar nota", { description: error.message });
+      } else if (data?.success) {
+        toast.success("NFS-e cancelada com sucesso!");
+      } else {
+        toast.error("Falha ao cancelar nota", { description: data?.error || "Tente novamente" });
+      }
+      await fetchInvoices();
+    } catch (e) {
+      toast.error("Erro de comunicação ao cancelar nota");
+    } finally {
+      setCancelling(null);
+    }
+  };
 
   const filtered = invoices.filter(
     (i) =>
@@ -134,7 +200,7 @@ export default function Invoices() {
               </div>
             ) : (
               <div className="rounded-lg border border-border overflow-x-auto">
-                <Table className="min-w-[640px]">
+                <Table className="min-w-[740px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Nº</TableHead>
@@ -143,11 +209,12 @@ export default function Invoices() {
                       <TableHead>Competência</TableHead>
                       <TableHead className="text-right">Valor</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filtered.map((inv) => (
-                      <TableRow key={inv.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/invoices/${inv.id}`)}>
+                      <TableRow key={inv.id} className="hover:bg-muted/50">
                         <TableCell className="font-mono text-sm">
                           {inv.invoice_number || inv.rps_number || "—"}
                         </TableCell>
@@ -169,6 +236,61 @@ export default function Invoices() {
                         <TableCell>
                           <StatusBadge status={inv.status} />
                         </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            {inv.status === "draft" && (
+                              <Button
+                                size="sm"
+                                variant="default"
+                                className="h-7 text-xs"
+                                disabled={emitting === inv.id}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setConfirmEmit(inv.id);
+                                }}
+                              >
+                                {emitting === inv.id ? (
+                                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                                ) : (
+                                  <Send className="h-3 w-3 mr-1" />
+                                )}
+                                Emitir
+                              </Button>
+                            )}
+                            {inv.status === "authorized" && (
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                className="h-7 text-xs"
+                                disabled={cancelling === inv.id}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setConfirmCancel(inv.id);
+                                }}
+                              >
+                                {cancelling === inv.id ? (
+                                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                                ) : (
+                                  <XCircle className="h-3 w-3 mr-1" />
+                                )}
+                                Cancelar
+                              </Button>
+                            )}
+                            {inv.status === "rejected" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 text-xs"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/invoices/${inv.id}`);
+                                }}
+                              >
+                                Editar
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -178,6 +300,42 @@ export default function Invoices() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Confirm Emit Dialog */}
+      <AlertDialog open={!!confirmEmit} onOpenChange={() => setConfirmEmit(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Emitir Nota Fiscal</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja emitir esta nota fiscal? A DPS será enviada ao portal nacional da NFS-e para validação e geração da nota.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => confirmEmit && handleEmit(confirmEmit)}>
+              Emitir NFS-e
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirm Cancel Dialog */}
+      <AlertDialog open={!!confirmCancel} onOpenChange={() => setConfirmCancel(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar Nota Fiscal</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja cancelar esta NFS-e? Esta ação enviará um evento de cancelamento ao portal nacional e não poderá ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => confirmCancel && handleCancel(confirmCancel)}>
+              Cancelar NFS-e
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }
