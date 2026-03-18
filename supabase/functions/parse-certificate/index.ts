@@ -85,7 +85,20 @@ function extractFromSubject(subject: any): { legal_name: string | null; document
   return { legal_name, document };
 }
 
-Deno.serve(async (req) => {
+function encryptPassword(password: string, masterKeyHex: string): string {
+  const keyBytes = forge.util.hexToBytes(masterKeyHex);
+  const iv = forge.random.getBytesSync(12);
+  const cipher = forge.cipher.createCipher("AES-GCM", keyBytes);
+  cipher.start({ iv, tagLength: 128 });
+  cipher.update(forge.util.createBuffer(password, "utf8"));
+  cipher.finish();
+  const encrypted = cipher.output.toHex();
+  const tag = cipher.mode.tag.toHex();
+  const ivHex = forge.util.bytesToHex(iv);
+  return `${ivHex}:${tag}:${encrypted}`;
+}
+
+
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
