@@ -14,6 +14,7 @@ import Companies from "@/pages/Companies";
 import CompanyForm from "@/pages/CompanyForm";
 import Invoices from "@/pages/Invoices";
 import InvoiceForm from "@/pages/InvoiceForm";
+import InvoiceDetail from "@/pages/InvoiceDetail";
 import Certificates from "@/pages/Certificates";
 import Reports from "@/pages/Reports";
 import SettingsPage from "@/pages/SettingsPage";
