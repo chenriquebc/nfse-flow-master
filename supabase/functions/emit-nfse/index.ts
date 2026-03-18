@@ -1,6 +1,12 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import forge from "npm:node-forge@1.3.1";
+import { Buffer } from "node:buffer";
+
+// Make Buffer available globally for node:https internals
+if (typeof globalThis.Buffer === "undefined") {
+  (globalThis as any).Buffer = Buffer;
+}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
