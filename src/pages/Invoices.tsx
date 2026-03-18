@@ -284,7 +284,7 @@ export default function Invoices() {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   navigate(`/invoices/${inv.id}/edit`);
-                              >
+                                }}
                                 Editar
                               </Button>
                             )}
