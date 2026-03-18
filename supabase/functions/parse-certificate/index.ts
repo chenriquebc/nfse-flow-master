@@ -159,6 +159,8 @@ Deno.serve(async (req) => {
     const cert = certs[0].cert;
     const { legal_name, document } = extractFromSubject(cert.subject);
 
+    const passwordEncrypted = encryptPassword(password, masterKey);
+
     const issuerCN = cert.issuer.getField("CN");
 
     const result: CertificateData = {
@@ -169,6 +171,7 @@ Deno.serve(async (req) => {
       valid_until: cert.validity.notAfter.toISOString(),
       legal_name,
       document,
+      password_encrypted: passwordEncrypted,
     };
 
     return new Response(
