@@ -209,7 +209,7 @@ function generateDPSXml(invoice: any, company: any, dpsId: string): string {
   xml += `<vServPrest>`;
   xml += `<vServ>${serviceValue}</vServ>`;
   if (Number(deductionValue) > 0) xml += `<vDeducao>${deductionValue}</vDeducao>`;
-  if (Number(unconditionalDiscount) > 0) xml += `<vDescIncworking>${unconditionalDiscount}</vDescIncond>`;
+  if (Number(unconditionalDiscount) > 0) xml += `<vDescIncond>${unconditionalDiscount}</vDescIncond>`;
   if (Number(conditionalDiscount) > 0) xml += `<vDescCond>${conditionalDiscount}</vDescCond>`;
   xml += `</vServPrest>`;
   
