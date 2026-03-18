@@ -444,9 +444,21 @@ Deno.serve(async (req) => {
     }
 
     // Load certificate and key
+    console.log("Loading PFX certificate...");
     const arrayBuffer = await fileData.arrayBuffer();
     const pfxBinary = String.fromCharCode(...new Uint8Array(arrayBuffer));
-    const { cert, key, certPem, keyPem } = loadCertificate(pfxBinary, certPassword);
+    let certData: { cert: any; key: any; certPem: string; keyPem: string };
+    try {
+      certData = loadCertificate(pfxBinary, certPassword);
+      console.log("Certificate loaded successfully");
+    } catch (loadErr) {
+      console.error("Failed to load certificate:", loadErr);
+      return new Response(JSON.stringify({ error: `Failed to load certificate: ${loadErr instanceof Error ? loadErr.message : "Unknown"}` }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { cert, key, certPem, keyPem } = certData;
 
     // Generate RPS number
     const { count } = await supabase
