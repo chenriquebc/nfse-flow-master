@@ -515,6 +515,7 @@ Deno.serve(async (req) => {
       httpClient = Deno.createHttpClient({
         certChain: certPem,
         privateKey: keyPem,
+        http2: false,
       });
     } catch (e) {
       await supabase.from("nfse_invoices").update({ status: "rejected" }).eq("id", invoice_id);
