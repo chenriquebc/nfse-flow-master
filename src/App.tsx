@@ -14,6 +14,7 @@ import Companies from "@/pages/Companies";
 import CompanyForm from "@/pages/CompanyForm";
 import Invoices from "@/pages/Invoices";
 import InvoiceForm from "@/pages/InvoiceForm";
+import InvoiceDetail from "@/pages/InvoiceDetail";
 import Certificates from "@/pages/Certificates";
 import Reports from "@/pages/Reports";
 import SettingsPage from "@/pages/SettingsPage";
@@ -38,7 +39,8 @@ const App = () => (
               <Route path="/companies/:id" element={<ProtectedRoute><TenantGate><CompanyForm /></TenantGate></ProtectedRoute>} />
               <Route path="/invoices" element={<ProtectedRoute><TenantGate><Invoices /></TenantGate></ProtectedRoute>} />
               <Route path="/invoices/new" element={<ProtectedRoute><TenantGate><InvoiceForm /></TenantGate></ProtectedRoute>} />
-              <Route path="/invoices/:id" element={<ProtectedRoute><TenantGate><InvoiceForm /></TenantGate></ProtectedRoute>} />
+              <Route path="/invoices/:id" element={<ProtectedRoute><TenantGate><InvoiceDetail /></TenantGate></ProtectedRoute>} />
+              <Route path="/invoices/:id/edit" element={<ProtectedRoute><TenantGate><InvoiceForm /></TenantGate></ProtectedRoute>} />
               <Route path="/certificates" element={<ProtectedRoute><TenantGate><Certificates /></TenantGate></ProtectedRoute>} />
               <Route path="/reports" element={<ProtectedRoute><TenantGate><Reports /></TenantGate></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><TenantGate><SettingsPage /></TenantGate></ProtectedRoute>} />
