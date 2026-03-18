@@ -14,6 +14,7 @@ interface CertificateData {
   valid_until: string;
   legal_name: string | null;
   document: string | null;
+  password_encrypted: string;
 }
 
 function extractFromSubject(subject: any): { legal_name: string | null; document: string | null } {
@@ -84,12 +85,33 @@ function extractFromSubject(subject: any): { legal_name: string | null; document
   return { legal_name, document };
 }
 
+function encryptPassword(password: string, masterKeyHex: string): string {
+  const keyBytes = forge.util.hexToBytes(masterKeyHex);
+  const iv = forge.random.getBytesSync(12);
+  const cipher = forge.cipher.createCipher("AES-GCM", keyBytes);
+  cipher.start({ iv, tagLength: 128 });
+  cipher.update(forge.util.createBuffer(password, "utf8"));
+  cipher.finish();
+  const encrypted = cipher.output.toHex();
+  const tag = cipher.mode.tag.toHex();
+  const ivHex = forge.util.bytesToHex(iv);
+  return `${ivHex}:${tag}:${encrypted}`;
+}
 Deno.serve(async (req) => {
+
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
+    const masterKey = Deno.env.get("CERTIFICATE_MASTER_KEY");
+    if (!masterKey) {
+      return new Response(
+        JSON.stringify({ error: "CERTIFICATE_MASTER_KEY not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
     const password = formData.get("password") as string | null;
@@ -137,6 +159,8 @@ Deno.serve(async (req) => {
     const cert = certs[0].cert;
     const { legal_name, document } = extractFromSubject(cert.subject);
 
+    const passwordEncrypted = encryptPassword(password, masterKey);
+
     const issuerCN = cert.issuer.getField("CN");
 
     const result: CertificateData = {
@@ -147,6 +171,7 @@ Deno.serve(async (req) => {
       valid_until: cert.validity.notAfter.toISOString(),
       legal_name,
       document,
+      password_encrypted: passwordEncrypted,
     };
 
     return new Response(
