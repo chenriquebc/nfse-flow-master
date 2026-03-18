@@ -214,7 +214,7 @@ export default function Invoices() {
                   </TableHeader>
                   <TableBody>
                     {filtered.map((inv) => (
-                      <TableRow key={inv.id} className="hover:bg-muted/50">
+                      <TableRow key={inv.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => navigate(`/invoices/${inv.id}`)}>
                         <TableCell className="font-mono text-sm">
                           {inv.invoice_number || inv.rps_number || "—"}
                         </TableCell>

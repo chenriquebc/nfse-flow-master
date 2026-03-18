@@ -39,7 +39,8 @@ const App = () => (
               <Route path="/companies/:id" element={<ProtectedRoute><TenantGate><CompanyForm /></TenantGate></ProtectedRoute>} />
               <Route path="/invoices" element={<ProtectedRoute><TenantGate><Invoices /></TenantGate></ProtectedRoute>} />
               <Route path="/invoices/new" element={<ProtectedRoute><TenantGate><InvoiceForm /></TenantGate></ProtectedRoute>} />
-              <Route path="/invoices/:id" element={<ProtectedRoute><TenantGate><InvoiceForm /></TenantGate></ProtectedRoute>} />
+              <Route path="/invoices/:id" element={<ProtectedRoute><TenantGate><InvoiceDetail /></TenantGate></ProtectedRoute>} />
+              <Route path="/invoices/:id/edit" element={<ProtectedRoute><TenantGate><InvoiceForm /></TenantGate></ProtectedRoute>} />
               <Route path="/certificates" element={<ProtectedRoute><TenantGate><Certificates /></TenantGate></ProtectedRoute>} />
               <Route path="/reports" element={<ProtectedRoute><TenantGate><Reports /></TenantGate></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><TenantGate><SettingsPage /></TenantGate></ProtectedRoute>} />
