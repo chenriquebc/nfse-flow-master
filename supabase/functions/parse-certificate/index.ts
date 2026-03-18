@@ -14,6 +14,7 @@ interface CertificateData {
   valid_until: string;
   legal_name: string | null;
   document: string | null;
+  password_encrypted: string;
 }
 
 function extractFromSubject(subject: any): { legal_name: string | null; document: string | null } {
