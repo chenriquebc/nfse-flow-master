@@ -26,7 +26,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, FileText, Download, Send, XCircle, Loader2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Plus, Search, FileText, Download, Send, XCircle, Loader2, AlertTriangle, CheckCircle2, Clock, Info, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 
 interface Invoice {
@@ -42,6 +50,30 @@ interface Invoice {
   companies: { legal_name: string } | null;
 }
 
+interface InvoiceEvent {
+  id: string;
+  event_type: string;
+  error_message: string | null;
+  error_code: string | null;
+  description: string | null;
+  request_xml: string | null;
+  response_xml: string | null;
+  metadata: any;
+  created_at: string;
+}
+
+const EVENT_TYPE_CONFIG: Record<string, { label: string; icon: typeof Info; color: string }> = {
+  created: { label: "Criado", icon: Info, color: "text-blue-500" },
+  xml_generated: { label: "XML Gerado", icon: FileText, color: "text-blue-500" },
+  xml_signed: { label: "XML Assinado", icon: CheckCircle2, color: "text-emerald-500" },
+  submitted: { label: "Enviado à SEFIN", icon: Send, color: "text-amber-500" },
+  protocol_received: { label: "Protocolo Recebido", icon: CheckCircle2, color: "text-emerald-500" },
+  authorized: { label: "Autorizada", icon: CheckCircle2, color: "text-emerald-600" },
+  rejected: { label: "Rejeitada", icon: XCircle, color: "text-destructive" },
+  cancelled: { label: "Cancelada", icon: XCircle, color: "text-muted-foreground" },
+  error: { label: "Erro", icon: AlertTriangle, color: "text-destructive" },
+};
+
 export default function Invoices() {
   const { tenant } = useTenant();
   const navigate = useNavigate();
@@ -53,6 +85,27 @@ export default function Invoices() {
   const [cancelling, setCancelling] = useState<string | null>(null);
   const [confirmEmit, setConfirmEmit] = useState<string | null>(null);
   const [confirmCancel, setConfirmCancel] = useState<string | null>(null);
+  const [eventLogInvoice, setEventLogInvoice] = useState<Invoice | null>(null);
+  const [events, setEvents] = useState<InvoiceEvent[]>([]);
+  const [loadingEvents, setLoadingEvents] = useState(false);
+  const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
+
+  const fetchEvents = async (invoiceId: string) => {
+    setLoadingEvents(true);
+    const { data } = await supabase
+      .from("nfse_events")
+      .select("*")
+      .eq("invoice_id", invoiceId)
+      .order("created_at", { ascending: true });
+    setEvents((data as unknown as InvoiceEvent[]) || []);
+    setLoadingEvents(false);
+  };
+
+  const openEventLog = (inv: Invoice) => {
+    setEventLogInvoice(inv);
+    setExpandedEvent(null);
+    fetchEvents(inv.id);
+  };
 
   const fetchInvoices = async () => {
     if (!tenant) return;
@@ -276,18 +329,32 @@ export default function Invoices() {
                                 Cancelar
                               </Button>
                             )}
-                            {inv.status === "rejected" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-7 text-xs"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigate(`/invoices/${inv.id}`);
-                                }}
-                              >
-                                Editar
-                              </Button>
+                            {(inv.status === "rejected" || inv.status === "error") && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 text-xs text-destructive"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openEventLog(inv);
+                                  }}
+                                >
+                                  <AlertTriangle className="h-3 w-3 mr-1" />
+                                  Ver Log
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 text-xs"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/invoices/${inv.id}`);
+                                  }}
+                                >
+                                  Editar
+                                </Button>
+                              </>
                             )}
                           </div>
                         </TableCell>
@@ -336,6 +403,119 @@ export default function Invoices() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Event Log Dialog */}
+      <Dialog open={!!eventLogInvoice} onOpenChange={(open) => !open && setEventLogInvoice(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Log de Eventos — {eventLogInvoice?.taker_name || "Nota"}
+            </DialogTitle>
+          </DialogHeader>
+
+          {loadingEvents ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : events.length === 0 ? (
+            <p className="text-muted-foreground text-center py-8">Nenhum evento registrado.</p>
+          ) : (
+            <ScrollArea className="max-h-[60vh] pr-4">
+              <div className="relative pl-6">
+                {/* Timeline line */}
+                <div className="absolute left-[11px] top-2 bottom-2 w-0.5 bg-border" />
+
+                <div className="space-y-4">
+                  {events.map((evt) => {
+                    const config = EVENT_TYPE_CONFIG[evt.event_type] || { label: evt.event_type, icon: Info, color: "text-muted-foreground" };
+                    const Icon = config.icon;
+                    const isError = evt.event_type === "rejected" || evt.event_type === "error";
+                    const isExpanded = expandedEvent === evt.id;
+                    const hasDetails = evt.error_message || evt.response_xml || evt.request_xml;
+
+                    return (
+                      <div key={evt.id} className="relative">
+                        {/* Timeline dot */}
+                        <div className={`absolute -left-6 top-1 h-5 w-5 rounded-full border-2 border-background flex items-center justify-center ${isError ? "bg-destructive/10" : "bg-muted"}`}>
+                          <Icon className={`h-3 w-3 ${config.color}`} />
+                        </div>
+
+                        <div className={`rounded-lg border p-3 ${isError ? "border-destructive/30 bg-destructive/5" : "border-border"}`}>
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <Badge variant={isError ? "destructive" : "secondary"} className="text-xs">
+                                {config.label}
+                              </Badge>
+                              {evt.error_code && (
+                                <Badge variant="outline" className="text-xs font-mono">
+                                  HTTP {evt.error_code}
+                                </Badge>
+                              )}
+                            </div>
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">
+                              {new Date(evt.created_at).toLocaleString("pt-BR")}
+                            </span>
+                          </div>
+
+                          {evt.description && (
+                            <p className="text-sm mt-2 text-foreground">{evt.description}</p>
+                          )}
+
+                          {evt.error_message && (
+                            <div className="mt-2 rounded bg-destructive/10 border border-destructive/20 p-2">
+                              <p className="text-xs font-semibold text-destructive mb-1">Motivo da Rejeição:</p>
+                              <pre className="text-xs text-destructive/90 whitespace-pre-wrap font-mono break-all">
+                                {evt.error_message}
+                              </pre>
+                            </div>
+                          )}
+
+                          {hasDetails && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 text-xs mt-2 px-1"
+                              onClick={() => setExpandedEvent(isExpanded ? null : evt.id)}
+                            >
+                              {isExpanded ? (
+                                <><ChevronUp className="h-3 w-3 mr-1" /> Ocultar detalhes</>
+                              ) : (
+                                <><ChevronDown className="h-3 w-3 mr-1" /> Ver detalhes</>
+                              )}
+                            </Button>
+                          )}
+
+                          {isExpanded && (
+                            <div className="mt-2 space-y-2">
+                              {evt.response_xml && (
+                                <div>
+                                  <p className="text-xs font-semibold text-muted-foreground mb-1">Resposta SEFIN:</p>
+                                  <pre className="text-xs bg-muted rounded p-2 overflow-x-auto whitespace-pre-wrap font-mono break-all max-h-40">
+                                    {evt.response_xml}
+                                  </pre>
+                                </div>
+                              )}
+                              {evt.request_xml && (
+                                <div>
+                                  <p className="text-xs font-semibold text-muted-foreground mb-1">XML Enviado:</p>
+                                  <pre className="text-xs bg-muted rounded p-2 overflow-x-auto whitespace-pre-wrap font-mono break-all max-h-40">
+                                    {evt.request_xml}
+                                  </pre>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </ScrollArea>
+          )}
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
