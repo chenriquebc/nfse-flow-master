@@ -493,13 +493,16 @@ async function generateDPSXml(invoice: any, company: any, dpsId: string): Promis
     push("</tribFed>");
   }
 
-  // E0712: Para ME/EPP (opSimpNac=3, regApTribSN=1), não informar totTrib/indTotTrib
+  // E0712: Para ME/EPP (opSimpNac=3, regApTribSN=1), usar pTotTribSN em vez de indTotTrib
   const isMeEpp = regApTribSN === "1";
-  if (!isMeEpp) {
-    push("<totTrib>");
+  push("<totTrib>");
+  if (isMeEpp) {
+    const pTotTribSN = toRate(invoice.simples_nacional_rate || 0);
+    push(`<pTotTribSN>${pTotTribSN}</pTotTribSN>`);
+  } else {
     push("<indTotTrib>0</indTotTrib>");
-    push("</totTrib>");
   }
+  push("</totTrib>");
   push("</trib>");
   push("</valores>");
 
