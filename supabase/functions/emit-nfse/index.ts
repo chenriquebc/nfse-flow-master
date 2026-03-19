@@ -167,6 +167,12 @@ function generateDPSXml(invoice: any, company: any, dpsId: string): string {
   const dhEmi = `${brt.getUTCFullYear()}-${pad(brt.getUTCMonth()+1)}-${pad(brt.getUTCDate())}T${pad(brt.getUTCHours())}:${pad(brt.getUTCMinutes())}:${pad(brt.getUTCSeconds())}-03:00`;
   xml += `<dhEmi>${dhEmi}</dhEmi>`;
   xml += `<verAplic>NFSE-FLOW-1.0</verAplic>`;
+
+  // Schema expects serie and nDPS before dCompet
+  const serieDigits = String(invoice.rps_series || "1").replace(/\D/g, "") || "1";
+  xml += `<serie>${Number(serieDigits)}</serie>`;
+  xml += `<nDPS>${Number(invoice.rps_number || 1)}</nDPS>`;
+
   xml += `<dCompet>${competenceDate}</dCompet>`;
   xml += `<subItemListaServico>${invoice.tax_code || ""}</subItemListaServico>`;
 
