@@ -168,12 +168,13 @@ export default function Invoices() {
     }
   };
 
-  const handleCancel = async (invoiceId: string) => {
+  const handleCancel = async (invoiceId: string, reason: string) => {
     setConfirmCancel(null);
+    setCancelReason("");
     setCancelling(invoiceId);
     try {
       const { data, error } = await supabase.functions.invoke("query-nfse", {
-        body: { action: "cancel", invoice_id: invoiceId, reason: "Cancelamento solicitado pelo emitente" },
+        body: { action: "cancel", invoice_id: invoiceId, reason },
       });
 
       if (error) {
