@@ -122,9 +122,8 @@ function generateDPSId(
   number: number,
 ): string {
   const ibge = padLeft(cityCode, 7);
-  const tipo = docType; // "1" = CNPJ, "2" = CPF
+  const tipo = docType;
   const inscricao = padLeft(formatDocument(document), 14);
-  // Series must be numeric only (5 digits) per TSIdDPS pattern
   const numericSeries = series.replace(/\D/g, "") || "1";
   const serie = padLeft(numericSeries, 5);
   const num = padLeft(number, 15);
@@ -133,10 +132,39 @@ function generateDPSId(
 
 // ─── DPS XML Generation ────────────────────────────────────────────────────
 
-function generateDPSXml(invoice: any, company: any, dpsId: string): string {
+async function generateDPSXml(invoice: any, company: any, dpsId: string): Promise<string> {
   const ns = "http://www.sped.fazenda.gov.br/nfse";
 
   const onlyDigits = (value: unknown) => String(value ?? "").replace(/\D/g, "");
+  const normalizeText = (value: unknown) =>
+    String(value ?? "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  const isLikelyIbge = (value: unknown) => /^\d{7}$/.test(onlyDigits(value)) && !onlyDigits(value).startsWith("00");
+
+  const resolveIbgeCityCode = async (city: unknown, uf: unknown): Promise<string> => {
+    const cityNorm = normalizeText(city);
+    const ufNorm = String(uf ?? "").trim().toUpperCase();
+
+    if (!cityNorm || ufNorm.length !== 2) return "";
+
+    try {
+      const res = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${encodeURIComponent(ufNorm)}/municipios`);
+      if (!res.ok) return "";
+
+      const data = await res.json();
+      if (!Array.isArray(data)) return "";
+
+      const found = data.find((m: any) => normalizeText(m?.nome) === cityNorm);
+      const ibge = onlyDigits(found?.id);
+      return /^\d{7}$/.test(ibge) ? ibge : "";
+    } catch {
+      return "";
+    }
+  };
+
   const normIbge = (value: unknown, fallback = "0000000") => {
     const digits = onlyDigits(value);
     if (digits.length === 7) return digits;
@@ -188,7 +216,25 @@ function generateDPSXml(invoice: any, company: any, dpsId: string): string {
 
   const serviceCityCode = normIbge(invoice.service_city_code || invoice.issqn_city || company.address_city_code);
   const companyCityCode = normIbge(company.address_city_code, serviceCityCode);
-  const takerCityCode = normIbge(invoice.taker_address_city_code, serviceCityCode);
+
+  let takerCityCode = isLikelyIbge(invoice.taker_address_city_code)
+    ? onlyDigits(invoice.taker_address_city_code).slice(0, 7)
+    : "";
+
+  if (!takerCityCode) {
+    takerCityCode = await resolveIbgeCityCode(invoice.taker_address_city, invoice.taker_address_state);
+  }
+
+  if (!takerCityCode) {
+    takerCityCode = normIbge(invoice.taker_address_city_code, serviceCityCode);
+  }
+
+  console.log("City code resolution", {
+    taker_address_city: invoice.taker_address_city,
+    taker_address_state: invoice.taker_address_state,
+    taker_address_city_code: invoice.taker_address_city_code,
+    takerCityCode,
+  });
 
   const taxCodeDigits = onlyDigits(invoice.tax_code);
   const municipalDigits = onlyDigits(invoice.municipal_tax_code);
@@ -315,17 +361,9 @@ function generateDPSXml(invoice: any, company: any, dpsId: string): string {
   push("<prest>");
   push(`<CNPJ>${padLeft(formatDocument(company.document), 14)}</CNPJ>`);
   if (company.municipal_registration) push(`<IM>${escapeXml(String(company.municipal_registration))}</IM>`);
-  push(`<xNome>${escapeXml(company.legal_name || "")}</xNome>`);
-  if (company.address_street) {
-    pushEnderecoNacional(
-      companyCityCode,
-      normCep(company.address_zip),
-      String(company.address_street),
-      String(company.address_number || "S/N"),
-      company.address_complement ? String(company.address_complement) : undefined,
-      company.address_neighborhood ? String(company.address_neighborhood) : undefined,
-    );
-  }
+  // Regra Nacional (E0128): quando o prestador é o próprio emitente (tpEmit=1),
+  // não informar endereço nacional em <prest>.
+
   const companyPhone = normPhone(company.phone);
   if (companyPhone) push(`<fone>${companyPhone}</fone>`);
   if (company.email) push(`<email>${escapeXml(String(company.email).slice(0, 80))}</email>`);
@@ -396,7 +434,8 @@ function generateDPSXml(invoice: any, company: any, dpsId: string): string {
     push("</vDescCondIncond>");
   }
 
-  if (deductionValue > 0) {
+  const isSimplesNacional = true; // opSimpNac = 3 neste fluxo
+  if (deductionValue > 0 && !isSimplesNacional) {
     push("<vDedRed>");
     push(`<vDR>${toMoney(deductionValue)}</vDR>`);
     push("</vDedRed>");
@@ -405,7 +444,9 @@ function generateDPSXml(invoice: any, company: any, dpsId: string): string {
   push("<trib>");
   push("<tribMun>");
   push(`<tribISSQN>${tribISSQN}</tribISSQN>`);
-  push("<cPaisResult>BR</cPaisResult>");
+  if (tribISSQN === "3") {
+    push("<cPaisResult>BR</cPaisResult>");
+  }
   push(`<tpRetISSQN>${tpRetISSQN}</tpRetISSQN>`);
   if (Number(invoice.iss_rate || 0) > 0) push(`<pAliq>${toRate(invoice.iss_rate)}</pAliq>`);
   push("</tribMun>");
@@ -705,7 +746,7 @@ Deno.serve(async (req) => {
     // Generate DPS ID
     const dpsId = generateDPSId(
       company.address_city_code || "0000000",
-      "1",
+      formatDocument(company.document).length > 11 ? "2" : "1",
       company.document,
       invoice.rps_series || "RPS",
       rpsNumber,
@@ -726,7 +767,7 @@ Deno.serve(async (req) => {
     });
 
     // Generate XML
-    const dpsXml = generateDPSXml(invoice, company, dpsId);
+    const dpsXml = await generateDPSXml(invoice, company, dpsId);
 
     await supabase.from("nfse_events").insert({
       invoice_id,
