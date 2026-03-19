@@ -92,13 +92,18 @@ function loadCertAndKey(pfxBinary: string, password: string) {
     .map((b: any) => forge.pki.certificateToPem(b.cert))
     .join("\n");
 
+  const privateKey = keys[0].key as forge.pki.rsa.PrivateKey;
+  const cert = certs.find((b: any) => b.cert)!.cert as forge.pki.Certificate;
+
   return {
     certPem: allCertsPem,
-    keyPem: forge.pki.privateKeyToPem(keys[0].key as forge.pki.rsa.PrivateKey),
+    keyPem: forge.pki.privateKeyToPem(privateKey),
+    privateKey,
+    cert,
   };
 }
 
-async function getCertPems(supabase: any, companyId: string, masterKey: string) {
+async function getCertPemsAndKeys(supabase: any, companyId: string, masterKey: string) {
   const { data: certRecord } = await supabase
     .from("certificates")
     .select("*")
