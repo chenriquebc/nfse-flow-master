@@ -445,7 +445,9 @@ async function generateDPSXml(invoice: any, company: any, dpsId: string): Promis
   push("<trib>");
   push("<tribMun>");
   push(`<tribISSQN>${tribISSQN}</tribISSQN>`);
-  push("<cPaisResult>BR</cPaisResult>");
+  if (tribISSQN === "3") {
+    push("<cPaisResult>BR</cPaisResult>");
+  }
   push(`<tpRetISSQN>${tpRetISSQN}</tpRetISSQN>`);
   if (Number(invoice.iss_rate || 0) > 0) push(`<pAliq>${toRate(invoice.iss_rate)}</pAliq>`);
   push("</tribMun>");
