@@ -773,7 +773,7 @@ Deno.serve(async (req) => {
     });
 
     // Generate XML
-    const dpsXml = generateDPSXml(invoice, company, dpsId);
+    const dpsXml = await generateDPSXml(invoice, company, dpsId);
 
     await supabase.from("nfse_events").insert({
       invoice_id,
