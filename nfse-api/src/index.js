@@ -53,8 +53,8 @@ app.listen(PORT, () => {
 
   const cert = loadCertificate();
   if (cert) {
-    console.log(`   Certificado: carregado`);
+    console.log(`   Certificado padrão: carregado`);
   } else {
-    console.warn("   ⚠️  Certificado não configurado (CERT_PFX_BASE64 / CERT_PASSWORD)");
+    console.log("   Certificado padrão não configurado (modo proxy dinâmico via certPem/keyPem ativo)");
   }
 });
