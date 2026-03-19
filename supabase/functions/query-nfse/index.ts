@@ -328,10 +328,17 @@ Deno.serve(async (req) => {
       const brt = new Date(now.getTime() - 3 * 60 * 60 * 1000);
       const dhEvento = `${brt.getUTCFullYear()}-${pad(brt.getUTCMonth() + 1)}-${pad(brt.getUTCDate())}T${pad(brt.getUTCHours())}:${pad(brt.getUTCMinutes())}:${pad(brt.getUTCSeconds())}-03:00`;
       const reason = body.reason || "Cancelamento solicitado pelo emitente";
+      const reasonCodeMap: Record<string, string> = {
+        "Erro na emissão": "1",
+        "Serviço não prestado": "2",
+        "Outros": "3",
+      };
+      const cMotivo = reasonCodeMap[reason] || "3";
       const nSeqEvento = "001";
-      const eventId = `IDe101101${chave}${nSeqEvento}`;
+      const cnpjAutor = chave.slice(7, 21);
+      const eventId = `PRE${chave}101101${nSeqEvento}`;
 
-      const cancelXml = `<pedRegEvento xmlns="http://www.sped.fazenda.gov.br/nfse" versao="1.00"><infPedReg Id="${eventId}"><tpAmb>1</tpAmb><verAplic>NFSE-FLOW-1.0</verAplic><dhEvento>${dhEvento}</dhEvento><nSeqEvento>1</nSeqEvento><chNFSe>${chave}</chNFSe><tpEvento>e101101</tpEvento><detEvento><e101101><xMotivo>${reason}</xMotivo></e101101></detEvento></infPedReg></pedRegEvento>`;
+      const cancelXml = `<pedRegEvento xmlns="http://www.sped.fazenda.gov.br/nfse" versao="1.00"><infPedReg Id="${eventId}"><tpAmb>1</tpAmb><verAplic>NFSE-FLOW-1.0</verAplic><dhEvento>${dhEvento}</dhEvento><CNPJAutor>${cnpjAutor}</CNPJAutor><chNFSe>${chave}</chNFSe><nPedRegEvento>${nSeqEvento}</nPedRegEvento><e101101><xDesc>Cancelamento de NFS-e</xDesc><cMotivo>${cMotivo}</cMotivo><xMotivo>${reason}</xMotivo></e101101></infPedReg></pedRegEvento>`;
 
       // Sign the cancel XML
       const signedCancelXml = signEventXml(cancelXml, privateKey, cert, eventId);
@@ -351,10 +358,10 @@ Deno.serve(async (req) => {
       for (let i = 0; i < gzippedBytes.length; i++) {
         binaryStr += String.fromCharCode(gzippedBytes[i]);
       }
-      const pedRegEventoXmlGZipB64 = btoa(binaryStr);
+      const pedidoRegistroEventoXmlGZipB64 = btoa(binaryStr);
 
       // Send as JSON to SEFIN eventos endpoint
-      const jsonPayload = JSON.stringify({ pedRegEventoXmlGZipB64 });
+      const jsonPayload = JSON.stringify({ pedidoRegistroEventoXmlGZipB64 });
 
       console.log(`[cancel] Sending JSON to SEFIN: POST /SefinNacional/nfse/${chave}/eventos (${jsonPayload.length} bytes)`);
 
