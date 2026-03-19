@@ -159,10 +159,12 @@ function generateDPSXml(invoice: any, company: any, dpsId: string): string {
   xml += `<infDPS Id="DPS${dpsId}">`;
 
   xml += `<tpAmb>1</tpAmb>`;
-  // TSDateTimeUTC requires YYYY-MM-DDTHH:MM:SS (no millis, no Z — use UTC offset -03:00)
+  // TSDateTimeUTC requires YYYY-MM-DDTHH:MM:SS-03:00 (no millis, with BRT offset)
   const now = new Date();
   const pad = (n: number) => String(n).padStart(2, "0");
-  const dhEmi = `${now.getUTCFullYear()}-${pad(now.getUTCMonth()+1)}-${pad(now.getUTCDate())}T${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())}:${pad(now.getUTCSeconds())}`;
+  // Convert to BRT (UTC-3)
+  const brt = new Date(now.getTime() - 3 * 60 * 60 * 1000);
+  const dhEmi = `${brt.getUTCFullYear()}-${pad(brt.getUTCMonth()+1)}-${pad(brt.getUTCDate())}T${pad(brt.getUTCHours())}:${pad(brt.getUTCMinutes())}:${pad(brt.getUTCSeconds())}-03:00`;
   xml += `<dhEmi>${dhEmi}</dhEmi>`;
   xml += `<verAplic>NFSE-FLOW-1.0</verAplic>`;
   xml += `<dCompet>${competenceDate}</dCompet>`;
