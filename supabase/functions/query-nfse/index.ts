@@ -194,8 +194,8 @@ function signEventXml(xml: string, privateKey: forge.pki.rsa.PrivateKey, cert: f
   return xml.replace("</pedRegEvento>", `${signatureXml}</pedRegEvento>`);
 }
 
+Deno.serve(async (req) => {
 
-  if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
