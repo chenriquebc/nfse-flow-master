@@ -73,6 +73,8 @@ const EVENT_TYPE_CONFIG: Record<string, { label: string; icon: typeof Info; colo
   cancelled: { label: "Cancelada", icon: XCircle, color: "text-muted-foreground" },
   error: { label: "Erro", icon: AlertTriangle, color: "text-destructive" },
 };
+
+export default function Invoices() {
   const { tenant } = useTenant();
   const navigate = useNavigate();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -83,6 +85,27 @@ const EVENT_TYPE_CONFIG: Record<string, { label: string; icon: typeof Info; colo
   const [cancelling, setCancelling] = useState<string | null>(null);
   const [confirmEmit, setConfirmEmit] = useState<string | null>(null);
   const [confirmCancel, setConfirmCancel] = useState<string | null>(null);
+  const [eventLogInvoice, setEventLogInvoice] = useState<Invoice | null>(null);
+  const [events, setEvents] = useState<InvoiceEvent[]>([]);
+  const [loadingEvents, setLoadingEvents] = useState(false);
+  const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
+
+  const fetchEvents = async (invoiceId: string) => {
+    setLoadingEvents(true);
+    const { data } = await supabase
+      .from("nfse_events")
+      .select("*")
+      .eq("invoice_id", invoiceId)
+      .order("created_at", { ascending: true });
+    setEvents((data as unknown as InvoiceEvent[]) || []);
+    setLoadingEvents(false);
+  };
+
+  const openEventLog = (inv: Invoice) => {
+    setEventLogInvoice(inv);
+    setExpandedEvent(null);
+    fetchEvents(inv.id);
+  };
 
   const fetchInvoices = async () => {
     if (!tenant) return;
