@@ -324,9 +324,9 @@ Deno.serve(async (req) => {
 
       // Build cancel event XML (pedRegEvento)
       const now = new Date();
-      const tzOffset = "-03:00";
       const pad = (n: number) => String(n).padStart(2, "0");
-      const dhEvento = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}${tzOffset}`;
+      const brt = new Date(now.getTime() - 3 * 60 * 60 * 1000);
+      const dhEvento = `${brt.getUTCFullYear()}-${pad(brt.getUTCMonth() + 1)}-${pad(brt.getUTCDate())}T${pad(brt.getUTCHours())}:${pad(brt.getUTCMinutes())}:${pad(brt.getUTCSeconds())}-03:00`;
       const reason = body.reason || "Cancelamento solicitado pelo emitente";
       const nSeqEvento = "001";
       const eventId = `IDe101101${chave}${nSeqEvento}`;
