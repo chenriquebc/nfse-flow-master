@@ -26,7 +26,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, FileText, Download, Send, XCircle, Loader2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Plus, Search, FileText, Download, Send, XCircle, Loader2, AlertTriangle, CheckCircle2, Clock, Info, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 
 interface Invoice {
@@ -42,7 +50,29 @@ interface Invoice {
   companies: { legal_name: string } | null;
 }
 
-export default function Invoices() {
+interface InvoiceEvent {
+  id: string;
+  event_type: string;
+  error_message: string | null;
+  error_code: string | null;
+  description: string | null;
+  request_xml: string | null;
+  response_xml: string | null;
+  metadata: any;
+  created_at: string;
+}
+
+const EVENT_TYPE_CONFIG: Record<string, { label: string; icon: typeof Info; color: string }> = {
+  created: { label: "Criado", icon: Info, color: "text-blue-500" },
+  xml_generated: { label: "XML Gerado", icon: FileText, color: "text-blue-500" },
+  xml_signed: { label: "XML Assinado", icon: CheckCircle2, color: "text-emerald-500" },
+  submitted: { label: "Enviado à SEFIN", icon: Send, color: "text-amber-500" },
+  protocol_received: { label: "Protocolo Recebido", icon: CheckCircle2, color: "text-emerald-500" },
+  authorized: { label: "Autorizada", icon: CheckCircle2, color: "text-emerald-600" },
+  rejected: { label: "Rejeitada", icon: XCircle, color: "text-destructive" },
+  cancelled: { label: "Cancelada", icon: XCircle, color: "text-muted-foreground" },
+  error: { label: "Erro", icon: AlertTriangle, color: "text-destructive" },
+};
   const { tenant } = useTenant();
   const navigate = useNavigate();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
