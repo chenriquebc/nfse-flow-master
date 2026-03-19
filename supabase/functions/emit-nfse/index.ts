@@ -475,92 +475,45 @@ function escapeXml(str: string): string {
 
 // ─── XML Signing ────────────────────────────────────────────────────────────
 
-function parseXmlDocument(xml: string): Document {
-  const doc = new DOMParser().parseFromString(xml, "application/xml");
-  const parserError = doc.getElementsByTagName("parsererror")[0];
-  if (parserError) {
-    throw new Error(`Invalid XML for signature: ${parserError.textContent || "parsererror"}`);
-  }
-  return doc;
-}
-
-function escapeCanonicalText(value: string): string {
-  return value
+function normalizeXmlForSignature(xml: string): string {
+  let normalized = xml
     .replace(/\r\n?/g, "\n")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+    .replace(/>\s+</g, "><")
+    .trim();
+
+  const selfClosingTagRegex = /<([A-Za-z_][\w:.-]*)([^>]*)\/>/g;
+  let previous = "";
+  while (previous !== normalized) {
+    previous = normalized;
+    normalized = normalized.replace(selfClosingTagRegex, "<$1$2></$1>");
+  }
+
+  return normalized;
 }
 
-function escapeCanonicalAttr(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/"/g, "&quot;")
-    .replace(/\t/g, "&#x9;")
-    .replace(/\n/g, "&#xA;")
-    .replace(/\r/g, "&#xD;");
-}
+function canonicalizeInfDPS(xml: string, ns: string): string {
+  const infDpsMatch = xml.match(/<infDPS\b[^>]*>[\s\S]*?<\/infDPS>/);
+  if (!infDpsMatch) {
+    throw new Error("infDPS element not found in XML");
+  }
 
-function canonicalizeElement(element: Element): string {
-  const serialize = (node: Node): string => {
-    if (node.nodeType === Node.TEXT_NODE || node.nodeType === Node.CDATA_SECTION_NODE) {
-      return escapeCanonicalText(node.nodeValue || "");
-    }
+  let infDps = infDpsMatch[0];
+  if (!/\sxmlns="[^"]+"/.test(infDps)) {
+    infDps = infDps.replace("<infDPS", `<infDPS xmlns="${ns}"`);
+  }
 
-    if (node.nodeType !== Node.ELEMENT_NODE) {
-      return "";
-    }
-
-    const el = node as Element;
-    const attrs = Array.from(el.attributes);
-    const namespaceAttrs = attrs
-      .filter((attr) => attr.name === "xmlns" || attr.name.startsWith("xmlns:"))
-      .sort((a, b) => a.name.localeCompare(b.name));
-    const regularAttrs = attrs
-      .filter((attr) => attr.name !== "xmlns" && !attr.name.startsWith("xmlns:"))
-      .sort((a, b) => a.name.localeCompare(b.name));
-
-    let out = `<${el.tagName}`;
-
-    for (const attr of [...namespaceAttrs, ...regularAttrs]) {
-      out += ` ${attr.name}="${escapeCanonicalAttr(attr.value)}"`;
-    }
-
-    out += ">";
-
-    for (const child of Array.from(el.childNodes)) {
-      out += serialize(child);
-    }
-
-    out += `</${el.tagName}>`;
-    return out;
-  };
-
-  return serialize(element);
+  return normalizeXmlForSignature(infDps);
 }
 
 function signXml(xml: string, privateKey: forge.pki.rsa.PrivateKey, cert: forge.pki.Certificate): string {
   const ns = "http://www.sped.fazenda.gov.br/nfse";
-  const xmlDoc = parseXmlDocument(xml);
-  const infDps =
-    xmlDoc.getElementsByTagNameNS(ns, "infDPS")[0] ||
-    xmlDoc.getElementsByTagName("infDPS")[0];
 
-  if (!infDps) {
-    throw new Error("infDPS element not found in XML");
-  }
-
-  if (!infDps.getAttribute("xmlns")) {
-    infDps.setAttribute("xmlns", ns);
-  }
-
-  const infDpsId = infDps.getAttribute("Id");
-  if (!infDpsId) {
+  const canonicalizedInfDps = canonicalizeInfDPS(xml, ns);
+  const idMatch = canonicalizedInfDps.match(/\sId="([^"]+)"/);
+  if (!idMatch) {
     throw new Error("infDPS Id attribute is required for XML signature");
   }
 
-  const canonicalizedInfDps = canonicalizeElement(infDps);
   const digestMd = forge.md.sha256.create();
   digestMd.update(canonicalizedInfDps, "utf8");
   const digestValue = forge.util.encode64(digestMd.digest().bytes());
@@ -569,7 +522,7 @@ function signXml(xml: string, privateKey: forge.pki.rsa.PrivateKey, cert: forge.
     `<SignedInfo xmlns="http://www.w3.org/2000/09/xmldsig#">` +
     `<CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></CanonicalizationMethod>` +
     `<SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"></SignatureMethod>` +
-    `<Reference URI="#${infDpsId}">` +
+    `<Reference URI="#${idMatch[1]}">` +
     `<Transforms>` +
     `<Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></Transform>` +
     `<Transform Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></Transform>` +
@@ -579,8 +532,7 @@ function signXml(xml: string, privateKey: forge.pki.rsa.PrivateKey, cert: forge.
     `</Reference>` +
     `</SignedInfo>`;
 
-  const signedInfoDoc = parseXmlDocument(signedInfoXml);
-  const canonicalizedSignedInfo = canonicalizeElement(signedInfoDoc.documentElement);
+  const canonicalizedSignedInfo = normalizeXmlForSignature(signedInfoXml);
 
   const signMd = forge.md.sha256.create();
   signMd.update(canonicalizedSignedInfo, "utf8");
