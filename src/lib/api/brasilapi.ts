@@ -1,3 +1,5 @@
+import { fetchMunicipios } from "@/lib/api/ibge";
+
 export interface CnpjData {
   cnpj: string;
   razao_social: string;
@@ -15,6 +17,8 @@ export interface CnpjData {
   cnae_fiscal_descricao: string;
   cnaes_secundarios: { codigo: number; descricao: string }[];
   codigo_municipio: number;
+  /** Código IBGE 7 dígitos resolvido (preenchido por resolveIbgeCode) */
+  codigo_municipio_ibge?: string;
 }
 
 export async function fetchCnpj(cnpj: string): Promise<CnpjData> {
@@ -23,6 +27,26 @@ export async function fetchCnpj(cnpj: string): Promise<CnpjData> {
   const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleanCnpj}`);
   if (!res.ok) throw new Error("CNPJ não encontrado");
   return res.json();
+}
+
+/**
+ * Resolve o código IBGE de 7 dígitos a partir do nome do município + UF.
+ * A BrasilAPI retorna o código SIAFI (4-5 dígitos), não o IBGE.
+ */
+export async function resolveIbgeCode(cityName: string, uf: string): Promise<string> {
+  if (!cityName || !uf) return "";
+  try {
+    const municipios = await fetchMunicipios();
+    const normalizado = cityName.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const ufUpper = uf.trim().toUpperCase();
+    const found = municipios.find(m => {
+      const nomeNorm = m.nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      return nomeNorm === normalizado && m.uf === ufUpper;
+    });
+    return found ? String(found.id) : "";
+  } catch {
+    return "";
+  }
 }
 
 export interface CepData {
