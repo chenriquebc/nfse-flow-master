@@ -329,18 +329,32 @@ export default function Invoices() {
                                 Cancelar
                               </Button>
                             )}
-                            {inv.status === "rejected" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-7 text-xs"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigate(`/invoices/${inv.id}`);
-                                }}
-                              >
-                                Editar
-                              </Button>
+                            {(inv.status === "rejected" || inv.status === "error") && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 text-xs text-destructive"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openEventLog(inv);
+                                  }}
+                                >
+                                  <AlertTriangle className="h-3 w-3 mr-1" />
+                                  Ver Log
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 text-xs"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/invoices/${inv.id}`);
+                                  }}
+                                >
+                                  Editar
+                                </Button>
+                              </>
                             )}
                           </div>
                         </TableCell>
