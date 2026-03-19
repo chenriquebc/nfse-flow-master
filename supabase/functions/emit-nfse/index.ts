@@ -184,7 +184,9 @@ function generateDPSXml(invoice: any, company: any, dpsId: string): string {
   // ─── prest (Prestador) ─────────────────────────────
   xml += `<prest>`;
   xml += `<CNPJ>${formatDocument(company.document)}</CNPJ>`;
-  xml += `<IM>${company.municipal_registration || ""}</IM>`;
+  if (company.municipal_registration) {
+    xml += `<IM>${company.municipal_registration}</IM>`;
+  }
   xml += `<xNome>${escapeXml(company.legal_name)}</xNome>`;
   if (company.address_street) {
     xml += `<end>`;
