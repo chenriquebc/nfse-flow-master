@@ -238,78 +238,79 @@ export default function InvoiceForm() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const [emitting, setEmitting] = useState(false);
+
+  const buildPayload = () => ({
+    tenant_id: tenant!.id,
+    company_id: form.company_id,
+    competence_date: form.competence_date,
+    tax_assessment_regime: form.tax_assessment_regime,
+    taker_document: form.taker_location === "nao_informado" ? "" : form.taker_document,
+    taker_name: form.taker_location === "nao_informado" ? "" : form.taker_name,
+    taker_email: form.taker_email || null,
+    taker_phone: form.taker_phone || null,
+    taker_address_street: form.taker_address_street || null,
+    taker_address_number: form.taker_address_number || null,
+    taker_address_city: form.taker_address_city || null,
+    taker_address_city_code: form.taker_address_city_code || null,
+    taker_address_state: form.taker_address_state || null,
+    taker_address_zip: form.taker_address_zip || null,
+    intermediary_type: form.intermediary_type,
+    intermediary_document: form.intermediary_document || null,
+    intermediary_name: form.intermediary_name || null,
+    intermediary_city: form.intermediary_city || null,
+    intermediary_city_code: form.intermediary_city_code || null,
+    intermediary_state: form.intermediary_state || null,
+    service_description: form.service_description,
+    tax_code: form.tax_code,
+    nbs_code: form.nbs_code || null,
+    cnae_code: form.municipal_tax_code || null,
+    municipal_tax_code: form.municipal_tax_code || null,
+    issqn_exemption: form.issqn_exemption,
+    issqn_city: form.issqn_city || null,
+    service_value: serviceValue,
+    intermediary_value: parseFloat(form.intermediary_value) || 0,
+    unconditional_discount: parseFloat(form.unconditional_discount) || 0,
+    conditional_discount: parseFloat(form.conditional_discount) || 0,
+    deduction_value: deductionValue,
+    discount_value: discountValue,
+    base_value: baseValue,
+    iss_rate: issRate / 100,
+    iss_value: issValue,
+    iss_retained: form.iss_retained,
+    issqn_taxation: form.issqn_taxation,
+    special_tax_regime: form.special_tax_regime,
+    issqn_suspended: form.issqn_suspended,
+    issqn_retained_by_taker: form.issqn_retained_by_taker,
+    municipal_benefit: form.municipal_benefit,
+    pis_cofins_situation: form.pis_cofins_situation || null,
+    pis_cofins_csll_retention_type: form.pis_cofins_csll_retention_type || null,
+    irrf_value: parseFloat(form.irrf_value) || 0,
+    social_contributions_retained: parseFloat(form.social_contributions_retained) || 0,
+    social_security_retained: parseFloat(form.social_security_retained) || 0,
+    approx_tax_mode: form.approx_tax_mode,
+    simples_nacional_rate: parseFloat(form.simples_nacional_rate) || 0,
+    pis_value: parseFloat(form.pis_value) || 0,
+    cofins_value: parseFloat(form.cofins_value) || 0,
+    inss_value: parseFloat(form.inss_value) || 0,
+    ir_value: parseFloat(form.ir_value) || 0,
+    csll_value: parseFloat(form.csll_value) || 0,
+    net_value: netValue,
+    notes: form.notes || null,
+    status: "draft" as const,
+    created_by: user!.id,
+  });
+
   const handleSubmit = async () => {
     if (!tenant || !user) return;
-
     setLoading(true);
-    const payload = {
-      tenant_id: tenant.id,
-      company_id: form.company_id,
-      competence_date: form.competence_date,
-      tax_assessment_regime: form.tax_assessment_regime,
-      taker_document: form.taker_document,
-      taker_name: form.taker_name,
-      taker_email: form.taker_email || null,
-      taker_phone: form.taker_phone || null,
-      taker_address_street: form.taker_address_street || null,
-      taker_address_number: form.taker_address_number || null,
-      taker_address_city: form.taker_address_city || null,
-      taker_address_city_code: form.taker_address_city_code || null,
-      taker_address_state: form.taker_address_state || null,
-      taker_address_zip: form.taker_address_zip || null,
-      intermediary_type: form.intermediary_type,
-      intermediary_document: form.intermediary_document || null,
-      intermediary_name: form.intermediary_name || null,
-      intermediary_city: form.intermediary_city || null,
-      intermediary_city_code: form.intermediary_city_code || null,
-      intermediary_state: form.intermediary_state || null,
-      service_description: form.service_description,
-      tax_code: form.tax_code,
-      nbs_code: form.nbs_code || null,
-      cnae_code: form.municipal_tax_code || null,
-      municipal_tax_code: form.municipal_tax_code || null,
-      issqn_exemption: form.issqn_exemption,
-      issqn_city: form.issqn_city || null,
-      service_value: serviceValue,
-      intermediary_value: parseFloat(form.intermediary_value) || 0,
-      unconditional_discount: parseFloat(form.unconditional_discount) || 0,
-      conditional_discount: parseFloat(form.conditional_discount) || 0,
-      deduction_value: deductionValue,
-      discount_value: discountValue,
-      base_value: baseValue,
-      iss_rate: issRate / 100,
-      iss_value: issValue,
-      iss_retained: form.iss_retained,
-      issqn_taxation: form.issqn_taxation,
-      special_tax_regime: form.special_tax_regime,
-      issqn_suspended: form.issqn_suspended,
-      issqn_retained_by_taker: form.issqn_retained_by_taker,
-      municipal_benefit: form.municipal_benefit,
-      pis_cofins_situation: form.pis_cofins_situation || null,
-      pis_cofins_csll_retention_type: form.pis_cofins_csll_retention_type || null,
-      irrf_value: parseFloat(form.irrf_value) || 0,
-      social_contributions_retained: parseFloat(form.social_contributions_retained) || 0,
-      social_security_retained: parseFloat(form.social_security_retained) || 0,
-      approx_tax_mode: form.approx_tax_mode,
-      simples_nacional_rate: parseFloat(form.simples_nacional_rate) || 0,
-      pis_value: parseFloat(form.pis_value) || 0,
-      cofins_value: parseFloat(form.cofins_value) || 0,
-      inss_value: parseFloat(form.inss_value) || 0,
-      ir_value: parseFloat(form.ir_value) || 0,
-      csll_value: parseFloat(form.csll_value) || 0,
-      net_value: netValue,
-      notes: form.notes || null,
-      status: "draft" as const,
-      created_by: user.id,
-    };
-
+    const payload = buildPayload();
     let error;
     if (isEditing) {
       ({ error } = await supabase.from("nfse_invoices").update(payload).eq("id", id!));
     } else {
       ({ error } = await supabase.from("nfse_invoices").insert(payload));
     }
-
     if (error) {
       toast.error("Erro ao salvar nota", { description: error.message });
     } else {
@@ -317,6 +318,39 @@ export default function InvoiceForm() {
       navigate("/invoices");
     }
     setLoading(false);
+  };
+
+  const handleSaveAndEmit = async () => {
+    if (!tenant || !user) return;
+    setEmitting(true);
+    const payload = buildPayload();
+    let invoiceId = id;
+    let error;
+    if (isEditing) {
+      ({ error } = await supabase.from("nfse_invoices").update(payload).eq("id", id!));
+    } else {
+      const { data: inserted, error: insertErr } = await supabase.from("nfse_invoices").insert(payload).select("id").single();
+      error = insertErr;
+      if (inserted) invoiceId = inserted.id;
+    }
+    if (error || !invoiceId) {
+      toast.error("Erro ao salvar nota", { description: error?.message });
+      setEmitting(false);
+      return;
+    }
+    try {
+      const { data: emitData, error: emitError } = await supabase.functions.invoke("emit-nfse", {
+        body: { invoice_id: invoiceId },
+      });
+      if (emitError) throw emitError;
+      if (emitData?.error) throw new Error(emitData.error);
+      toast.success("Nota fiscal emitida com sucesso!");
+      navigate("/invoices");
+    } catch (err: any) {
+      toast.error("Nota salva, mas erro ao emitir", { description: err.message });
+      navigate("/invoices");
+    }
+    setEmitting(false);
   };
 
   const isLastStep = currentStep === STEPS.length - 1;
