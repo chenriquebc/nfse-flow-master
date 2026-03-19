@@ -475,20 +475,40 @@ function escapeXml(str: string): string {
 
 // ─── XML Signing ────────────────────────────────────────────────────────────
 
-function signXml(xml: string, privateKey: forge.pki.rsa.PrivateKey, cert: forge.pki.Certificate): string {
+/**
+ * Minimal C14N for our use-case:
+ * The infDPS element inherits xmlns from the parent DPS element.
+ * During C14N, inherited default namespaces MUST be rendered on the element.
+ */
+function canonicalizeInfDPS(xml: string, ns: string): string {
   const infDpsMatch = xml.match(/<infDPS[^>]*>[\s\S]*<\/infDPS>/);
   if (!infDpsMatch) throw new Error("infDPS element not found in XML");
+  let infDps = infDpsMatch[0];
 
-  const infDps = infDpsMatch[0];
-  const idMatch = infDps.match(/Id="([^"]+)"/);
+  // If infDPS doesn't already have the default namespace, add it (C14N requirement)
+  if (!infDps.includes(`xmlns="`)) {
+    infDps = infDps.replace("<infDPS", `<infDPS xmlns="${ns}"`);
+  }
+
+  return infDps;
+}
+
+function signXml(xml: string, privateKey: forge.pki.rsa.PrivateKey, cert: forge.pki.Certificate): string {
+  const ns = "http://www.sped.fazenda.gov.br/nfse";
+
+  // Step 1: Canonicalize infDPS (add inherited namespace)
+  const canonicalized = canonicalizeInfDPS(xml, ns);
+
+  // Step 2: Extract reference URI from Id attribute
+  const idMatch = canonicalized.match(/Id="([^"]+)"/);
   const referenceUri = idMatch ? `#${idMatch[1]}` : "";
 
-  const canonicalized = infDps;
-
+  // Step 3: Compute SHA-256 digest of canonicalized infDPS
   const md = forge.md.sha256.create();
   md.update(canonicalized, "utf8");
   const digestValue = forge.util.encode64(md.digest().bytes());
 
+  // Step 4: Build SignedInfo (with its own xmlns for C14N)
   const signedInfo = `<SignedInfo xmlns="http://www.w3.org/2000/09/xmldsig#">` +
     `<CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>` +
     `<SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>` +
@@ -502,14 +522,17 @@ function signXml(xml: string, privateKey: forge.pki.rsa.PrivateKey, cert: forge.
     `</Reference>` +
     `</SignedInfo>`;
 
+  // Step 5: Sign the SignedInfo with RSA-SHA256 (PKCS#1 v1.5)
   const signMd = forge.md.sha256.create();
   signMd.update(signedInfo, "utf8");
   const signature = privateKey.sign(signMd);
   const signatureValue = forge.util.encode64(signature);
 
+  // Step 6: Build X509Certificate
   const certDer = forge.asn1.toDer(forge.pki.certificateToAsn1(cert)).bytes();
   const x509Certificate = forge.util.encode64(certDer);
 
+  // Step 7: Assemble Signature element and inject before </DPS>
   const signatureXml = `<Signature xmlns="http://www.w3.org/2000/09/xmldsig#">` +
     signedInfo +
     `<SignatureValue>${signatureValue}</SignatureValue>` +
