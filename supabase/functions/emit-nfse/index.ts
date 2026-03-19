@@ -197,31 +197,10 @@ function generateDPSXml(invoice: any, company: any, dpsId: string): string {
     xml += `<xLgr>${escapeXml(company.address_street)}</xLgr>`;
     xml += `<nro>${company.address_number || "S/N"}</nro>`;
     if (company.address_complement) xml += `<xCpl>${escapeXml(company.address_complement)}</xCpl>`;
-    if (company.address_neighborhood) xml += `<xBairro>${escapeXml(company.address_neighborhood)}</xBairro>`;
+    xml += `<xBairro>${escapeXml(company.address_neighborhood || "NAO INFORMADO")}</xBairro>`;
     xml += `</end>`;
   }
-  if (company.phone) xml += `<fone>${company.phone.replace(/\D/g, "")}</fone>`;
-  if (company.email) xml += `<email>${company.email}</email>`;
-  xml += `<regTrib>`;
-  xml += `<opSimpNac>${invoice.tax_assessment_regime || "1"}</opSimpNac>`;
-  xml += `<regApTribSN>${invoice.tax_assessment_regime || "1"}</regApTribSN>`;
-  const regEspMap: Record<string, string> = {
-    microempresa_municipal: "1", estimativa: "2", sociedade_profissionais: "3",
-    cooperativa: "4", mei: "5", me_epp: "6",
-  };
-  xml += `<regEspTrib>${regEspMap[regEspTrib] || "0"}</regEspTrib>`;
-  xml += `</regTrib>`;
-  xml += `</prest>`;
-
-  // ─── toma (Tomador) ────────────────────────────────
-  xml += `<toma>`;
-  const takerDoc = formatDocument(invoice.taker_document);
-  if (takerDoc.length <= 11) {
-    xml += `<CPF>${padLeft(takerDoc, 11)}</CPF>`;
-  } else {
-    xml += `<CNPJ>${padLeft(takerDoc, 14)}</CNPJ>`;
-  }
-  xml += `<xNome>${escapeXml(invoice.taker_name)}</xNome>`;
+...
   if (invoice.taker_address_street) {
     xml += `<end>`;
     xml += `<endNac>`;
@@ -230,6 +209,7 @@ function generateDPSXml(invoice: any, company: any, dpsId: string): string {
     xml += `</endNac>`;
     xml += `<xLgr>${escapeXml(invoice.taker_address_street)}</xLgr>`;
     xml += `<nro>${invoice.taker_address_number || "S/N"}</nro>`;
+    xml += `<xBairro>NAO INFORMADO</xBairro>`;
     xml += `</end>`;
   }
   if (invoice.taker_phone) xml += `<fone>${invoice.taker_phone.replace(/\D/g, "")}</fone>`;
