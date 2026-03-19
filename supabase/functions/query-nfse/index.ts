@@ -92,13 +92,18 @@ function loadCertAndKey(pfxBinary: string, password: string) {
     .map((b: any) => forge.pki.certificateToPem(b.cert))
     .join("\n");
 
+  const privateKey = keys[0].key as forge.pki.rsa.PrivateKey;
+  const cert = certs.find((b: any) => b.cert)!.cert as forge.pki.Certificate;
+
   return {
     certPem: allCertsPem,
-    keyPem: forge.pki.privateKeyToPem(keys[0].key as forge.pki.rsa.PrivateKey),
+    keyPem: forge.pki.privateKeyToPem(privateKey),
+    privateKey,
+    cert,
   };
 }
 
-async function getCertPems(supabase: any, companyId: string, masterKey: string) {
+async function getCertPemsAndKeys(supabase: any, companyId: string, masterKey: string) {
   const { data: certRecord } = await supabase
     .from("certificates")
     .select("*")
@@ -129,6 +134,64 @@ async function getCertPems(supabase: any, companyId: string, masterKey: string) 
   const arrayBuffer = await fileData.arrayBuffer();
   const pfxBinary = String.fromCharCode(...new Uint8Array(arrayBuffer));
   return loadCertAndKey(pfxBinary, certPassword);
+}
+
+// ─── XML Signing for Events ─────────────────────────────────────────────
+
+function normalizeXmlForSignature(xml: string): string {
+  return xml
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .replace(/>\s+</g, "><")
+    .trim();
+}
+
+function signEventXml(xml: string, privateKey: forge.pki.rsa.PrivateKey, cert: forge.pki.Certificate, eventId: string): string {
+  const infMatch = xml.match(/<infPedReg[^>]*>[\s\S]*<\/infPedReg>/);
+  if (!infMatch) throw new Error("infPedReg not found in event XML");
+
+  const canonicalized = normalizeXmlForSignature(infMatch[0]);
+
+  const digestMd = forge.md.sha256.create();
+  digestMd.update(canonicalized, "utf8");
+  const digestValue = forge.util.encode64(digestMd.digest().bytes());
+
+  const signedInfoXml =
+    `<SignedInfo xmlns="http://www.w3.org/2000/09/xmldsig#">` +
+    `<CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></CanonicalizationMethod>` +
+    `<SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"></SignatureMethod>` +
+    `<Reference URI="#${eventId}">` +
+    `<Transforms>` +
+    `<Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></Transform>` +
+    `<Transform Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></Transform>` +
+    `</Transforms>` +
+    `<DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"></DigestMethod>` +
+    `<DigestValue>${digestValue}</DigestValue>` +
+    `</Reference>` +
+    `</SignedInfo>`;
+
+  const canonicalizedSignedInfo = normalizeXmlForSignature(signedInfoXml);
+
+  const signMd = forge.md.sha256.create();
+  signMd.update(canonicalizedSignedInfo, "utf8");
+  const signature = privateKey.sign(signMd);
+  const signatureValue = forge.util.encode64(signature);
+
+  const certDer = forge.asn1.toDer(forge.pki.certificateToAsn1(cert)).bytes();
+  const x509Certificate = forge.util.encode64(certDer);
+
+  const signatureXml =
+    `<Signature xmlns="http://www.w3.org/2000/09/xmldsig#">` +
+    canonicalizedSignedInfo +
+    `<SignatureValue>${signatureValue}</SignatureValue>` +
+    `<KeyInfo>` +
+    `<X509Data>` +
+    `<X509Certificate>${x509Certificate}</X509Certificate>` +
+    `</X509Data>` +
+    `</KeyInfo>` +
+    `</Signature>`;
+
+  return xml.replace("</pedRegEvento>", `${signatureXml}</pedRegEvento>`);
 }
 
 Deno.serve(async (req) => {
@@ -186,7 +249,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      const { certPem, keyPem } = await getCertPems(supabase, invoice.company_id, masterKey);
+      const { certPem, keyPem } = await getCertPemsAndKeys(supabase, invoice.company_id, masterKey);
 
       const result = await mtlsFetch(
         "GET",
@@ -237,32 +300,54 @@ Deno.serve(async (req) => {
         });
       }
 
-      const { certPem, keyPem } = await getCertPems(supabase, invoice.company_id, masterKey);
+      const { certPem, keyPem, cert, privateKey } = await getCertPemsAndKeys(supabase, invoice.company_id, masterKey);
 
-      const cancelXml = `<?xml version="1.0" encoding="UTF-8"?>
-<pedRegEvento xmlns="http://www.sped.fazenda.gov.br/nfse" versao="1.00">
-  <infPedReg>
-    <tpAmb>1</tpAmb>
-    <verAplic>NFSE-FLOW-1.0</verAplic>
-    <dhEvento>${new Date().toISOString()}</dhEvento>
-    <nSeqEvento>1</nSeqEvento>
-    <chNFSe>${chave}</chNFSe>
-    <tpEvento>e101101</tpEvento>
-    <detEvento>
-      <e101101>
-        <xMotivo>${body.reason || "Cancelamento solicitado pelo emitente"}</xMotivo>
-      </e101101>
-    </detEvento>
-  </infPedReg>
-</pedRegEvento>`;
+      // Build cancel event XML (pedRegEvento)
+      const now = new Date();
+      const tzOffset = "-03:00";
+      const pad = (n: number) => String(n).padStart(2, "0");
+      const dhEvento = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}${tzOffset}`;
+      const reason = body.reason || "Cancelamento solicitado pelo emitente";
+      const nSeqEvento = "001";
+      const eventId = `IDe101101${chave}${nSeqEvento}`;
+
+      const cancelXml = `<pedRegEvento xmlns="http://www.sped.fazenda.gov.br/nfse" versao="1.00"><infPedReg Id="${eventId}"><tpAmb>1</tpAmb><verAplic>NFSE-FLOW-1.0</verAplic><dhEvento>${dhEvento}</dhEvento><nSeqEvento>1</nSeqEvento><chNFSe>${chave}</chNFSe><tpEvento>e101101</tpEvento><detEvento><e101101><xMotivo>${reason}</xMotivo></e101101></detEvento></infPedReg></pedRegEvento>`;
+
+      // Sign the cancel XML
+      const signedCancelXml = signEventXml(cancelXml, privateKey, cert, eventId);
+
+      console.log(`[cancel] eventId=${eventId}`);
+      console.log(`[cancel] Raw XML (first 600): ${signedCancelXml.substring(0, 600)}`);
+
+      // GZip + Base64 encode
+      const xmlBytes = new TextEncoder().encode(signedCancelXml);
+      const cs = new CompressionStream("gzip");
+      const csWriter = cs.writable.getWriter();
+      csWriter.write(xmlBytes);
+      csWriter.close();
+      const gzippedBuf = await new Response(cs.readable).arrayBuffer();
+      const gzippedBytes = new Uint8Array(gzippedBuf);
+      let binaryStr = "";
+      for (let i = 0; i < gzippedBytes.length; i++) {
+        binaryStr += String.fromCharCode(gzippedBytes[i]);
+      }
+      const pedRegEventoXmlGZipB64 = btoa(binaryStr);
+
+      // Send as JSON to SEFIN eventos endpoint
+      const jsonPayload = JSON.stringify({ pedRegEventoXmlGZipB64 });
+
+      console.log(`[cancel] Sending JSON to SEFIN: POST /SefinNacional/nfse/${chave}/eventos (${jsonPayload.length} bytes)`);
 
       const result = await mtlsFetch(
         "POST",
         `/SefinNacional/nfse/${chave}/eventos`,
-        cancelXml,
+        jsonPayload,
         certPem,
         keyPem,
+        "application/json",
       );
+
+      console.log(`[cancel] SEFIN response: ${result.status} - ${result.body.substring(0, 500)}`);
 
       if (result.status >= 200 && result.status < 300) {
         await supabase.from("nfse_invoices").update({ status: "cancelled" }).eq("id", invoice_id);
@@ -280,6 +365,7 @@ Deno.serve(async (req) => {
           tenant_id: invoice.tenant_id,
           event_type: "error",
           error_message: `Cancel failed: ${result.status}`,
+          error_code: String(result.status),
           response_xml: result.body,
           created_by: userData.user.id,
         });
