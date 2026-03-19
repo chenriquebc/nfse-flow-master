@@ -758,7 +758,7 @@ Deno.serve(async (req) => {
     // Generate DPS ID (regra nacional: cMun(7) + tpInsc(1) + CNPJ/CPF(14) + serie(5) + nDPS(15))
     const dpsId = generateDPSId(
       company.address_city_code || "0000000",
-      formatDocument(company.document).length > 11 ? "1" : "2",
+      formatDocument(company.document).length > 11 ? "2" : "1",
       company.document,
       invoiceForEmission.rps_series || "RPS",
       rpsNumber,
