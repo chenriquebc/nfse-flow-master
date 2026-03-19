@@ -750,12 +750,17 @@ Deno.serve(async (req) => {
       .eq("company_id", company.id);
     const rpsNumber = (count || 0) + 1;
 
-    // Generate DPS ID
+    const invoiceForEmission = {
+      ...invoice,
+      rps_number: rpsNumber,
+    };
+
+    // Generate DPS ID (regra nacional: cMun(7) + tpInsc(1) + CNPJ/CPF(14) + serie(5) + nDPS(15))
     const dpsId = generateDPSId(
       company.address_city_code || "0000000",
-      formatDocument(company.document).length > 11 ? "2" : "1",
+      formatDocument(company.document).length > 11 ? "1" : "2",
       company.document,
-      invoice.rps_series || "RPS",
+      invoiceForEmission.rps_series || "RPS",
       rpsNumber,
     );
 
@@ -774,7 +779,7 @@ Deno.serve(async (req) => {
     });
 
     // Generate XML
-    const dpsXml = await generateDPSXml(invoice, company, dpsId);
+    const dpsXml = await generateDPSXml(invoiceForEmission, company, dpsId);
 
     await supabase.from("nfse_events").insert({
       invoice_id,
