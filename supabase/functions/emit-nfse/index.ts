@@ -134,175 +134,290 @@ function generateDPSId(
 // ─── DPS XML Generation ────────────────────────────────────────────────────
 
 function generateDPSXml(invoice: any, company: any, dpsId: string): string {
-  const ns = 'http://www.sped.fazenda.gov.br/nfse';
-  const serviceValue = Number(invoice.service_value || 0).toFixed(2);
-  const deductionValue = Number(invoice.deduction_value || 0).toFixed(2);
-  const unconditionalDiscount = Number(invoice.unconditional_discount || 0).toFixed(2);
-  const conditionalDiscount = Number(invoice.conditional_discount || 0).toFixed(2);
-  const issRate = Number(invoice.iss_rate || 0).toFixed(4);
-  const issValue = Number(invoice.iss_value || 0).toFixed(2);
-  const baseValue = Number(invoice.base_value || 0).toFixed(2);
-  const regEspTrib = invoice.special_tax_regime || "0";
+  const ns = "http://www.sped.fazenda.gov.br/nfse";
 
-  let issqnExigType = "1";
-  if (invoice.issqn_suspended) issqnExigType = "3";
-  else if (invoice.issqn_taxation === "imune") issqnExigType = "4";
-  else if (invoice.issqn_taxation === "isenta") issqnExigType = "5";
-  else if (invoice.issqn_taxation === "exportacao") issqnExigType = "6";
-  else if (invoice.issqn_taxation === "nao_incidencia") issqnExigType = "2";
+  const onlyDigits = (value: unknown) => String(value ?? "").replace(/\D/g, "");
+  const normIbge = (value: unknown, fallback = "0000000") => {
+    const digits = onlyDigits(value);
+    if (digits.length === 7) return digits;
+    if (digits.length > 7) return digits.slice(0, 7);
+    if (digits.length > 0) return digits.padStart(7, "0").slice(-7);
+    return fallback;
+  };
+  const normCep = (value: unknown) => {
+    const digits = onlyDigits(value);
+    if (digits.length === 8) return digits;
+    if (digits.length > 8) return digits.slice(0, 8);
+    if (digits.length > 0) return digits.padStart(8, "0").slice(-8);
+    return "00000000";
+  };
+  const normPhone = (value: unknown) => {
+    const digits = onlyDigits(value);
+    return digits.length >= 6 && digits.length <= 20 ? digits : "";
+  };
+  const toMoney = (value: unknown) => Number(value || 0).toFixed(2);
+  const toRate = (value: unknown) => {
+    const n = Math.min(Math.max(Number(value || 0), 0), 9.99);
+    return n.toFixed(2);
+  };
+
+  const regEspMap: Record<string, string> = {
+    microempresa_municipal: "3",
+    estimativa: "2",
+    sociedade_profissionais: "6",
+    cooperativa: "1",
+    mei: "5",
+    me_epp: "0",
+    nenhum: "0",
+    "0": "0",
+  };
+  const pisCofinsRetMap: Record<string, string> = {
+    nao_retido: "0",
+    retido: "3",
+    pis_cofins_retido_csll_nao: "4",
+    pis_retido_cofins_csll_nao: "5",
+    cofins_retido_pis_csll_nao: "6",
+  };
+  const tribIssqnMap: Record<string, string> = {
+    tributavel: "1",
+    imune: "2",
+    exportacao: "3",
+    nao_incidencia: "4",
+    isenta: "4",
+  };
+
+  const serviceCityCode = normIbge(invoice.service_city_code || invoice.issqn_city || company.address_city_code);
+  const companyCityCode = normIbge(company.address_city_code, serviceCityCode);
+  const takerCityCode = normIbge(invoice.taker_address_city_code, serviceCityCode);
+
+  const taxCodeDigits = onlyDigits(invoice.tax_code);
+  const municipalDigits = onlyDigits(invoice.municipal_tax_code);
+  const cTribMun = municipalDigits ? municipalDigits.slice(-3).padStart(3, "0") : "";
+  const cTribNac = (() => {
+    if (taxCodeDigits.length >= 6) return taxCodeDigits.slice(0, 6);
+    if (taxCodeDigits.length === 4) {
+      const suffix = (cTribMun || "001").slice(0, 2);
+      return `${taxCodeDigits}${suffix}`;
+    }
+    return taxCodeDigits.padEnd(6, "0").slice(0, 6);
+  })();
+
+  const cNbsDigits = onlyDigits(invoice.nbs_code);
+  const cNBS = cNbsDigits.length >= 9 ? cNbsDigits.slice(0, 9) : "";
+
+  const takerDoc = formatDocument(invoice.taker_document);
+  const takerName = String(invoice.taker_name || "").trim() || "TOMADOR NAO INFORMADO";
+
+  const serviceValue = Number(invoice.service_value || 0);
+  const intermediaryValue = Number(invoice.intermediary_value || 0);
+  const deductionValue = Number(invoice.deduction_value || 0);
+  const unconditionalDiscount = Number(invoice.unconditional_discount || 0);
+  const conditionalDiscount = Number(invoice.conditional_discount || 0);
 
   const competenceDate = invoice.competence_date || new Date().toISOString().split("T")[0];
-  const cityCode = company.address_city_code || "0000000";
+  const regApTribSN = ["1", "2", "3"].includes(String(invoice.tax_assessment_regime))
+    ? String(invoice.tax_assessment_regime)
+    : "1";
+  const regEspTrib = regEspMap[String(invoice.special_tax_regime || "0")] || "0";
+  const tribISSQN = tribIssqnMap[String(invoice.issqn_taxation || "tributavel")] || "1";
 
-  let xml = `<?xml version="1.0" encoding="UTF-8"?>`;
-  xml += `<DPS xmlns="${ns}" versao="1.00">`;
-  xml += `<infDPS Id="DPS${dpsId}">`;
+  let tpRetISSQN = "1";
+  if (invoice.issqn_retained_by_taker || invoice.iss_retained) tpRetISSQN = "2";
 
-  xml += `<tpAmb>1</tpAmb>`;
-  // TSDateTimeUTC requires YYYY-MM-DDTHH:MM:SS-03:00 (no millis, with BRT offset)
   const now = new Date();
   const pad = (n: number) => String(n).padStart(2, "0");
-  // Convert to BRT (UTC-3)
   const brt = new Date(now.getTime() - 3 * 60 * 60 * 1000);
-  const dhEmi = `${brt.getUTCFullYear()}-${pad(brt.getUTCMonth()+1)}-${pad(brt.getUTCDate())}T${pad(brt.getUTCHours())}:${pad(brt.getUTCMinutes())}:${pad(brt.getUTCSeconds())}-03:00`;
-  xml += `<dhEmi>${dhEmi}</dhEmi>`;
-  xml += `<verAplic>NFSE-FLOW-1.0</verAplic>`;
+  const dhEmi = `${brt.getUTCFullYear()}-${pad(brt.getUTCMonth() + 1)}-${pad(brt.getUTCDate())}T${pad(brt.getUTCHours())}:${pad(brt.getUTCMinutes())}:${pad(brt.getUTCSeconds())}-03:00`;
 
-  // Schema expects serie and nDPS before dCompet
-  const serieDigits = String(invoice.rps_series || "1").replace(/\D/g, "") || "1";
-  xml += `<serie>${Number(serieDigits)}</serie>`;
-  xml += `<nDPS>${Number(invoice.rps_number || 1)}</nDPS>`;
+  const serieDigits = onlyDigits(invoice.rps_series || "1") || "1";
+  const nDps = Number(invoice.rps_number || 1);
 
-  xml += `<dCompet>${competenceDate}</dCompet>`;
+  const xml: string[] = [];
+  const push = (value: string) => xml.push(value);
 
-  // tpEmit: 1=Prestador de Serviço, 2=Tomador, 3=Intermediário
-  xml += `<tpEmit>1</tpEmit>`;
-
-  // cLocEmi: Código IBGE do município de emissão (7 dígitos)
-  xml += `<cLocEmi>${padLeft(cityCode, 7)}</cLocEmi>`;
-
-  // ─── prest (Prestador) ─────────────────────────────
-  xml += `<prest>`;
-  xml += `<CNPJ>${formatDocument(company.document)}</CNPJ>`;
-  if (company.municipal_registration) {
-    xml += `<IM>${company.municipal_registration}</IM>`;
-  }
-  xml += `<xNome>${escapeXml(company.legal_name)}</xNome>`;
-  if (company.address_street) {
-    xml += `<end>`;
-    xml += `<endNac>`;
-    xml += `<cMun>${padLeft(cityCode, 7)}</cMun>`;
-    xml += `<CEP>${(company.address_zip || "").replace(/\D/g, "")}</CEP>`;
-    xml += `</endNac>`;
-    xml += `<xLgr>${escapeXml(company.address_street)}</xLgr>`;
-    xml += `<nro>${company.address_number || "S/N"}</nro>`;
-    if (company.address_complement) xml += `<xCpl>${escapeXml(company.address_complement)}</xCpl>`;
-    xml += `<xBairro>${escapeXml(company.address_neighborhood || "NAO INFORMADO")}</xBairro>`;
-    xml += `</end>`;
-  }
-  if (company.phone) xml += `<fone>${company.phone.replace(/\D/g, "")}</fone>`;
-  if (company.email) xml += `<email>${company.email}</email>`;
-  xml += `<regTrib>`;
-  xml += `<opSimpNac>${invoice.tax_assessment_regime || "1"}</opSimpNac>`;
-  xml += `<regApTribSN>${invoice.tax_assessment_regime || "1"}</regApTribSN>`;
-  const regEspMap: Record<string, string> = {
-    microempresa_municipal: "1", estimativa: "2", sociedade_profissionais: "3",
-    cooperativa: "4", mei: "5", me_epp: "6",
+  const pushEnderecoNacional = (
+    cityCode: string,
+    zipCode: string,
+    street: string,
+    number: string,
+    complement?: string,
+    neighborhood?: string,
+  ) => {
+    push("<end>");
+    push("<endNac>");
+    push(`<cMun>${cityCode}</cMun>`);
+    push(`<CEP>${zipCode}</CEP>`);
+    push("</endNac>");
+    push(`<xLgr>${escapeXml(street || "NAO INFORMADO")}</xLgr>`);
+    push(`<nro>${escapeXml(number || "S/N")}</nro>`);
+    if (complement) push(`<xCpl>${escapeXml(complement)}</xCpl>`);
+    push(`<xBairro>${escapeXml(neighborhood || "NAO INFORMADO")}</xBairro>`);
+    push("</end>");
   };
-  xml += `<regEspTrib>${regEspMap[regEspTrib] || "0"}</regEspTrib>`;
-  xml += `</regTrib>`;
-  xml += `</prest>`;
 
-  // ─── toma (Tomador) ────────────────────────────────
-  xml += `<toma>`;
-  const takerDoc = formatDocument(invoice.taker_document);
-  if (takerDoc.length <= 11) {
-    xml += `<CPF>${padLeft(takerDoc, 11)}</CPF>`;
+  push(`<?xml version="1.0" encoding="UTF-8"?>`);
+  push(`<DPS xmlns="${ns}" versao="1.00">`);
+  push(`<infDPS Id="DPS${dpsId}">`);
+  push(`<tpAmb>1</tpAmb>`);
+  push(`<dhEmi>${dhEmi}</dhEmi>`);
+  push(`<verAplic>NFSE-FLOW-1.0</verAplic>`);
+  push(`<serie>${Number(serieDigits)}</serie>`);
+  push(`<nDPS>${nDps}</nDPS>`);
+  push(`<dCompet>${competenceDate}</dCompet>`);
+  push(`<tpEmit>1</tpEmit>`);
+  push(`<cLocEmi>${companyCityCode}</cLocEmi>`);
+
+  // Prestador
+  push("<prest>");
+  push(`<CNPJ>${padLeft(formatDocument(company.document), 14)}</CNPJ>`);
+  if (company.municipal_registration) push(`<IM>${escapeXml(String(company.municipal_registration))}</IM>`);
+  push(`<xNome>${escapeXml(company.legal_name || "")}</xNome>`);
+  if (company.address_street) {
+    pushEnderecoNacional(
+      companyCityCode,
+      normCep(company.address_zip),
+      String(company.address_street),
+      String(company.address_number || "S/N"),
+      company.address_complement ? String(company.address_complement) : undefined,
+      company.address_neighborhood ? String(company.address_neighborhood) : undefined,
+    );
+  }
+  const companyPhone = normPhone(company.phone);
+  if (companyPhone) push(`<fone>${companyPhone}</fone>`);
+  if (company.email) push(`<email>${escapeXml(String(company.email).slice(0, 80))}</email>`);
+  push("<regTrib>");
+  push(`<opSimpNac>3</opSimpNac>`);
+  push(`<regApTribSN>${regApTribSN}</regApTribSN>`);
+  push(`<regEspTrib>${regEspTrib}</regEspTrib>`);
+  push("</regTrib>");
+  push("</prest>");
+
+  // Tomador
+  push("<toma>");
+  if (takerDoc.length > 11) {
+    push(`<CNPJ>${padLeft(takerDoc, 14)}</CNPJ>`);
   } else {
-    xml += `<CNPJ>${padLeft(takerDoc, 14)}</CNPJ>`;
+    push(`<CPF>${padLeft(takerDoc || "0", 11)}</CPF>`);
   }
-  xml += `<xNome>${escapeXml(invoice.taker_name)}</xNome>`;
+  push(`<xNome>${escapeXml(takerName)}</xNome>`);
   if (invoice.taker_address_street) {
-    xml += `<end>`;
-    xml += `<endNac>`;
-    if (invoice.taker_address_city_code) xml += `<cMun>${padLeft(invoice.taker_address_city_code, 7)}</cMun>`;
-    if (invoice.taker_address_zip) xml += `<CEP>${invoice.taker_address_zip.replace(/\D/g, "")}</CEP>`;
-    xml += `</endNac>`;
-    xml += `<xLgr>${escapeXml(invoice.taker_address_street)}</xLgr>`;
-    xml += `<nro>${invoice.taker_address_number || "S/N"}</nro>`;
-    xml += `<xBairro>NAO INFORMADO</xBairro>`;
-    xml += `</end>`;
+    pushEnderecoNacional(
+      takerCityCode,
+      normCep(invoice.taker_address_zip),
+      String(invoice.taker_address_street),
+      String(invoice.taker_address_number || "S/N"),
+      undefined,
+      invoice.taker_address_city ? String(invoice.taker_address_city) : "NAO INFORMADO",
+    );
   }
-  if (invoice.taker_phone) xml += `<fone>${invoice.taker_phone.replace(/\D/g, "")}</fone>`;
-  if (invoice.taker_email) xml += `<email>${invoice.taker_email}</email>`;
-  xml += `</toma>`;
+  const takerPhone = normPhone(invoice.taker_phone);
+  if (takerPhone) push(`<fone>${takerPhone}</fone>`);
+  if (invoice.taker_email) push(`<email>${escapeXml(String(invoice.taker_email).slice(0, 80))}</email>`);
+  push("</toma>");
 
-  // ─── interm (Intermediário) ────────────────────────
+  // Intermediário
   if (invoice.intermediary_type && invoice.intermediary_type !== "none" && invoice.intermediary_document) {
-    xml += `<interm>`;
+    push("<interm>");
     const intermDoc = formatDocument(invoice.intermediary_document);
-    if (intermDoc.length <= 11) {
-      xml += `<CPF>${padLeft(intermDoc, 11)}</CPF>`;
-    } else {
-      xml += `<CNPJ>${padLeft(intermDoc, 14)}</CNPJ>`;
+    if (intermDoc.length > 11) push(`<CNPJ>${padLeft(intermDoc, 14)}</CNPJ>`);
+    else push(`<CPF>${padLeft(intermDoc, 11)}</CPF>`);
+    if (invoice.intermediary_name) push(`<xNome>${escapeXml(invoice.intermediary_name)}</xNome>`);
+    push("</interm>");
+  }
+
+  // Serviço (ordem exata do XSD)
+  push("<serv>");
+  push("<locPrest>");
+  push(`<cLocPrestacao>${serviceCityCode}</cLocPrestacao>`);
+  push("</locPrest>");
+  push("<cServ>");
+  push(`<cTribNac>${cTribNac}</cTribNac>`);
+  if (cTribMun) push(`<cTribMun>${cTribMun}</cTribMun>`);
+  push(`<xDescServ>${escapeXml(String(invoice.service_description || "SERVICO PRESTADO"))}</xDescServ>`);
+  if (cNBS) push(`<cNBS>${cNBS}</cNBS>`);
+  push("</cServ>");
+  push("</serv>");
+
+  // Valores e tributos (ordem exata do XSD)
+  push("<valores>");
+  push("<vServPrest>");
+  if (intermediaryValue > 0) push(`<vReceb>${toMoney(intermediaryValue)}</vReceb>`);
+  push(`<vServ>${toMoney(serviceValue)}</vServ>`);
+  push("</vServPrest>");
+
+  if (unconditionalDiscount > 0 || conditionalDiscount > 0) {
+    push("<vDescCondIncond>");
+    if (unconditionalDiscount > 0) push(`<vDescIncond>${toMoney(unconditionalDiscount)}</vDescIncond>`);
+    if (conditionalDiscount > 0) push(`<vDescCond>${toMoney(conditionalDiscount)}</vDescCond>`);
+    push("</vDescCondIncond>");
+  }
+
+  if (deductionValue > 0) {
+    push("<vDedRed>");
+    push(`<vDR>${toMoney(deductionValue)}</vDR>`);
+    push("</vDedRed>");
+  }
+
+  push("<trib>");
+  push("<tribMun>");
+  push(`<tribISSQN>${tribISSQN}</tribISSQN>`);
+  push("<cPaisResult>BR</cPaisResult>");
+  push(`<tpRetISSQN>${tpRetISSQN}</tpRetISSQN>`);
+  if (Number(invoice.iss_rate || 0) > 0) push(`<pAliq>${toRate(invoice.iss_rate)}</pAliq>`);
+  push("</tribMun>");
+
+  const hasFederal =
+    !!invoice.pis_cofins_situation ||
+    Number(invoice.social_security_retained || 0) > 0 ||
+    Number(invoice.irrf_value || 0) > 0 ||
+    Number(invoice.csll_value || 0) > 0 ||
+    Number(invoice.social_contributions_retained || 0) > 0;
+
+  if (hasFederal) {
+    push("<tribFed>");
+
+    if (invoice.pis_cofins_situation) {
+      const basePisCofins = Number(invoice.base_value || invoice.service_value || 0);
+      const pis = Number(invoice.pis_value || 0);
+      const cofins = Number(invoice.cofins_value || 0);
+      push("<piscofins>");
+      push(`<CST>${String(invoice.pis_cofins_situation).padStart(2, "0")}</CST>`);
+      if (basePisCofins > 0) push(`<vBCPisCofins>${toMoney(basePisCofins)}</vBCPisCofins>`);
+      if (basePisCofins > 0 && pis > 0) push(`<pAliqPis>${toRate((pis * 100) / basePisCofins)}</pAliqPis>`);
+      if (basePisCofins > 0 && cofins > 0) push(`<pAliqCofins>${toRate((cofins * 100) / basePisCofins)}</pAliqCofins>`);
+      if (pis > 0) push(`<vPis>${toMoney(pis)}</vPis>`);
+      if (cofins > 0) push(`<vCofins>${toMoney(cofins)}</vCofins>`);
+      if (invoice.pis_cofins_csll_retention_type) {
+        const tpRet = pisCofinsRetMap[String(invoice.pis_cofins_csll_retention_type)] ?? "0";
+        push(`<tpRetPisCofins>${tpRet}</tpRetPisCofins>`);
+      }
+      push("</piscofins>");
     }
-    if (invoice.intermediary_name) xml += `<xNome>${escapeXml(invoice.intermediary_name)}</xNome>`;
-    xml += `</interm>`;
+
+    if (Number(invoice.social_security_retained || 0) > 0) {
+      push(`<vRetCP>${toMoney(invoice.social_security_retained)}</vRetCP>`);
+    }
+    if (Number(invoice.irrf_value || 0) > 0) {
+      push(`<vRetIRRF>${toMoney(invoice.irrf_value)}</vRetIRRF>`);
+    }
+    const vRetCsll = Number(invoice.csll_value || invoice.social_contributions_retained || 0);
+    if (vRetCsll > 0) {
+      push(`<vRetCSLL>${toMoney(vRetCsll)}</vRetCSLL>`);
+    }
+
+    push("</tribFed>");
   }
 
-  // ─── serv (Serviço) ───────────────────────────────
-  xml += `<serv>`;
-  xml += `<cServ>${(invoice.tax_code || "").replace(/\./g, "")}</cServ>`;
-  if (company.cnae_code) xml += `<cCnae>${company.cnae_code.replace(/\./g, "")}</cCnae>`;
-  if (invoice.nbs_code) xml += `<CNBS>${invoice.nbs_code.replace(/\D/g, "")}</CNBS>`;
-  xml += `<xDescServ>${escapeXml(invoice.service_description || "")}</xDescServ>`;
-  xml += `<cMunPrestacao>${padLeft(cityCode, 7)}</cMunPrestacao>`;
-  if (invoice.issqn_city) xml += `<cMunIncid>${padLeft(String(invoice.issqn_city).replace(/\D/g, "") || cityCode, 7)}</cMunIncid>`;
-  xml += `</serv>`;
+  push("<totTrib>");
+  push("<indTotTrib>0</indTotTrib>");
+  push("</totTrib>");
+  push("</trib>");
+  push("</valores>");
 
-  // ─── valores ──────────────────────────────────────
-  xml += `<valores>`;
-  xml += `<vServPrest>`;
-  xml += `<vServ>${serviceValue}</vServ>`;
-  if (Number(deductionValue) > 0) xml += `<vDeducao>${deductionValue}</vDeducao>`;
-  if (Number(unconditionalDiscount) > 0) xml += `<vDescIncond>${unconditionalDiscount}</vDescIncond>`;
-  if (Number(conditionalDiscount) > 0) xml += `<vDescCond>${conditionalDiscount}</vDescCond>`;
-  xml += `</vServPrest>`;
+  push("</infDPS>");
+  push("</DPS>");
 
-  xml += `<trib>`;
-  xml += `<tribMun>`;
-  xml += `<tribISSQN>${issqnExigType}</tribISSQN>`;
-  xml += `<cPaisResult>1058</cPaisResult>`;
-  xml += `<BM>`;
-  xml += `<vBCISS>${baseValue}</vBCISS>`;
-  xml += `<pAliq>${issRate}</pAliq>`;
-  xml += `<vISS>${issValue}</vISS>`;
-  if (invoice.issqn_retained_by_taker || invoice.iss_retained) xml += `<tpRetISSQN>1</tpRetISSQN>`;
-  xml += `</BM>`;
-  xml += `</tribMun>`;
-
-  xml += `<tribFed>`;
-  if (Number(invoice.pis_value || 0) > 0) xml += `<vPIS>${Number(invoice.pis_value).toFixed(2)}</vPIS>`;
-  if (Number(invoice.cofins_value || 0) > 0) xml += `<vCOFINS>${Number(invoice.cofins_value).toFixed(2)}</vCOFINS>`;
-  if (Number(invoice.inss_value || 0) > 0) xml += `<vINSS>${Number(invoice.inss_value).toFixed(2)}</vINSS>`;
-  if (Number(invoice.ir_value || 0) > 0) xml += `<vIR>${Number(invoice.ir_value).toFixed(2)}</vIR>`;
-  if (Number(invoice.csll_value || 0) > 0) xml += `<vCSLL>${Number(invoice.csll_value).toFixed(2)}</vCSLL>`;
-  xml += `</tribFed>`;
-
-  if (invoice.approx_tax_mode === "simples_nacional" && Number(invoice.simples_nacional_rate || 0) > 0) {
-    const approxTax = (Number(invoice.service_value) * Number(invoice.simples_nacional_rate) / 100).toFixed(2);
-    xml += `<totTrib>`;
-    xml += `<vTotTrib>${approxTax}</vTotTrib>`;
-    xml += `</totTrib>`;
-  }
-
-  xml += `</trib>`;
-  xml += `</valores>`;
-
-  xml += `</infDPS>`;
-  xml += `</DPS>`;
-
-  return xml;
+  return xml.join("");
 }
 
 function escapeXml(str: string): string {
