@@ -108,7 +108,9 @@ export default function StepTomador({ form, set }: StepTomadorProps) {
       set("taker_address_city", data.municipio || "");
       set("taker_address_state", data.uf || "");
       set("taker_address_zip", data.cep || "");
-      set("taker_address_city_code", String(data.codigo_municipio || ""));
+      // Resolve código IBGE real (BrasilAPI retorna código SIAFI, não IBGE)
+      const ibgeCode = await resolveIbgeCode(data.municipio, data.uf);
+      set("taker_address_city_code", ibgeCode || String(data.codigo_municipio || ""));
       toast.success("Dados do tomador preenchidos!");
     } catch {
       toast.error("Não foi possível buscar o CNPJ");
