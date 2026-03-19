@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ArrowLeft, Save, Search, Loader2, Upload, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
-import { fetchCnpj, fetchCep } from "@/lib/api/brasilapi";
+import { fetchCnpj, fetchCep, resolveIbgeCode } from "@/lib/api/brasilapi";
 import { CnaeCombobox, CnaeMultiSelect } from "@/components/company/CnaeCombobox";
 
 const emptyForm = {
