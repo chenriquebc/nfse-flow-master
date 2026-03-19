@@ -40,7 +40,7 @@ export default function InvoiceForm() {
 
   const [form, setForm] = useState({
     company_id: "",
-    competence_date: new Date().toISOString().split("T")[0],
+    competence_date: (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; })(),
     tax_assessment_regime: "1",
     taker_document: "",
     taker_name: "",
