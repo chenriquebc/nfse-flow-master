@@ -139,18 +139,38 @@ async function getCertPemsAndKeys(supabase: any, companyId: string, masterKey: s
 // ─── XML Signing for Events ─────────────────────────────────────────────
 
 function normalizeXmlForSignature(xml: string): string {
-  return xml
-    .replace(/\r\n/g, "\n")
-    .replace(/\r/g, "\n")
+  let normalized = xml
+    .replace(/\r\n?/g, "\n")
     .replace(/>\s+</g, "><")
     .trim();
+
+  const selfClosingTagRegex = /<([A-Za-z_][\w:.-]*)([^>]*)\/>/g;
+  let previous = "";
+  while (previous !== normalized) {
+    previous = normalized;
+    normalized = normalized.replace(selfClosingTagRegex, "<$1$2></$1>");
+  }
+
+  return normalized;
+}
+
+function canonicalizeInfPedReg(xml: string, ns: string): string {
+  const infMatch = xml.match(/<infPedReg\b[^>]*>[\s\S]*?<\/infPedReg>/);
+  if (!infMatch) {
+    throw new Error("infPedReg not found in event XML");
+  }
+
+  let infPedReg = infMatch[0];
+  if (!/\sxmlns="[^"]+"/.test(infPedReg)) {
+    infPedReg = infPedReg.replace("<infPedReg", `<infPedReg xmlns="${ns}"`);
+  }
+
+  return normalizeXmlForSignature(infPedReg);
 }
 
 function signEventXml(xml: string, privateKey: forge.pki.rsa.PrivateKey, cert: forge.pki.Certificate, eventId: string): string {
-  const infMatch = xml.match(/<infPedReg[^>]*>[\s\S]*<\/infPedReg>/);
-  if (!infMatch) throw new Error("infPedReg not found in event XML");
-
-  const canonicalized = normalizeXmlForSignature(infMatch[0]);
+  const ns = "http://www.sped.fazenda.gov.br/nfse";
+  const canonicalized = canonicalizeInfPedReg(xml, ns);
 
   const digestMd = forge.md.sha256.create();
   digestMd.update(canonicalized, "utf8");
