@@ -435,7 +435,8 @@ async function generateDPSXml(invoice: any, company: any, dpsId: string): Promis
     push("</vDescCondIncond>");
   }
 
-  if (deductionValue > 0) {
+  const isSimplesNacional = true; // opSimpNac = 3 neste fluxo
+  if (deductionValue > 0 && !isSimplesNacional) {
     push("<vDedRed>");
     push(`<vDR>${toMoney(deductionValue)}</vDR>`);
     push("</vDedRed>");
