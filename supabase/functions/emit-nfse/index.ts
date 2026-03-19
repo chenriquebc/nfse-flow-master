@@ -362,16 +362,9 @@ async function generateDPSXml(invoice: any, company: any, dpsId: string): Promis
   push(`<CNPJ>${padLeft(formatDocument(company.document), 14)}</CNPJ>`);
   if (company.municipal_registration) push(`<IM>${escapeXml(String(company.municipal_registration))}</IM>`);
   push(`<xNome>${escapeXml(company.legal_name || "")}</xNome>`);
-  if (company.address_street) {
-    pushEnderecoNacional(
-      companyCityCode,
-      normCep(company.address_zip),
-      String(company.address_street),
-      String(company.address_number || "S/N"),
-      company.address_complement ? String(company.address_complement) : undefined,
-      company.address_neighborhood ? String(company.address_neighborhood) : undefined,
-    );
-  }
+  // Regra Nacional (E0128): quando o prestador é o próprio emitente (tpEmit=1),
+  // não informar endereço nacional em <prest>.
+
   const companyPhone = normPhone(company.phone);
   if (companyPhone) push(`<fone>${companyPhone}</fone>`);
   if (company.email) push(`<email>${escapeXml(String(company.email).slice(0, 80))}</email>`);
