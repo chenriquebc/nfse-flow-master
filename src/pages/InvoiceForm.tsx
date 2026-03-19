@@ -395,6 +395,8 @@ export default function InvoiceForm() {
               totalDeductions={totalDeductions}
               netValue={netValue}
               formatCurrency={formatCurrency}
+              onEmit={handleSaveAndEmit}
+              emitting={emitting}
             />
           )}
         </div>
