@@ -205,6 +205,7 @@ export default function CompanyForm() {
         if (cleanDoc.length === 14) {
           try {
             const rfbData = await fetchCnpj(cleanDoc);
+            const ibgeCode2 = await resolveIbgeCode(rfbData.municipio, rfbData.uf);
             setForm((f) => ({
               ...f,
               legal_name: rfbData.razao_social || f.legal_name,
@@ -215,7 +216,7 @@ export default function CompanyForm() {
               address_complement: rfbData.complemento || f.address_complement,
               address_neighborhood: rfbData.bairro || f.address_neighborhood,
               address_city: rfbData.municipio || f.address_city,
-              address_city_code: rfbData.codigo_municipio ? String(rfbData.codigo_municipio) : f.address_city_code,
+              address_city_code: ibgeCode2 || (rfbData.codigo_municipio ? String(rfbData.codigo_municipio) : f.address_city_code),
               address_state: rfbData.uf || f.address_state,
               address_zip: rfbData.cep ? rfbData.cep.replace(/\D/g, "") : f.address_zip,
               email: rfbData.email || f.email,
