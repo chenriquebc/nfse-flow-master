@@ -23,7 +23,7 @@ interface TenantContextType {
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
 export function TenantProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,7 +32,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     if (!user) {
       setTenants([]);
       setTenant(null);
-      setLoading(false);
+      if (!authLoading) setLoading(false);
       return;
     }
 
@@ -51,8 +51,12 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    if (authLoading) {
+      setLoading(true);
+      return;
+    }
     fetchTenants();
-  }, [user]);
+  }, [user, authLoading]);
 
   const setCurrentTenant = (id: string) => {
     const found = tenants.find(t => t.id === id);
