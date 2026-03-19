@@ -122,9 +122,11 @@ function generateDPSId(
   number: number,
 ): string {
   const ibge = padLeft(cityCode, 7);
-  const tipo = docType;
+  const tipo = docType; // "1" = CNPJ, "2" = CPF
   const inscricao = padLeft(formatDocument(document), 14);
-  const serie = padLeft(series, 5);
+  // Series must be numeric only (5 digits) per TSIdDPS pattern
+  const numericSeries = series.replace(/\D/g, "") || "1";
+  const serie = padLeft(numericSeries, 5);
   const num = padLeft(number, 15);
   return `${ibge}${tipo}${inscricao}${serie}${num}`;
 }
