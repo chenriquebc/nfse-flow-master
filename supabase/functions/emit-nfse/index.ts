@@ -196,7 +196,10 @@ function generateDPSXml(invoice: any, company: any, dpsId: string): string {
   const cTribNac = (() => {
     if (taxCodeDigits.length >= 6) return taxCodeDigits.slice(0, 6);
     if (taxCodeDigits.length === 4) {
-      const suffix = (cTribMun || "001").slice(0, 2);
+      // cTribNac = item(2) + subitem(2) + desdobro nacional(2)
+      // Ex.: 01.06 + 001 => 010601 (não 010600)
+      const suffixRaw = (cTribMun || "001").slice(-2).padStart(2, "0");
+      const suffix = suffixRaw === "00" ? "01" : suffixRaw;
       return `${taxCodeDigits}${suffix}`;
     }
     return taxCodeDigits.padEnd(6, "0").slice(0, 6);
