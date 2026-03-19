@@ -361,7 +361,6 @@ async function generateDPSXml(invoice: any, company: any, dpsId: string): Promis
   push("<prest>");
   push(`<CNPJ>${padLeft(formatDocument(company.document), 14)}</CNPJ>`);
   if (company.municipal_registration) push(`<IM>${escapeXml(String(company.municipal_registration))}</IM>`);
-  push(`<xNome>${escapeXml(company.legal_name || "")}</xNome>`);
   // Regra Nacional (E0128): quando o prestador é o próprio emitente (tpEmit=1),
   // não informar endereço nacional em <prest>.
 
