@@ -305,7 +305,21 @@ Deno.serve(async (req) => {
         .eq("id", invoice_id)
         .single();
 
-      if (!invoice || invoice.status !== "authorized") {
+      if (!invoice) {
+        return new Response(JSON.stringify({ error: "Invoice not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (invoice.status === "cancelled") {
+        return new Response(JSON.stringify({ success: true, status: 200, data: "Already cancelled" }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (invoice.status !== "authorized") {
         return new Response(JSON.stringify({ error: "Only authorized invoices can be cancelled" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
