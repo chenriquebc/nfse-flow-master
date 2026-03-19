@@ -180,6 +180,40 @@ export default function Invoices() {
     }
   };
 
+  const handleResend = async (invoiceId: string) => {
+    setConfirmResend(null);
+    setResending(invoiceId);
+    try {
+      // Reset status to draft first
+      await supabase
+        .from("nfse_invoices")
+        .update({ status: "draft" as any })
+        .eq("id", invoiceId);
+
+      // Then emit
+      const { data, error } = await supabase.functions.invoke("emit-nfse", {
+        body: { invoice_id: invoiceId },
+      });
+
+      if (error) {
+        toast.error("Erro ao reenviar nota", { description: error.message });
+      } else if (data?.success) {
+        toast.success("NFS-e autorizada com sucesso!", {
+          description: data.chave_acesso ? `Chave: ${data.chave_acesso}` : undefined,
+        });
+      } else {
+        toast.error("Nota rejeitada novamente", {
+          description: data?.error_message || "Verifique os dados e tente novamente",
+        });
+      }
+      await fetchInvoices();
+    } catch (e) {
+      toast.error("Erro de comunicação ao reenviar nota");
+    } finally {
+      setResending(null);
+    }
+  };
+
   const filtered = invoices.filter(
     (i) =>
       i.taker_name.toLowerCase().includes(search.toLowerCase()) ||
