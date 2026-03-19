@@ -205,13 +205,11 @@ function generateDPSXml(invoice: any, company: any, dpsId: string): string {
   xml += `<regTrib>`;
   xml += `<opSimpNac>${invoice.tax_assessment_regime || "1"}</opSimpNac>`;
   xml += `<regApTribSN>${invoice.tax_assessment_regime || "1"}</regApTribSN>`;
-  if (regEspTrib !== "nenhum" && regEspTrib !== "0") {
-    const regEspMap: Record<string, string> = {
-      microempresa_municipal: "1", estimativa: "2", sociedade_profissionais: "3",
-      cooperativa: "4", mei: "5", me_epp: "6",
-    };
-    xml += `<regEspTrib>${regEspMap[regEspTrib] || "0"}</regEspTrib>`;
-  }
+  const regEspMap: Record<string, string> = {
+    microempresa_municipal: "1", estimativa: "2", sociedade_profissionais: "3",
+    cooperativa: "4", mei: "5", me_epp: "6",
+  };
+  xml += `<regEspTrib>${regEspMap[regEspTrib] || "0"}</regEspTrib>`;
   xml += `</regTrib>`;
   xml += `</prest>`;
 
