@@ -133,10 +133,39 @@ function generateDPSId(
 
 // ─── DPS XML Generation ────────────────────────────────────────────────────
 
-function generateDPSXml(invoice: any, company: any, dpsId: string): string {
+async function generateDPSXml(invoice: any, company: any, dpsId: string): Promise<string> {
   const ns = "http://www.sped.fazenda.gov.br/nfse";
 
   const onlyDigits = (value: unknown) => String(value ?? "").replace(/\D/g, "");
+  const normalizeText = (value: unknown) =>
+    String(value ?? "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  const isLikelyIbge = (value: unknown) => /^\d{7}$/.test(onlyDigits(value)) && !onlyDigits(value).startsWith("00");
+
+  const resolveIbgeCityCode = async (city: unknown, uf: unknown): Promise<string> => {
+    const cityNorm = normalizeText(city);
+    const ufNorm = String(uf ?? "").trim().toUpperCase();
+
+    if (!cityNorm || ufNorm.length !== 2) return "";
+
+    try {
+      const res = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${encodeURIComponent(ufNorm)}/municipios`);
+      if (!res.ok) return "";
+
+      const data = await res.json();
+      if (!Array.isArray(data)) return "";
+
+      const found = data.find((m: any) => normalizeText(m?.nome) === cityNorm);
+      const ibge = onlyDigits(found?.id);
+      return /^\d{7}$/.test(ibge) ? ibge : "";
+    } catch {
+      return "";
+    }
+  };
+
   const normIbge = (value: unknown, fallback = "0000000") => {
     const digits = onlyDigits(value);
     if (digits.length === 7) return digits;
@@ -188,7 +217,25 @@ function generateDPSXml(invoice: any, company: any, dpsId: string): string {
 
   const serviceCityCode = normIbge(invoice.service_city_code || invoice.issqn_city || company.address_city_code);
   const companyCityCode = normIbge(company.address_city_code, serviceCityCode);
-  const takerCityCode = normIbge(invoice.taker_address_city_code, serviceCityCode);
+
+  let takerCityCode = isLikelyIbge(invoice.taker_address_city_code)
+    ? onlyDigits(invoice.taker_address_city_code).slice(0, 7)
+    : "";
+
+  if (!takerCityCode) {
+    takerCityCode = await resolveIbgeCityCode(invoice.taker_address_city, invoice.taker_address_state);
+  }
+
+  if (!takerCityCode) {
+    takerCityCode = normIbge(invoice.taker_address_city_code, serviceCityCode);
+  }
+
+  console.log("City code resolution", {
+    taker_address_city: invoice.taker_address_city,
+    taker_address_state: invoice.taker_address_state,
+    taker_address_city_code: invoice.taker_address_city_code,
+    takerCityCode,
+  });
 
   const taxCodeDigits = onlyDigits(invoice.tax_code);
   const municipalDigits = onlyDigits(invoice.municipal_tax_code);
