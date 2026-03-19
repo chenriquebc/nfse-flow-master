@@ -356,21 +356,21 @@ export default function Invoices() {
                             )}
                             {(inv.status === "rejected" || inv.status === "error") && (
                               <Button
-                                size="sm"
+                                size="icon"
                                 variant="default"
-                                className="h-7 text-xs"
+                                className="h-7 w-7"
                                 disabled={resending === inv.id}
+                                title="Reenviar"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setConfirmResend(inv.id);
                                 }}
                               >
                                 {resending === inv.id ? (
-                                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                                  <Loader2 className="h-3 w-3 animate-spin" />
                                 ) : (
-                                  <RotateCcw className="h-3 w-3 mr-1" />
+                                  <RotateCcw className="h-3 w-3" />
                                 )}
-                                Reenviar
                               </Button>
                             )}
 
@@ -432,15 +432,11 @@ export default function Invoices() {
                                   <FileText className="h-4 w-4 mr-2" />
                                   Download DANFS-e
                                 </DropdownMenuItem>
-                                {(inv.status === "rejected" || inv.status === "error") && (
-                                  <>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={() => openEventLog(inv)}>
-                                      <AlertTriangle className="h-4 w-4 mr-2" />
-                                      Ver Log de Erros
-                                    </DropdownMenuItem>
-                                  </>
-                                )}
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => openEventLog(inv)}>
+                                  <AlertTriangle className="h-4 w-4 mr-2" />
+                                  Ver Log de Eventos
+                                </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
