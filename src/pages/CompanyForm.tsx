@@ -98,6 +98,8 @@ export default function CompanyForm() {
     setCnpjLoading(true);
     try {
       const data = await fetchCnpj(form.document);
+      // Resolve código IBGE real (BrasilAPI retorna código SIAFI, não IBGE)
+      const ibgeCode = await resolveIbgeCode(data.municipio, data.uf);
       setForm((f) => ({
         ...f,
         legal_name: data.razao_social || f.legal_name,
@@ -107,7 +109,7 @@ export default function CompanyForm() {
         address_complement: data.complemento || f.address_complement,
         address_neighborhood: data.bairro || f.address_neighborhood,
         address_city: data.municipio || f.address_city,
-        address_city_code: data.codigo_municipio ? String(data.codigo_municipio) : f.address_city_code,
+        address_city_code: ibgeCode || (data.codigo_municipio ? String(data.codigo_municipio) : f.address_city_code),
         address_state: data.uf || f.address_state,
         address_zip: data.cep ? data.cep.replace(/\D/g, "") : f.address_zip,
         email: data.email || f.email,
