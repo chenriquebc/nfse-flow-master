@@ -193,15 +193,56 @@ function generateDPSXml(invoice: any, company: any, dpsId: string): string {
   const taxCodeDigits = onlyDigits(invoice.tax_code);
   const municipalDigits = onlyDigits(invoice.municipal_tax_code);
   const cTribMun = municipalDigits ? municipalDigits.slice(-3).padStart(3, "0") : "";
+
+  // Códigos de tributação nacional válidos para os itens usados no frontend.
+  // Evita rejeição E0310 por montagem inválida do desdobro.
+  const validNationalTribCodesByItem: Record<string, string[]> = {
+    "0101": ["010101"],
+    "0102": ["010201"],
+    "0103": ["010301", "010302"],
+    "0104": ["010401"],
+    "0105": ["010501"],
+    "0106": ["010601"],
+    "0107": ["010701"],
+    "0108": ["010801"],
+    "0109": ["010901", "010902"],
+    "0201": ["020101"],
+    "0701": ["070101"],
+    "0702": ["070201"],
+    "0703": ["070301"],
+    "1001": ["100101"],
+    "1002": ["100201"],
+    "1005": ["100501"],
+    "1401": ["140101"],
+    "1701": ["170101"],
+    "1702": ["170201"],
+    "1704": ["170401"],
+    "1705": ["170501"],
+    "1706": ["170601"],
+    "1719": ["171901"],
+    "1720": ["172001"],
+    "1722": ["172201"],
+    "2501": ["250101"],
+    "2502": ["250201"],
+    "2503": ["250301"],
+    "2504": ["250401"],
+  };
+
   const cTribNac = (() => {
     if (taxCodeDigits.length >= 6) return taxCodeDigits.slice(0, 6);
+
     if (taxCodeDigits.length === 4) {
-      // cTribNac = item(2) + subitem(2) + desdobro nacional(2)
-      // Ex.: 01.06 + 001 => 010601 (não 010600)
-      const suffixRaw = (cTribMun || "001").slice(-2).padStart(2, "0");
-      const suffix = suffixRaw === "00" ? "01" : suffixRaw;
-      return `${taxCodeDigits}${suffix}`;
+      const allowed = validNationalTribCodesByItem[taxCodeDigits];
+      const desiredSuffix = (cTribMun || "001").slice(-2).padStart(2, "0");
+      const desired = `${taxCodeDigits}${desiredSuffix === "00" ? "01" : desiredSuffix}`;
+
+      if (allowed?.length) {
+        return allowed.includes(desired) ? desired : allowed[0];
+      }
+
+      return `${taxCodeDigits}01`;
     }
+
     return taxCodeDigits.padEnd(6, "0").slice(0, 6);
   })();
 
