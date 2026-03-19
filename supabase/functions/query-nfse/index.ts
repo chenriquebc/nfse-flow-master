@@ -375,7 +375,20 @@ Deno.serve(async (req) => {
 
       console.log(`[cancel] SEFIN response: ${result.status} - ${result.body.substring(0, 500)}`);
 
-      if (result.status >= 200 && result.status < 300) {
+      // Treat E0840 (already cancelled) as success
+      let isSuccess = result.status >= 200 && result.status < 300;
+      if (!isSuccess) {
+        try {
+          const parsed = JSON.parse(result.body);
+          const errors = parsed.erro || parsed.erros || [];
+          if (errors.some((e: any) => e.codigo === "E0840" || e.Codigo === "E0840")) {
+            isSuccess = true;
+            console.log("[cancel] E0840 detected - treating as successful cancellation (already cancelled)");
+          }
+        } catch { /* not JSON, ignore */ }
+      }
+
+      if (isSuccess) {
         await supabase.from("nfse_invoices").update({ status: "cancelled" }).eq("id", invoice_id);
         await supabase.from("nfse_events").insert({
           invoice_id,
@@ -398,7 +411,7 @@ Deno.serve(async (req) => {
       }
 
       return new Response(JSON.stringify({
-        success: result.status >= 200 && result.status < 300,
+        success: isSuccess,
         status: result.status,
         data: result.body,
       }), {
