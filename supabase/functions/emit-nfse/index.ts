@@ -536,11 +536,31 @@ Deno.serve(async (req) => {
       created_by: userData.user.id,
     });
 
-    // ─── Send via Deno HttpClient (mTLS) ────────────────────────────────
+    // ─── Send via proxy (mTLS) ─────────────────────────────────────────
     try {
-      console.log(`Sending to SEFIN via Deno HttpClient: POST ${SEFIN_HOST}${SEFIN_PATH}`);
+      // SEFIN Nacional expects JSON with GZip+Base64 encoded signed XML
+      // 1. Compress signed XML with GZip
+      const xmlBytes = new TextEncoder().encode(signedXml);
+      const cs = new CompressionStream("gzip");
+      const csWriter = cs.writable.getWriter();
+      csWriter.write(xmlBytes);
+      csWriter.close();
+      const gzippedBuf = await new Response(cs.readable).arrayBuffer();
+      const gzippedBytes = new Uint8Array(gzippedBuf);
 
-      const result = await mtlsFetch("POST", SEFIN_PATH, signedXml, certPem, keyPem);
+      // 2. Base64 encode the gzipped data
+      let binaryStr = "";
+      for (let i = 0; i < gzippedBytes.length; i++) {
+        binaryStr += String.fromCharCode(gzippedBytes[i]);
+      }
+      const dpsXmlGZipB64 = btoa(binaryStr);
+
+      // 3. Build JSON payload as required by SEFIN Nacional API
+      const jsonPayload = JSON.stringify({ dpsXmlGZipB64 });
+
+      console.log(`Sending to SEFIN via proxy: POST ${SEFIN_HOST}${SEFIN_PATH} (JSON/GZip+B64, ${jsonPayload.length} bytes)`);
+
+      const result = await mtlsFetch("POST", SEFIN_PATH, jsonPayload, certPem, keyPem, "application/json");
 
       console.log(`SEFIN response status: ${result.status}`);
       console.log(`SEFIN response body (first 500 chars): ${result.body.substring(0, 500)}`);
@@ -549,28 +569,52 @@ Deno.serve(async (req) => {
         invoice_id,
         tenant_id: invoice.tenant_id,
         event_type: "submitted",
-        description: `Enviado à Sefin Nacional. Status HTTP: ${result.status}`,
+        description: `Enviado à Sefin Nacional (JSON/GZip+B64). Status HTTP: ${result.status}`,
         response_xml: result.body,
         created_by: userData.user.id,
       });
 
-      if (result.status >= 200 && result.status < 300) {
-        const chaveMatch = result.body.match(/<chNFSe>([^<]+)<\/chNFSe>/);
-        const protocolMatch = result.body.match(/<nProt>([^<]+)<\/nProt>/);
-        const nfseNumMatch = result.body.match(/<nNFSe>([^<]+)<\/nNFSe>/);
-        const verCodeMatch = result.body.match(/<cVerif>([^<]+)<\/cVerif>/);
+      // Parse JSON response from SEFIN
+      let responseData: Record<string, unknown> | null = null;
+      try {
+        responseData = JSON.parse(result.body);
+      } catch {
+        // Response may not be valid JSON
+      }
+
+      if (result.status >= 200 && result.status < 300 && responseData) {
+        // Decode nfseXmlGZipB64 if present in the response
+        let nfseXml = "";
+        if (responseData.nfseXmlGZipB64 && typeof responseData.nfseXmlGZipB64 === "string") {
+          try {
+            const gzipBin = Uint8Array.from(atob(responseData.nfseXmlGZipB64 as string), (c) => c.charCodeAt(0));
+            const ds = new DecompressionStream("gzip");
+            const dsWriter = ds.writable.getWriter();
+            dsWriter.write(gzipBin);
+            dsWriter.close();
+            nfseXml = await new Response(ds.readable).text();
+          } catch (decErr) {
+            console.warn("Failed to decode nfseXmlGZipB64:", decErr);
+            nfseXml = result.body;
+          }
+        }
+
+        const chaveAcesso = (responseData.chNFSe || responseData.chaveAcesso || null) as string | null;
+        const nProt = (responseData.nProt || null) as string | null;
+        const nNFSe = (responseData.nNFSe || null) as string | null;
+        const cVerif = (responseData.cVerif || null) as string | null;
 
         await supabase.from("nfse_invoices").update({
           status: "authorized",
-          xml_authorized: result.body,
+          xml_authorized: nfseXml || result.body,
           xml_response: result.body,
-          protocol_number: protocolMatch ? protocolMatch[1] : null,
-          invoice_number: nfseNumMatch ? parseInt(nfseNumMatch[1]) : null,
-          verification_code: verCodeMatch ? verCodeMatch[1] : null,
+          protocol_number: nProt,
+          invoice_number: nNFSe ? parseInt(nNFSe) : null,
+          verification_code: cVerif,
           issued_at: new Date().toISOString(),
           metadata: {
             ...(invoice.metadata || {}),
-            chave_acesso: chaveMatch ? chaveMatch[1] : null,
+            chave_acesso: chaveAcesso,
             dps_id: dpsId,
           },
         }).eq("id", invoice_id);
@@ -579,23 +623,24 @@ Deno.serve(async (req) => {
           invoice_id,
           tenant_id: invoice.tenant_id,
           event_type: "authorized",
-          description: `NFS-e autorizada. ${chaveMatch ? `Chave: ${chaveMatch[1]}` : ""}`,
+          description: `NFS-e autorizada. ${chaveAcesso ? `Chave: ${chaveAcesso}` : ""}`,
           created_by: userData.user.id,
         });
 
         return new Response(JSON.stringify({
           success: true,
           status: "authorized",
-          chave_acesso: chaveMatch ? chaveMatch[1] : null,
-          protocol: protocolMatch ? protocolMatch[1] : null,
-          invoice_number: nfseNumMatch ? nfseNumMatch[1] : null,
+          chave_acesso: chaveAcesso,
+          protocol: nProt,
+          invoice_number: nNFSe,
         }), {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       } else {
-        const errorMatch = result.body.match(/<xMotivo>([^<]+)<\/xMotivo>/);
-        const errorCodeMatch = result.body.match(/<cStat>([^<]+)<\/cStat>/);
+        // Rejection or error
+        const errorMsg = (responseData?.message || responseData?.xMotivo || result.body.substring(0, 500)) as string;
+        const errorCode = String(responseData?.cStat || responseData?.codigo || result.status);
 
         await supabase.from("nfse_invoices").update({
           status: "rejected",
@@ -606,8 +651,8 @@ Deno.serve(async (req) => {
           invoice_id,
           tenant_id: invoice.tenant_id,
           event_type: "rejected",
-          error_code: errorCodeMatch ? errorCodeMatch[1] : String(result.status),
-          error_message: errorMatch ? errorMatch[1] : result.body.substring(0, 500),
+          error_code: errorCode,
+          error_message: errorMsg,
           response_xml: result.body,
           created_by: userData.user.id,
         });
@@ -615,8 +660,8 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({
           success: false,
           status: "rejected",
-          error_code: errorCodeMatch ? errorCodeMatch[1] : String(result.status),
-          error_message: errorMatch ? errorMatch[1] : "Rejeição da DPS pela Sefin Nacional",
+          error_code: errorCode,
+          error_message: errorMsg,
           response: result.body,
         }), {
           status: 200,
