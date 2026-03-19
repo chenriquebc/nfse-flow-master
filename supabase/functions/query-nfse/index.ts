@@ -195,7 +195,7 @@ function signEventXml(xml: string, privateKey: forge.pki.rsa.PrivateKey, cert: f
 }
 
 Deno.serve(async (req) => {
-
+  if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
