@@ -7,7 +7,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Table,
   TableBody,
@@ -54,6 +56,7 @@ interface Invoice {
   status: string;
   competence_date: string;
   created_at: string;
+  metadata?: any;
   companies: { legal_name: string } | null;
 }
 
@@ -92,7 +95,9 @@ export default function Invoices() {
   const [cancelling, setCancelling] = useState<string | null>(null);
   const [resending, setResending] = useState<string | null>(null);
   const [confirmEmit, setConfirmEmit] = useState<string | null>(null);
-  const [confirmCancel, setConfirmCancel] = useState<string | null>(null);
+  const [confirmCancel, setConfirmCancel] = useState<Invoice | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelDetailsOpen, setCancelDetailsOpen] = useState(false);
   const [confirmResend, setConfirmResend] = useState<string | null>(null);
   const [eventLogInvoice, setEventLogInvoice] = useState<Invoice | null>(null);
   const [events, setEvents] = useState<InvoiceEvent[]>([]);
@@ -164,12 +169,13 @@ export default function Invoices() {
     }
   };
 
-  const handleCancel = async (invoiceId: string) => {
+  const handleCancel = async (invoiceId: string, reason: string) => {
     setConfirmCancel(null);
+    setCancelReason("");
     setCancelling(invoiceId);
     try {
       const { data, error } = await supabase.functions.invoke("query-nfse", {
-        body: { action: "cancel", invoice_id: invoiceId, reason: "Cancelamento solicitado pelo emitente" },
+        body: { action: "cancel", invoice_id: invoiceId, reason },
       });
 
       if (error) {
@@ -403,7 +409,7 @@ export default function Invoices() {
                                     <DropdownMenuItem
                                       className="text-destructive focus:text-destructive"
                                       disabled={cancelling === inv.id}
-                                      onClick={() => setConfirmCancel(inv.id)}
+                                      onClick={() => { setCancelReason(""); setCancelDetailsOpen(false); setConfirmCancel(inv as unknown as Invoice); }}
                                     >
                                       <XCircle className="h-4 w-4 mr-2" />
                                       Cancelar NFS-e
@@ -469,23 +475,96 @@ export default function Invoices() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Confirm Cancel Dialog */}
-      <AlertDialog open={!!confirmCancel} onOpenChange={() => setConfirmCancel(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Cancelar Nota Fiscal</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja cancelar esta NFS-e? Esta ação enviará um evento de cancelamento ao portal nacional e não poderá ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Voltar</AlertDialogCancel>
-            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => confirmCancel && handleCancel(confirmCancel)}>
-              Cancelar NFS-e
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Cancel Modal */}
+      <Dialog open={!!confirmCancel} onOpenChange={(open) => { if (!open) setConfirmCancel(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold text-destructive">
+              CANCELAMENTO DE NFS-E
+            </DialogTitle>
+          </DialogHeader>
+          <div className="border-t border-destructive/30 mb-2" />
+
+          {confirmCancel && (
+            <div className="space-y-4">
+              {/* Chave de acesso */}
+              <div>
+                <Label className="text-sm font-medium">Chave de acesso</Label>
+                <div className="mt-1 rounded-md border bg-muted/50 p-3 font-mono text-sm break-all">
+                  {(confirmCancel as any).metadata?.chave_acesso || "Não disponível"}
+                </div>
+              </div>
+
+              {/* Expandable details */}
+              <Collapsible open={cancelDetailsOpen} onOpenChange={setCancelDetailsOpen}>
+                <CollapsibleTrigger asChild>
+                  <Button variant="link" size="sm" className="h-auto p-0 text-primary">
+                    {cancelDetailsOpen ? (
+                      <><ChevronUp className="h-3 w-3 mr-1" /> Ocultar detalhes da NFS-e</>
+                    ) : (
+                      <><ChevronDown className="h-3 w-3 mr-1" /> Exibir detalhes da NFS-e</>
+                    )}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-2 space-y-2 rounded-md border p-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Tomador:</span>
+                    <span className="font-medium">{confirmCancel.taker_name}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Valor:</span>
+                    <span className="font-medium">{Number(confirmCancel.service_value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Competência:</span>
+                    <span className="font-medium">{new Date(confirmCancel.competence_date).toLocaleDateString("pt-BR")}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Empresa:</span>
+                    <span className="font-medium">{confirmCancel.companies?.legal_name || "—"}</span>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+
+              {/* Reason select */}
+              <div>
+                <Label className="text-sm font-medium">
+                  Motivo do cancelamento <span className="text-destructive">*</span>
+                </Label>
+                <Select value={cancelReason} onValueChange={setCancelReason}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Erro na emissão">Erro na emissão</SelectItem>
+                    <SelectItem value="Serviço não prestado">Serviço não prestado</SelectItem>
+                    <SelectItem value="Outros">Outros</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end gap-3 pt-2">
+                <Button
+                  disabled={!cancelReason || cancelling === confirmCancel.id}
+                  onClick={() => handleCancel(confirmCancel.id, cancelReason)}
+                >
+                  {cancelling === confirmCancel.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                  )}
+                  Cancelar NFS-e
+                </Button>
+                <Button variant="secondary" onClick={() => setConfirmCancel(null)}>
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Fechar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Confirm Resend Dialog */}
       <AlertDialog open={!!confirmResend} onOpenChange={() => setConfirmResend(null)}>
