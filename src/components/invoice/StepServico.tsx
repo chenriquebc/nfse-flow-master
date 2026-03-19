@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileText, Search } from "lucide-react";
 import { useState, useMemo } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -44,7 +45,6 @@ const NATIONAL_TAX_CODES = [
   { code: "25.04", desc: "Manutenção e conservação de jazigos e cemitérios." },
 ];
 
-// Lista de códigos NBS (Nomenclatura Brasileira de Serviços) — mais comuns
 const NBS_CODES = [
   { code: "1.0101.10.00", desc: "Serviços de pesquisa e desenvolvimento em ciências físicas" },
   { code: "1.0101.20.00", desc: "Serviços de pesquisa e desenvolvimento em ciências naturais e engenharia" },
@@ -86,6 +86,9 @@ interface StepServicoProps {
     municipal_tax_code: string;
     issqn_exemption: boolean;
     issqn_city: string;
+    service_country: string;
+    service_city_code: string;
+    competence_date: string;
   };
   set: (key: string, value: string | boolean) => void;
 }
@@ -151,7 +154,6 @@ function TaxCodeCombobox({ value, onChange, label, codes, placeholder }: {
 }
 
 export default function StepServico({ form, set }: StepServicoProps) {
-  // Gerar códigos complementares municipais a partir do código nacional selecionado
   const municipalCodes = useMemo(() => {
     if (!form.tax_code) return [];
     return [
@@ -167,6 +169,31 @@ export default function StepServico({ form, set }: StepServicoProps) {
         <h2 className="text-lg font-semibold text-foreground">Serviço Prestado</h2>
         <p className="text-sm text-muted-foreground">Informe os códigos fiscais e descreva o serviço</p>
       </div>
+
+      {/* Local da Prestação do Serviço */}
+      <Card>
+        <CardContent className="pt-6 space-y-4">
+          <h3 className="text-sm font-semibold text-primary uppercase tracking-wide">Local da Prestação do Serviço</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>País *</Label>
+              <Select value={form.service_country} onValueChange={(v) => set("service_country", v)}>
+                <SelectTrigger className="h-12">
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1058">Brasil</SelectItem>
+                  <SelectItem value="exterior">Exterior</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Município *</Label>
+              <Input className="h-12" value={form.service_city_code} onChange={(e) => set("service_city_code", e.target.value)} placeholder="Ex: Rio de Janeiro/RJ ou cód. IBGE" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardContent className="pt-6 space-y-5">
@@ -215,9 +242,15 @@ export default function StepServico({ form, set }: StepServicoProps) {
             </RadioGroup>
           </div>
 
-          <div className="space-y-2">
-            <Label>Município de incidência do ISSQN</Label>
-            <Input className="h-12" value={form.issqn_city} onChange={(e) => set("issqn_city", e.target.value)} placeholder="Ex: São Paulo/SP" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Município de incidência do ISSQN</Label>
+              <Input className="h-12" value={form.issqn_city} onChange={(e) => set("issqn_city", e.target.value)} placeholder="Ex: São Paulo/SP" />
+            </div>
+            <div className="space-y-2">
+              <Label>Data de Competência</Label>
+              <Input type="date" className="h-12 bg-muted/50" value={form.competence_date} readOnly />
+            </div>
           </div>
 
           <div className="space-y-2">

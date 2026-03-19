@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { ClipboardCheck, Building2, UserRound, FileText, Calculator } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ClipboardCheck, Building2, UserRound, FileText, Calculator, Send } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 interface Company {
@@ -15,6 +16,8 @@ interface StepRevisaoProps {
   totalDeductions: number;
   netValue: number;
   formatCurrency: (v: number) => string;
+  onEmit?: () => void;
+  emitting?: boolean;
 }
 
 function InfoRow({ label, value }: { label: string; value: string }) {
@@ -27,7 +30,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default function StepRevisao({ form, companies, baseValue, issValue, totalDeductions, netValue, formatCurrency }: StepRevisaoProps) {
+export default function StepRevisao({ form, companies, baseValue, issValue, totalDeductions, netValue, formatCurrency, onEmit, emitting }: StepRevisaoProps) {
   const companyName = companies.find((c) => c.id === form.company_id)?.legal_name || "—";
 
   return (
@@ -117,6 +120,15 @@ export default function StepRevisao({ form, companies, baseValue, issValue, tota
             <p className="text-sm text-muted-foreground whitespace-pre-wrap">{form.notes as string}</p>
           </CardContent>
         </Card>
+      )}
+
+      {onEmit && (
+        <div className="flex justify-center pt-2">
+          <Button onClick={onEmit} disabled={emitting} variant="default" size="lg" className="gap-2">
+            <Send className="h-4 w-4" />
+            {emitting ? "Emitindo..." : "Salvar e Emitir NFS-e"}
+          </Button>
+        </div>
       )}
     </div>
   );
