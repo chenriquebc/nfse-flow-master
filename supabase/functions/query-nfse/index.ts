@@ -316,7 +316,7 @@ Deno.serve(async (req) => {
       // Sign the cancel XML
       const signedCancelXml = signEventXml(cancelXml, privateKey, cert, eventId);
 
-      console.log(`[cancel] Signed cancel XML for chave=${chave}`);
+      console.log(`[cancel] eventId=${eventId}, XML length=${signedCancelXml.length}`);
 
       // GZip + Base64 encode
       const xmlBytes = new TextEncoder().encode(signedCancelXml);
