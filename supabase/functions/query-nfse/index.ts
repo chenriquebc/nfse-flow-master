@@ -336,7 +336,7 @@ Deno.serve(async (req) => {
       const cMotivo = reasonCodeMap[reason] || "3";
       const nSeqEvento = "001";
       const cnpjAutor = chave.slice(7, 21);
-      const eventId = `PRE${chave}101101${nSeqEvento}`;
+      const eventId = `PRE${chave}101${nSeqEvento}`;
 
       const cancelXml = `<?xml version="1.0" encoding="UTF-8"?><pedRegEvento xmlns="http://www.sped.fazenda.gov.br/nfse" versao="1.00"><infPedReg Id="${eventId}"><tpAmb>1</tpAmb><verAplic>NFSE-FLOW-1.0</verAplic><dhEvento>${dhEvento}</dhEvento><CNPJAutor>${cnpjAutor}</CNPJAutor><chNFSe>${chave}</chNFSe><nPedRegEvento>${nSeqEvento}</nPedRegEvento><e101101><xDesc>Cancelamento de NFS-e</xDesc><cMotivo>${cMotivo}</cMotivo><xMotivo>${reason}</xMotivo></e101101></infPedReg></pedRegEvento>`;
 
