@@ -237,32 +237,52 @@ Deno.serve(async (req) => {
         });
       }
 
-      const { certPem, keyPem } = await getCertPems(supabase, invoice.company_id, masterKey);
+      const { certPem, keyPem, cert, privateKey } = await getCertPemsAndKeys(supabase, invoice.company_id, masterKey);
 
-      const cancelXml = `<?xml version="1.0" encoding="UTF-8"?>
-<pedRegEvento xmlns="http://www.sped.fazenda.gov.br/nfse" versao="1.00">
-  <infPedReg>
-    <tpAmb>1</tpAmb>
-    <verAplic>NFSE-FLOW-1.0</verAplic>
-    <dhEvento>${new Date().toISOString()}</dhEvento>
-    <nSeqEvento>1</nSeqEvento>
-    <chNFSe>${chave}</chNFSe>
-    <tpEvento>e101101</tpEvento>
-    <detEvento>
-      <e101101>
-        <xMotivo>${body.reason || "Cancelamento solicitado pelo emitente"}</xMotivo>
-      </e101101>
-    </detEvento>
-  </infPedReg>
-</pedRegEvento>`;
+      // Build cancel event XML (pedRegEvento)
+      const now = new Date();
+      const tzOffset = "-03:00";
+      const pad = (n: number) => String(n).padStart(2, "0");
+      const dhEvento = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}${tzOffset}`;
+      const reason = body.reason || "Cancelamento solicitado pelo emitente";
+      const eventId = `ID${chave}e10110100001`;
+
+      const cancelXml = `<?xml version="1.0" encoding="UTF-8"?><pedRegEvento xmlns="http://www.sped.fazenda.gov.br/nfse" versao="1.00"><infPedReg Id="${eventId}"><tpAmb>1</tpAmb><verAplic>NFSE-FLOW-1.0</verAplic><dhEvento>${dhEvento}</dhEvento><nSeqEvento>1</nSeqEvento><chNFSe>${chave}</chNFSe><tpEvento>e101101</tpEvento><detEvento><e101101><xMotivo>${reason}</xMotivo></e101101></detEvento></infPedReg></pedRegEvento>`;
+
+      // Sign the cancel XML
+      const signedCancelXml = signEventXml(cancelXml, privateKey, cert, eventId);
+
+      console.log(`[cancel] Signed cancel XML for chave=${chave}`);
+
+      // GZip + Base64 encode
+      const xmlBytes = new TextEncoder().encode(signedCancelXml);
+      const cs = new CompressionStream("gzip");
+      const csWriter = cs.writable.getWriter();
+      csWriter.write(xmlBytes);
+      csWriter.close();
+      const gzippedBuf = await new Response(cs.readable).arrayBuffer();
+      const gzippedBytes = new Uint8Array(gzippedBuf);
+      let binaryStr = "";
+      for (let i = 0; i < gzippedBytes.length; i++) {
+        binaryStr += String.fromCharCode(gzippedBytes[i]);
+      }
+      const pedRegEventoXmlGZipB64 = btoa(binaryStr);
+
+      // Send as JSON to SEFIN eventos endpoint
+      const jsonPayload = JSON.stringify({ pedRegEventoXmlGZipB64 });
+
+      console.log(`[cancel] Sending JSON to SEFIN: POST /SefinNacional/nfse/${chave}/eventos (${jsonPayload.length} bytes)`);
 
       const result = await mtlsFetch(
         "POST",
         `/SefinNacional/nfse/${chave}/eventos`,
-        cancelXml,
+        jsonPayload,
         certPem,
         keyPem,
+        "application/json",
       );
+
+      console.log(`[cancel] SEFIN response: ${result.status} - ${result.body.substring(0, 500)}`);
 
       if (result.status >= 200 && result.status < 300) {
         await supabase.from("nfse_invoices").update({ status: "cancelled" }).eq("id", invoice_id);
@@ -280,6 +300,7 @@ Deno.serve(async (req) => {
           tenant_id: invoice.tenant_id,
           event_type: "error",
           error_message: `Cancel failed: ${result.status}`,
+          error_code: String(result.status),
           response_xml: result.body,
           created_by: userData.user.id,
         });
