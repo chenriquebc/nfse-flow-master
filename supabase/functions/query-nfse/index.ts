@@ -191,7 +191,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      const { certPem, keyPem } = await getCertPems(supabase, invoice.company_id, masterKey);
+      const { certPem, keyPem } = await getCertPemsAndKeys(supabase, invoice.company_id, masterKey);
 
       const result = await mtlsFetch(
         "GET",
