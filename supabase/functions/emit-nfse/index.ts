@@ -493,9 +493,13 @@ async function generateDPSXml(invoice: any, company: any, dpsId: string): Promis
     push("</tribFed>");
   }
 
-  push("<totTrib>");
-  push("<indTotTrib>0</indTotTrib>");
-  push("</totTrib>");
+  // E0712: Para ME/EPP (opSimpNac=3, regApTribSN=1), não informar totTrib/indTotTrib
+  const isMeEpp = regApTribSN === "1";
+  if (!isMeEpp) {
+    push("<totTrib>");
+    push("<indTotTrib>0</indTotTrib>");
+    push("</totTrib>");
+  }
   push("</trib>");
   push("</valores>");
 
