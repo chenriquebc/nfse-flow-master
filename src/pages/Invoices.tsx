@@ -408,7 +408,7 @@ export default function Invoices() {
                                     <DropdownMenuItem
                                       className="text-destructive focus:text-destructive"
                                       disabled={cancelling === inv.id}
-                                      onClick={() => setConfirmCancel(inv.id)}
+                                      onClick={() => { setCancelReason(""); setCancelDetailsOpen(false); setConfirmCancel(inv as unknown as Invoice); }}
                                     >
                                       <XCircle className="h-4 w-4 mr-2" />
                                       Cancelar NFS-e
