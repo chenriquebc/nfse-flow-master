@@ -319,7 +319,8 @@ async function generateDPSXml(invoice: any, company: any, dpsId: string): Promis
   const dhEmi = `${brt.getUTCFullYear()}-${pad(brt.getUTCMonth() + 1)}-${pad(brt.getUTCDate())}T${pad(brt.getUTCHours())}:${pad(brt.getUTCMinutes())}:${pad(brt.getUTCSeconds())}-03:00`;
 
   const serieDigits = onlyDigits(invoice.rps_series || "1") || "1";
-  const nDps = Number(invoice.rps_number || 1);
+  const serieXml = padLeft(serieDigits, 5);
+  const nDpsXml = padLeft(Number(invoice.rps_number || 1), 15);
 
   const xml: string[] = [];
   const push = (value: string) => xml.push(value);
@@ -350,8 +351,8 @@ async function generateDPSXml(invoice: any, company: any, dpsId: string): Promis
   push(`<tpAmb>1</tpAmb>`);
   push(`<dhEmi>${dhEmi}</dhEmi>`);
   push(`<verAplic>NFSE-FLOW-1.0</verAplic>`);
-  push(`<serie>${Number(serieDigits)}</serie>`);
-  push(`<nDPS>${nDps}</nDPS>`);
+  push(`<serie>${serieXml}</serie>`);
+  push(`<nDPS>${nDpsXml}</nDPS>`);
   push(`<dCompet>${competenceDate}</dCompet>`);
   push(`<tpEmit>1</tpEmit>`);
   push(`<cLocEmi>${companyCityCode}</cLocEmi>`);
