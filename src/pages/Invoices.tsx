@@ -432,15 +432,11 @@ export default function Invoices() {
                                   <FileText className="h-4 w-4 mr-2" />
                                   Download DANFS-e
                                 </DropdownMenuItem>
-                                {(inv.status === "rejected" || inv.status === "error") && (
-                                  <>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={() => openEventLog(inv)}>
-                                      <AlertTriangle className="h-4 w-4 mr-2" />
-                                      Ver Log de Erros
-                                    </DropdownMenuItem>
-                                  </>
-                                )}
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => openEventLog(inv)}>
+                                  <AlertTriangle className="h-4 w-4 mr-2" />
+                                  Ver Log de Eventos
+                                </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
