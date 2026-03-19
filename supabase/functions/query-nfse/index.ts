@@ -136,7 +136,65 @@ async function getCertPemsAndKeys(supabase: any, companyId: string, masterKey: s
   return loadCertAndKey(pfxBinary, certPassword);
 }
 
-Deno.serve(async (req) => {
+// ─── XML Signing for Events ─────────────────────────────────────────────
+
+function normalizeXmlForSignature(xml: string): string {
+  return xml
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .replace(/>\s+</g, "><")
+    .trim();
+}
+
+function signEventXml(xml: string, privateKey: forge.pki.rsa.PrivateKey, cert: forge.pki.Certificate, eventId: string): string {
+  const infMatch = xml.match(/<infPedReg[^>]*>[\s\S]*<\/infPedReg>/);
+  if (!infMatch) throw new Error("infPedReg not found in event XML");
+
+  const canonicalized = normalizeXmlForSignature(infMatch[0]);
+
+  const digestMd = forge.md.sha256.create();
+  digestMd.update(canonicalized, "utf8");
+  const digestValue = forge.util.encode64(digestMd.digest().bytes());
+
+  const signedInfoXml =
+    `<SignedInfo xmlns="http://www.w3.org/2000/09/xmldsig#">` +
+    `<CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></CanonicalizationMethod>` +
+    `<SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"></SignatureMethod>` +
+    `<Reference URI="#${eventId}">` +
+    `<Transforms>` +
+    `<Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></Transform>` +
+    `<Transform Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></Transform>` +
+    `</Transforms>` +
+    `<DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"></DigestMethod>` +
+    `<DigestValue>${digestValue}</DigestValue>` +
+    `</Reference>` +
+    `</SignedInfo>`;
+
+  const canonicalizedSignedInfo = normalizeXmlForSignature(signedInfoXml);
+
+  const signMd = forge.md.sha256.create();
+  signMd.update(canonicalizedSignedInfo, "utf8");
+  const signature = privateKey.sign(signMd);
+  const signatureValue = forge.util.encode64(signature);
+
+  const certDer = forge.asn1.toDer(forge.pki.certificateToAsn1(cert)).bytes();
+  const x509Certificate = forge.util.encode64(certDer);
+
+  const signatureXml =
+    `<Signature xmlns="http://www.w3.org/2000/09/xmldsig#">` +
+    canonicalizedSignedInfo +
+    `<SignatureValue>${signatureValue}</SignatureValue>` +
+    `<KeyInfo>` +
+    `<X509Data>` +
+    `<X509Certificate>${x509Certificate}</X509Certificate>` +
+    `</X509Data>` +
+    `</KeyInfo>` +
+    `</Signature>`;
+
+  return xml.replace("</pedRegEvento>", `${signatureXml}</pedRegEvento>`);
+}
+
+
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
