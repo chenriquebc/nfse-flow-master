@@ -5,12 +5,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileText, Search } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { fetchMunicipios, searchMunicipios, type MunicipioIBGE } from "@/lib/api/ibge";
 
 // Lista de códigos de tributação nacional (LC 116) — itens mais comuns
 const NATIONAL_TAX_CODES = [
@@ -154,6 +155,21 @@ function TaxCodeCombobox({ value, onChange, label, codes, placeholder }: {
 }
 
 export default function StepServico({ form, set }: StepServicoProps) {
+  const [municipios, setMunicipios] = useState<MunicipioIBGE[]>([]);
+  const [munSearch, setMunSearch] = useState("");
+  const [munOpen, setMunOpen] = useState(false);
+
+  useEffect(() => {
+    fetchMunicipios().then(setMunicipios).catch(() => {});
+  }, []);
+
+  const filteredMunicipios = useMemo(() => searchMunicipios(municipios, munSearch), [municipios, munSearch]);
+
+  const selectedMunicipio = useMemo(() => {
+    if (!form.service_city_code || municipios.length === 0) return null;
+    return municipios.find(m => String(m.id) === form.service_city_code) || null;
+  }, [form.service_city_code, municipios]);
+
   const municipalCodes = useMemo(() => {
     if (!form.tax_code) return [];
     return [
@@ -189,7 +205,54 @@ export default function StepServico({ form, set }: StepServicoProps) {
             </div>
             <div className="space-y-2">
               <Label>Município *</Label>
-              <Input className="h-12" value={form.service_city_code} onChange={(e) => set("service_city_code", e.target.value)} placeholder="Ex: Rio de Janeiro/RJ ou cód. IBGE" />
+              <Popover open={munOpen} onOpenChange={setMunOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={munOpen}
+                    className="w-full justify-between h-12 text-left font-normal"
+                  >
+                    <span className="truncate">
+                      {selectedMunicipio
+                        ? `${selectedMunicipio.nome}/${selectedMunicipio.uf} (${selectedMunicipio.id})`
+                        : "Digite ao menos 3 letras..."}
+                    </span>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <Command shouldFilter={false}>
+                    <CommandInput placeholder="Buscar município..." value={munSearch} onValueChange={setMunSearch} />
+                    <CommandList>
+                      {munSearch.length < 3 ? (
+                        <div className="py-6 text-center text-sm text-muted-foreground">
+                          Digite ao menos 3 caracteres para buscar...
+                        </div>
+                      ) : filteredMunicipios.length === 0 ? (
+                        <CommandEmpty>Nenhum município encontrado.</CommandEmpty>
+                      ) : (
+                        <CommandGroup>
+                          {filteredMunicipios.map((m) => (
+                            <CommandItem
+                              key={m.id}
+                              value={String(m.id)}
+                              onSelect={() => {
+                                set("service_city_code", String(m.id));
+                                setMunOpen(false);
+                                setMunSearch("");
+                              }}
+                            >
+                              <Check className={cn("mr-2 h-4 w-4", form.service_city_code === String(m.id) ? "opacity-100" : "opacity-0")} />
+                              <span className="truncate">{m.nome}/{m.uf} ({m.id})</span>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      )}
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
         </CardContent>

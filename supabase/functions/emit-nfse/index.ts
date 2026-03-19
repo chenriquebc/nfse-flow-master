@@ -198,7 +198,6 @@ function generateDPSXml(invoice: any, company: any, dpsId: string): string {
     xml += `<nro>${company.address_number || "S/N"}</nro>`;
     if (company.address_complement) xml += `<xCpl>${escapeXml(company.address_complement)}</xCpl>`;
     if (company.address_neighborhood) xml += `<xBairro>${escapeXml(company.address_neighborhood)}</xBairro>`;
-    xml += `<UF>${company.address_state || ""}</UF>`;
     xml += `</end>`;
   }
   if (company.phone) xml += `<fone>${company.phone.replace(/\D/g, "")}</fone>`;
@@ -228,12 +227,11 @@ function generateDPSXml(invoice: any, company: any, dpsId: string): string {
   if (invoice.taker_address_street) {
     xml += `<end>`;
     xml += `<endNac>`;
-    if (invoice.taker_address_city_code) xml += `<cMun>${invoice.taker_address_city_code}</cMun>`;
+    if (invoice.taker_address_city_code) xml += `<cMun>${padLeft(invoice.taker_address_city_code, 7)}</cMun>`;
     if (invoice.taker_address_zip) xml += `<CEP>${invoice.taker_address_zip.replace(/\D/g, "")}</CEP>`;
     xml += `</endNac>`;
     xml += `<xLgr>${escapeXml(invoice.taker_address_street)}</xLgr>`;
     xml += `<nro>${invoice.taker_address_number || "S/N"}</nro>`;
-    if (invoice.taker_address_state) xml += `<UF>${invoice.taker_address_state}</UF>`;
     xml += `</end>`;
   }
   if (invoice.taker_phone) xml += `<fone>${invoice.taker_phone.replace(/\D/g, "")}</fone>`;

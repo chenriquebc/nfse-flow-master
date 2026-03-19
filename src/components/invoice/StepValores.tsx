@@ -315,23 +315,23 @@ export default function StepValores({ form, set, baseValue, issValue, totalDeduc
             </Select>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
             <div className="space-y-2">
-              <Label className="text-sm">IRRF</Label>
+              <Label className="text-sm min-h-[2.5rem] flex items-end">IRRF</Label>
               <div className="flex">
                 <span className="inline-flex items-center px-3 bg-muted border border-r-0 border-input rounded-l-md text-sm text-muted-foreground">R$</span>
                 <Input type="number" step="0.01" min="0" className="h-10 rounded-l-none" value={form.irrf_value} onChange={(e) => set("irrf_value", e.target.value)} />
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-sm">Contribuições Sociais - Retidas</Label>
+              <Label className="text-sm min-h-[2.5rem] flex items-end">Contribuições Sociais - Retidas</Label>
               <div className="flex">
                 <span className="inline-flex items-center px-3 bg-muted border border-r-0 border-input rounded-l-md text-sm text-muted-foreground">R$</span>
                 <Input type="number" step="0.01" min="0" className="h-10 rounded-l-none" value={form.social_contributions_retained} onChange={(e) => set("social_contributions_retained", e.target.value)} />
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-sm leading-tight">Contribuição Previdenciária - Retida</Label>
+              <Label className="text-sm min-h-[2.5rem] flex items-end">Contribuição Previdenciária - Retida</Label>
               <div className="flex">
                 <span className="inline-flex items-center px-3 bg-muted border border-r-0 border-input rounded-l-md text-sm text-muted-foreground">R$</span>
                 <Input type="number" step="0.01" min="0" className="h-10 rounded-l-none" value={form.social_security_retained} onChange={(e) => set("social_security_retained", e.target.value)} />
