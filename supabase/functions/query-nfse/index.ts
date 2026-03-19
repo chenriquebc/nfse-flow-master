@@ -411,7 +411,7 @@ Deno.serve(async (req) => {
       }
 
       return new Response(JSON.stringify({
-        success: result.status >= 200 && result.status < 300,
+        success: isSuccess,
         status: result.status,
         data: result.body,
       }), {
