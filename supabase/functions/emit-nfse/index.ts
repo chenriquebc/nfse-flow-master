@@ -174,16 +174,14 @@ function generateDPSXml(invoice: any, company: any, dpsId: string): string {
   xml += `<nDPS>${Number(invoice.rps_number || 1)}</nDPS>`;
 
   xml += `<dCompet>${competenceDate}</dCompet>`;
-  xml += `<subItemListaServico>${invoice.tax_code || ""}</subItemListaServico>`;
 
-  if (company.cnae_code) xml += `<cCnae>${company.cnae_code}</cCnae>`;
-  if (invoice.nbs_code) xml += `<CNBS>${invoice.nbs_code.replace(/\D/g, "")}</CNBS>`;
+  // tpEmit: 1=Prestador de Serviço, 2=Tomador, 3=Intermediário
+  xml += `<tpEmit>1</tpEmit>`;
 
-  xml += `<xDescServ>${escapeXml(invoice.service_description || "")}</xDescServ>`;
-  xml += `<cMunPrestacao>${cityCode}</cMunPrestacao>`;
-  if (invoice.issqn_city) xml += `<cMunIncid>${invoice.issqn_city}</cMunIncid>`;
+  // cLocEmi: Código IBGE do município de emissão (7 dígitos)
+  xml += `<cLocEmi>${padLeft(cityCode, 7)}</cLocEmi>`;
 
-  // Provider
+  // ─── prest (Prestador) ─────────────────────────────
   xml += `<prest>`;
   xml += `<CNPJ>${formatDocument(company.document)}</CNPJ>`;
   xml += `<IM>${company.municipal_registration || ""}</IM>`;
@@ -194,7 +192,7 @@ function generateDPSXml(invoice: any, company: any, dpsId: string): string {
     xml += `<nro>${company.address_number || "S/N"}</nro>`;
     if (company.address_complement) xml += `<xCpl>${escapeXml(company.address_complement)}</xCpl>`;
     if (company.address_neighborhood) xml += `<xBairro>${escapeXml(company.address_neighborhood)}</xBairro>`;
-    xml += `<cMun>${cityCode}</cMun>`;
+    xml += `<cMun>${padLeft(cityCode, 7)}</cMun>`;
     xml += `<UF>${company.address_state || ""}</UF>`;
     xml += `<CEP>${(company.address_zip || "").replace(/\D/g, "")}</CEP>`;
     xml += `</end>`;
@@ -214,7 +212,7 @@ function generateDPSXml(invoice: any, company: any, dpsId: string): string {
   xml += `</regTrib>`;
   xml += `</prest>`;
 
-  // Taker
+  // ─── toma (Tomador) ────────────────────────────────
   xml += `<toma>`;
   const takerDoc = formatDocument(invoice.taker_document);
   if (takerDoc.length <= 11) {
@@ -236,7 +234,7 @@ function generateDPSXml(invoice: any, company: any, dpsId: string): string {
   if (invoice.taker_email) xml += `<email>${invoice.taker_email}</email>`;
   xml += `</toma>`;
 
-  // Intermediary
+  // ─── interm (Intermediário) ────────────────────────
   if (invoice.intermediary_type && invoice.intermediary_type !== "none" && invoice.intermediary_document) {
     xml += `<interm>`;
     const intermDoc = formatDocument(invoice.intermediary_document);
@@ -249,7 +247,17 @@ function generateDPSXml(invoice: any, company: any, dpsId: string): string {
     xml += `</interm>`;
   }
 
-  // Values
+  // ─── serv (Serviço) ───────────────────────────────
+  xml += `<serv>`;
+  xml += `<cServ>${(invoice.tax_code || "").replace(/\./g, "")}</cServ>`;
+  if (company.cnae_code) xml += `<cCnae>${company.cnae_code.replace(/\./g, "")}</cCnae>`;
+  if (invoice.nbs_code) xml += `<CNBS>${invoice.nbs_code.replace(/\D/g, "")}</CNBS>`;
+  xml += `<xDescServ>${escapeXml(invoice.service_description || "")}</xDescServ>`;
+  xml += `<cMunPrestacao>${padLeft(cityCode, 7)}</cMunPrestacao>`;
+  if (invoice.issqn_city) xml += `<cMunIncid>${padLeft(String(invoice.issqn_city).replace(/\D/g, "") || cityCode, 7)}</cMunIncid>`;
+  xml += `</serv>`;
+
+  // ─── valores ──────────────────────────────────────
   xml += `<valores>`;
   xml += `<vServPrest>`;
   xml += `<vServ>${serviceValue}</vServ>`;
