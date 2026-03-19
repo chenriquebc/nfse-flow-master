@@ -345,7 +345,13 @@ export default function InvoiceForm() {
         body: { invoice_id: invoiceId },
       });
       if (emitError) throw emitError;
-      if (emitData?.error) throw new Error(emitData.error);
+      if (emitData?.error || emitData?.error_message || emitData?.success === false) {
+        const msg = emitData?.error_message || emitData?.error || "Erro desconhecido na emissão";
+        toast.error("Nota salva, mas rejeitada pela SEFIN", { description: typeof msg === "string" ? msg.slice(0, 200) : "Verifique os detalhes na listagem" });
+        navigate("/invoices");
+        setEmitting(false);
+        return;
+      }
       toast.success("Nota fiscal emitida com sucesso!");
       navigate("/invoices");
     } catch (err: any) {
