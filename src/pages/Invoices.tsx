@@ -369,6 +369,23 @@ export default function Invoices() {
                               <>
                                 <Button
                                   size="sm"
+                                  variant="default"
+                                  className="h-7 text-xs"
+                                  disabled={resending === inv.id}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setConfirmResend(inv.id);
+                                  }}
+                                >
+                                  {resending === inv.id ? (
+                                    <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                                  ) : (
+                                    <RotateCcw className="h-3 w-3 mr-1" />
+                                  )}
+                                  Reenviar
+                                </Button>
+                                <Button
+                                  size="sm"
                                   variant="ghost"
                                   className="h-7 text-xs text-destructive"
                                   onClick={(e) => {
