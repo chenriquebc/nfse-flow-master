@@ -203,7 +203,7 @@ function generateDPSXml(invoice: any, company: any, dpsId: string): string {
   if (company.phone) xml += `<fone>${company.phone.replace(/\D/g, "")}</fone>`;
   if (company.email) xml += `<email>${company.email}</email>`;
   xml += `<regTrib>`;
-  xml += `<opSN>${invoice.tax_assessment_regime || "1"}</opSN>`;
+  xml += `<opSimpNac>${invoice.tax_assessment_regime || "1"}</opSimpNac>`;
   xml += `<regApTribSN>${invoice.tax_assessment_regime || "1"}</regApTribSN>`;
   if (regEspTrib !== "nenhum" && regEspTrib !== "0") {
     const regEspMap: Record<string, string> = {
