@@ -32,21 +32,25 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     if (!user) {
       setTenants([]);
       setTenant(null);
-      if (!authLoading) setLoading(false);
+      // Mantém loading ativo até o auth confirmar uma sessão válida
+      setLoading(true);
       return;
     }
 
+    setLoading(true);
     const { data, error } = await supabase.from("tenants").select("*");
+
     if (!error && data && data.length > 0) {
       const mapped = data as Tenant[];
       setTenants(mapped);
       const stored = localStorage.getItem("current_tenant_id");
-      const found = mapped.find(t => t.id === stored);
+      const found = mapped.find((t) => t.id === stored);
       setTenant(found || mapped[0]);
     } else {
       setTenants([]);
       setTenant(null);
     }
+
     setLoading(false);
   };
 
