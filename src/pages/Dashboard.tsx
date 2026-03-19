@@ -157,28 +157,18 @@ export default function Dashboard() {
         {/* Setup Guide - shown when missing steps */}
         {showSetupGuide && !loading && (
           <div className="mb-8">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <SetupStep
                 step={1}
-                title="Cadastrar empresa"
-                description="Adicione sua primeira empresa ou cliente para começar."
-                icon={Building2}
-                done={setup.hasCompanies}
-                href="/companies/new"
-                cta="Cadastrar empresa"
+                title="Enviar certificado"
+                description="Envie o certificado A1 e a empresa será cadastrada automaticamente."
+                icon={ShieldCheck}
+                done={setup.hasCompanies && setup.hasCertificates}
+                href="/certificates"
+                cta="Enviar certificado"
               />
               <SetupStep
                 step={2}
-                title="Enviar certificado"
-                description="Faça upload do certificado digital A1 da empresa."
-                icon={ShieldCheck}
-                done={setup.hasCertificates}
-                href="/certificates"
-                cta="Enviar certificado"
-                disabled={!setup.hasCompanies}
-              />
-              <SetupStep
-                step={3}
                 title="Emitir primeira nota"
                 description="Crie e emita sua primeira nota fiscal de serviço."
                 icon={Upload}

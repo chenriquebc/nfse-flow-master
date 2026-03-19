@@ -5,8 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -39,20 +38,13 @@ interface Certificate {
   companies: { legal_name: string } | null;
 }
 
-interface Company {
-  id: string;
-  legal_name: string;
-}
-
 export default function Certificates() {
   const { tenant } = useTenant();
   const [certificates, setCertificates] = useState<Certificate[]>([]);
-  const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  const [companyId, setCompanyId] = useState("");
   const [password, setPassword] = useState("");
   const [file, setFile] = useState<File | null>(null);
 
@@ -70,18 +62,11 @@ export default function Certificates() {
   useEffect(() => {
     if (!tenant) return;
     fetchCerts();
-    supabase
-      .from("companies")
-      .select("id, legal_name")
-      .eq("tenant_id", tenant.id)
-      .eq("is_active", true)
-      .order("legal_name")
-      .then(({ data }) => setCompanies((data as Company[]) || []));
   }, [tenant]);
 
   const handleUpload = async () => {
-    if (!tenant || !file || !companyId) {
-      toast.error("Selecione empresa e arquivo");
+    if (!tenant || !file) {
+      toast.error("Selecione o arquivo do certificado");
       return;
     }
     if (!password) {
@@ -91,8 +76,17 @@ export default function Certificates() {
 
     setUploading(true);
 
-    // 1. Parse certificate to extract metadata
-    let certMeta: { subject?: string; issuer?: string; serial_number?: string; valid_from?: string; valid_until?: string; legal_name?: string; document?: string } = {};
+    // 1. Parse certificate to extract metadata (legal_name, CNPJ, etc.)
+    let certMeta: {
+      subject?: string;
+      issuer?: string;
+      serial_number?: string;
+      valid_from?: string;
+      valid_until?: string;
+      legal_name?: string;
+      document?: string;
+    } = {};
+
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -127,7 +121,61 @@ export default function Certificates() {
       return;
     }
 
-    // 2. Upload file to storage
+    // 2. Auto-create company from certificate data
+    const legalName = certMeta.legal_name || file.name.replace(/\.(pfx|p12)$/i, "");
+    const doc = certMeta.document?.replace(/[^\d]/g, "") || "";
+
+    // Check if company with same CNPJ already exists
+    let companyId: string;
+    if (doc) {
+      const { data: existing } = await supabase
+        .from("companies")
+        .select("id")
+        .eq("tenant_id", tenant.id)
+        .eq("document", doc)
+        .maybeSingle();
+
+      if (existing) {
+        companyId = existing.id;
+      } else {
+        const { data: newCompany, error: companyError } = await supabase
+          .from("companies")
+          .insert({
+            tenant_id: tenant.id,
+            legal_name: legalName,
+            document: doc,
+          })
+          .select("id")
+          .single();
+
+        if (companyError || !newCompany) {
+          toast.error("Erro ao cadastrar empresa", { description: companyError?.message });
+          setUploading(false);
+          return;
+        }
+        companyId = newCompany.id;
+      }
+    } else {
+      // No CNPJ found — create company with name only
+      const { data: newCompany, error: companyError } = await supabase
+        .from("companies")
+        .insert({
+          tenant_id: tenant.id,
+          legal_name: legalName,
+          document: "",
+        })
+        .select("id")
+        .single();
+
+      if (companyError || !newCompany) {
+        toast.error("Erro ao cadastrar empresa", { description: companyError?.message });
+        setUploading(false);
+        return;
+      }
+      companyId = newCompany.id;
+    }
+
+    // 3. Upload file to storage
     const filePath = `${tenant.id}/${companyId}/${Date.now()}_${file.name}`;
     const { error: uploadError } = await supabase.storage
       .from("certificates")
@@ -139,7 +187,7 @@ export default function Certificates() {
       return;
     }
 
-    // 3. Save certificate record with extracted metadata
+    // 4. Save certificate record
     const { error } = await supabase.from("certificates").insert({
       tenant_id: tenant.id,
       company_id: companyId,
@@ -157,11 +205,10 @@ export default function Certificates() {
     if (error) {
       toast.error("Erro ao salvar certificado", { description: error.message });
     } else {
-      toast.success("Certificado instalado com sucesso!");
+      toast.success("Certificado instalado e empresa cadastrada!");
       setOpen(false);
       setFile(null);
       setPassword("");
-      setCompanyId("");
       fetchCerts();
     }
     setUploading(false);
@@ -206,21 +253,10 @@ export default function Certificates() {
               <DialogHeader>
                 <DialogTitle>Upload de Certificado A1</DialogTitle>
                 <DialogDescription>
-                  Envie o arquivo .pfx e informe a senha do certificado
+                  Envie o arquivo .pfx e a empresa será cadastrada automaticamente a partir dos dados do certificado.
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 pt-2">
-                <div className="space-y-2">
-                  <Label>Empresa</Label>
-                  <Select value={companyId} onValueChange={setCompanyId}>
-                    <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                    <SelectContent>
-                      {companies.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>{c.legal_name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
                 <div className="space-y-2">
                   <Label>Arquivo do certificado (.pfx)</Label>
                   <div className="flex items-center gap-2">
@@ -247,7 +283,7 @@ export default function Certificates() {
                   />
                 </div>
                 <Button onClick={handleUpload} disabled={uploading} className="w-full">
-                  {uploading ? "Enviando..." : "Enviar Certificado"}
+                  {uploading ? "Processando..." : "Enviar Certificado"}
                 </Button>
               </div>
             </DialogContent>
@@ -264,6 +300,7 @@ export default function Certificates() {
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <ShieldCheck className="h-12 w-12 text-muted-foreground/40 mb-4" />
                 <p className="text-muted-foreground">Nenhum certificado cadastrado</p>
+                <p className="text-xs text-muted-foreground mt-1">Ao enviar um certificado, a empresa será cadastrada automaticamente.</p>
                 <Button variant="outline" size="sm" className="mt-4" onClick={() => setOpen(true)}>
                   <Plus className="mr-2 h-4 w-4" />
                   Adicionar certificado
