@@ -32,9 +32,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Search, FileText, Download, Send, XCircle, Loader2, AlertTriangle, CheckCircle2, Clock, Info, ChevronDown, ChevronUp, RotateCcw } from "lucide-react";
+import { Plus, Search, FileText, Download, Send, XCircle, Loader2, AlertTriangle, CheckCircle2, Clock, Info, ChevronDown, ChevronUp, RotateCcw, MoreVertical, Eye, ArrowUpDown, Code } from "lucide-react";
 import { toast } from "sonner";
 
 interface Invoice {
@@ -327,6 +334,7 @@ export default function Invoices() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
+                            {/* Primary action button */}
                             {inv.status === "draft" && (
                               <Button
                                 size="sm"
@@ -346,69 +354,95 @@ export default function Invoices() {
                                 Emitir
                               </Button>
                             )}
-                            {inv.status === "authorized" && (
+                            {(inv.status === "rejected" || inv.status === "error") && (
                               <Button
                                 size="sm"
-                                variant="destructive"
+                                variant="default"
                                 className="h-7 text-xs"
-                                disabled={cancelling === inv.id}
+                                disabled={resending === inv.id}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  setConfirmCancel(inv.id);
+                                  setConfirmResend(inv.id);
                                 }}
                               >
-                                {cancelling === inv.id ? (
+                                {resending === inv.id ? (
                                   <Loader2 className="h-3 w-3 animate-spin mr-1" />
                                 ) : (
-                                  <XCircle className="h-3 w-3 mr-1" />
+                                  <RotateCcw className="h-3 w-3 mr-1" />
                                 )}
-                                Cancelar
+                                Reenviar
                               </Button>
                             )}
-                            {(inv.status === "rejected" || inv.status === "error") && (
-                              <>
-                                <Button
-                                  size="sm"
-                                  variant="default"
-                                  className="h-7 text-xs"
-                                  disabled={resending === inv.id}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setConfirmResend(inv.id);
-                                  }}
-                                >
-                                  {resending === inv.id ? (
-                                    <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                                  ) : (
-                                    <RotateCcw className="h-3 w-3 mr-1" />
-                                  )}
-                                  Reenviar
-                                </Button>
+
+                            {/* 3-dot dropdown menu */}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  className="h-7 text-xs text-destructive"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openEventLog(inv);
-                                  }}
+                                  className="h-7 w-7 p-0"
+                                  onClick={(e) => e.stopPropagation()}
                                 >
-                                  <AlertTriangle className="h-3 w-3 mr-1" />
-                                  Ver Log
+                                  <MoreVertical className="h-4 w-4" />
                                 </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-7 text-xs"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    navigate(`/invoices/${inv.id}`);
-                                  }}
-                                >
-                                  Editar
-                                </Button>
-                              </>
-                            )}
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem onClick={() => navigate(`/invoices/${inv.id}`)}>
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  Visualizar
+                                </DropdownMenuItem>
+                                {inv.status === "authorized" && (
+                                  <DropdownMenuItem onClick={() => toast.info("Funcionalidade em desenvolvimento")}>
+                                    <ArrowUpDown className="h-4 w-4 mr-2" />
+                                    Substituir
+                                  </DropdownMenuItem>
+                                )}
+                                {inv.status === "authorized" && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      className="text-destructive focus:text-destructive"
+                                      disabled={cancelling === inv.id}
+                                      onClick={() => setConfirmCancel(inv.id)}
+                                    >
+                                      <XCircle className="h-4 w-4 mr-2" />
+                                      Cancelar NFS-e
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => {
+                                  if (inv.status === "authorized") {
+                                    // Download XML autorizado
+                                    toast.info("Download XML em desenvolvimento");
+                                  } else {
+                                    toast.info("XML disponível apenas para notas autorizadas");
+                                  }
+                                }}>
+                                  <Code className="h-4 w-4 mr-2" />
+                                  Download XML
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => {
+                                  if (inv.status === "authorized") {
+                                    toast.info("Download DANFS-e em desenvolvimento");
+                                  } else {
+                                    toast.info("DANFS-e disponível apenas para notas autorizadas");
+                                  }
+                                }}>
+                                  <FileText className="h-4 w-4 mr-2" />
+                                  Download DANFS-e
+                                </DropdownMenuItem>
+                                {(inv.status === "rejected" || inv.status === "error") && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={() => openEventLog(inv)}>
+                                      <AlertTriangle className="h-4 w-4 mr-2" />
+                                      Ver Log de Erros
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </TableCell>
                       </TableRow>
