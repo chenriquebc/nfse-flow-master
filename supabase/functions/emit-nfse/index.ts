@@ -116,19 +116,17 @@ function formatDocument(doc: string): string {
 
 function generateDPSId(
   cityCode: string,
-  docType: string,
   document: string,
   series: string,
   number: number,
 ): string {
   const ibge = padLeft(cityCode, 7);
-  const tipo = docType; // "1" = CNPJ, "2" = CPF
   const inscricao = padLeft(formatDocument(document), 14);
-  // Series must be numeric only (5 digits) per TSIdDPS pattern
+  // Série e número devem respeitar os comprimentos da composição do Id da DPS
   const numericSeries = series.replace(/\D/g, "") || "1";
   const serie = padLeft(numericSeries, 5);
   const num = padLeft(number, 15);
-  return `${ibge}${tipo}${inscricao}${serie}${num}`;
+  return `${ibge}${inscricao}${serie}${num}`;
 }
 
 // ─── DPS XML Generation ────────────────────────────────────────────────────
