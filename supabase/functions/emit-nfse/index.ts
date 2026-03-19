@@ -124,11 +124,10 @@ function generateDPSId(
   const ibge = padLeft(cityCode, 7);
   const tipo = docType; // "1" = CNPJ, "2" = CPF
   const inscricao = padLeft(formatDocument(document), 14);
-  // Série e número devem respeitar os comprimentos da composição do Id da DPS
-  const numericSeries = series.replace(/\D/g, "") || "1";
-  const serie = padLeft(numericSeries, 5);
-  const num = padLeft(number, 15);
-  return `${ibge}${tipo}${inscricao}${serie}${num}`;
+  // IdDPS deve concatenar os valores dos campos (sem pad extra em série e nDPS)
+  const numericSeries = String(Number(series.replace(/\D/g, "") || "1"));
+  const num = String(Number(number || 1));
+  return `${ibge}${tipo}${inscricao}${numericSeries}${num}`;
 }
 
 // ─── DPS XML Generation ────────────────────────────────────────────────────
