@@ -47,36 +47,95 @@ const NATIONAL_TAX_CODES = [
 ];
 
 const NBS_CODES = [
-  { code: "1.0101.10.00", desc: "Serviços de pesquisa e desenvolvimento em ciências físicas" },
-  { code: "1.0101.20.00", desc: "Serviços de pesquisa e desenvolvimento em ciências naturais e engenharia" },
-  { code: "1.0102.10.00", desc: "Serviços de pesquisa e desenvolvimento em ciências sociais e humanas" },
-  { code: "1.0201.10.00", desc: "Serviços de design de software sob encomenda" },
-  { code: "1.0201.20.00", desc: "Serviços de design de software para uso particular" },
-  { code: "1.0202.10.00", desc: "Serviços de programação de software sob encomenda" },
-  { code: "1.0202.20.00", desc: "Serviços de manutenção e suporte de software" },
-  { code: "1.0301.10.00", desc: "Serviços de processamento de dados" },
-  { code: "1.0301.20.00", desc: "Serviços de hospedagem de sites e aplicativos" },
-  { code: "1.0301.30.00", desc: "Serviços de infraestrutura de TI e computação em nuvem" },
-  { code: "1.0302.10.00", desc: "Serviços de consultoria em tecnologia da informação" },
-  { code: "1.0302.20.00", desc: "Serviços de gerenciamento de redes e sistemas" },
-  { code: "1.0401.10.00", desc: "Serviços de contabilidade e auditoria" },
-  { code: "1.0401.20.00", desc: "Serviços de consultoria tributária e fiscal" },
-  { code: "1.0402.10.00", desc: "Serviços de consultoria em gestão e administração" },
-  { code: "1.0402.20.00", desc: "Serviços de assessoria empresarial" },
-  { code: "1.0501.10.00", desc: "Serviços de arquitetura" },
-  { code: "1.0501.20.00", desc: "Serviços de engenharia" },
-  { code: "1.0501.30.00", desc: "Serviços de engenharia integrada" },
-  { code: "1.0601.10.00", desc: "Serviços de publicidade" },
-  { code: "1.0601.20.00", desc: "Serviços de marketing e promoção" },
-  { code: "1.0701.10.00", desc: "Serviços jurídicos" },
-  { code: "1.0702.10.00", desc: "Serviços de tradução e interpretação" },
-  { code: "1.0801.10.00", desc: "Serviços de construção civil" },
-  { code: "1.0901.10.00", desc: "Serviços de transporte de passageiros" },
-  { code: "1.0902.10.00", desc: "Serviços de transporte de cargas" },
-  { code: "1.1001.10.00", desc: "Serviços de educação e treinamento" },
-  { code: "1.1101.10.00", desc: "Serviços de saúde humana" },
-  { code: "1.1201.10.00", desc: "Serviços de limpeza e manutenção predial" },
-  { code: "1.1301.10.00", desc: "Serviços de segurança e vigilância" },
+  // 01.01 - Análise e desenvolvimento de sistemas
+  { code: "1.1502.10.00", desc: "Serviços de projeto, desenvolvimento e instalação de aplicativos e programas não customizáveis" },
+  { code: "1.1502.20.00", desc: "Serviços de projeto, desenvolvimento, adaptação e instalação de aplicativos e programas customizáveis" },
+  { code: "1.1502.40.00", desc: "Serviços de projeto e desenvolvimento de estruturas e conteúdo de bancos de dados" },
+  { code: "1.1502.50.00", desc: "Serviços de integração de sistemas de tecnologia da informação (TI)" },
+  { code: "1.1502.90.00", desc: "Serviços de projeto e desenvolvimento de aplicativos e programas de TI não classificados em outras subposições" },
+  { code: "1.1503.00.00", desc: "Serviços de projeto e desenvolvimento de redes de TI" },
+  { code: "1.1504.00.00", desc: "Serviços de projeto e desenvolvimento de topografias de circuitos integrados" },
+  { code: "1.1505.00.00", desc: "Serviços de projeto de circuitos integrados" },
+  // 01.03 - Processamento, armazenamento, hospedagem
+  { code: "1.1506.10.00", desc: "Serviços de hospedagem de páginas na rede mundial de computadores (World Wide Web)" },
+  { code: "1.1506.21.00", desc: "Serviços de hospedagem de aplicativos e software como serviço (SaaS)" },
+  { code: "1.1506.22.00", desc: "Serviços de provimento de infraestrutura como serviço (IaaS)" },
+  { code: "1.1506.23.00", desc: "Serviços de provimento de plataforma como serviço (PaaS)" },
+  { code: "1.1506.29.00", desc: "Serviços de hospedagem de aplicativos e programas não classificados em outras subposições" },
+  { code: "1.1506.90.00", desc: "Serviços de hospedagem e provimento de infraestrutura de TI não classificados em outras subposições" },
+  { code: "1.1509.00.00", desc: "Serviços de processamento de dados" },
+  // 01.05 - Licenciamento ou cessão de direito de uso de programas
+  { code: "1.1103.21.00", desc: "Licenciamento de direitos para produção, distribuição ou comercialização de programas de computador (software)" },
+  { code: "1.1103.22.00", desc: "Licenciamento de direitos de uso de programas de computador (software)" },
+  { code: "1.1103.23.00", desc: "Licenciamento de direitos sobre bancos de dados" },
+  { code: "1.1106.20.00", desc: "Cessão temporária de direitos sobre programas de computador (software)" },
+  { code: "1.1107.20.00", desc: "Cessão permanente de direitos sobre programas de computador (software)" },
+  // 01.06 - Assessoria e consultoria em informática
+  { code: "1.1501.10.00", desc: "Serviços de consultoria em tecnologia da informação (TI)" },
+  { code: "1.1501.20.00", desc: "Serviços de segurança em tecnologia da informação (TI)" },
+  // 01.07 - Suporte técnico em informática
+  { code: "1.1501.30.00", desc: "Serviços de suporte em tecnologia da informação (TI)" },
+  { code: "1.1508.00.00", desc: "Serviços de manutenção de aplicativos e programas" },
+  // 01.08 - Planejamento, confecção, manutenção de páginas eletrônicas
+  { code: "1.1502.30.00", desc: "Serviços de projeto e desenvolvimento de estruturas e conteúdo de páginas da Internet" },
+  // 01.09 - Disponibilização de conteúdo
+  { code: "1.1703.10.00", desc: "Serviços de oferta de livros, jornais, periódicos, diretórios e mala direta online" },
+  { code: "1.1703.21.00", desc: "Serviços de oferta de áudio para download" },
+  { code: "1.1703.22.00", desc: "Serviços de oferta de conteúdo de áudio por streaming" },
+  { code: "1.1703.31.00", desc: "Serviços de oferta de arquivos contendo filmes e vídeos para download" },
+  { code: "1.1703.32.00", desc: "Serviços de oferta de filmes e vídeos por streaming" },
+  { code: "1.1703.91.00", desc: "Serviços de oferta de jogos online" },
+  { code: "1.1703.99.00", desc: "Serviços de oferta de outros conteúdos online não classificados em outras subposições" },
+  // 01.10 - TI genérico
+  { code: "1.1507.10.00", desc: "Serviços de gerenciamento de redes de TI" },
+  { code: "1.1507.20.00", desc: "Serviços de gerenciamento de sistemas de computadores" },
+  { code: "1.1507.90.00", desc: "Serviços de gerenciamento de infraestrutura de TI não classificados em outras subposições" },
+  { code: "1.1510.00.00", desc: "Serviços de tecnologia da informação (TI) não classificados em outras subposições" },
+  // 02.01 - Pesquisa e desenvolvimento
+  { code: "1.1201.11.00", desc: "Serviços de pesquisa e desenvolvimento em ciências físicas" },
+  { code: "1.1201.12.00", desc: "Serviços de pesquisa e desenvolvimento em química e biologia" },
+  { code: "1.1201.19.00", desc: "Serviços de pesquisa e desenvolvimento em ciências não classificados em outras subposições" },
+  { code: "1.1201.31.00", desc: "Serviços de pesquisa e desenvolvimento em Tecnologia da Informação e Comunicação (TIC)" },
+  { code: "1.1201.90.00", desc: "Serviços de P&D em ciências, engenharia e tecnologia não classificados em outras subposições" },
+  { code: "1.1202.10.00", desc: "Serviços de pesquisa e desenvolvimento em psicologia" },
+  { code: "1.1202.90.00", desc: "Serviços de P&D em ciências sociais e humanas não classificados em outras subposições" },
+  { code: "1.1203.00.00", desc: "Serviços de pesquisa e desenvolvimento interdisciplinares" },
+  // 07.01 - Engenharia, agronomia, arquitetura
+  { code: "1.1402.11.00", desc: "Serviços de consultoria em arquitetura" },
+  { code: "1.1403.10.00", desc: "Serviços de consultoria em engenharia" },
+  { code: "1.1403.90.00", desc: "Serviços de engenharia não classificados em outras subposições" },
+  { code: "1.1404.11.00", desc: "Serviços de consultoria geológica e geofísica" },
+  // 07.02 - Obras de construção civil
+  { code: "1.0101.11.00", desc: "Serviços de construção de edificações residenciais de um e dois pavimentos" },
+  { code: "1.0101.22.00", desc: "Serviços de construção de edificações comerciais" },
+  { code: "1.0102.90.00", desc: "Serviços de construção de obras de engenharia civil não classificados em outras subposições" },
+  // 07.03 - Planos diretores, estudos de viabilidade
+  { code: "1.1402.21.00", desc: "Serviços de planejamento urbano" },
+  // 10.05 - Agenciamento, corretagem de bens móveis ou imóveis
+  { code: "1.1601.10.00", desc: "Serviços de intermediação em transações de imóveis residenciais em base de taxa ou contrato" },
+  // 14.01 - Lubrificação, limpeza, revisão, conserto
+  { code: "1.0108.11.00", desc: "Serviços de manutenção e reparação de máquinas e equipamentos" },
+  // 17.01 - Assessoria ou consultoria de qualquer natureza
+  { code: "1.1401.10.00", desc: "Serviços de consultoria em gestão geral" },
+  { code: "1.1401.20.00", desc: "Serviços de consultoria em gestão financeira" },
+  { code: "1.1401.30.00", desc: "Serviços de consultoria em gestão de recursos humanos" },
+  { code: "1.1401.40.00", desc: "Serviços de consultoria em gestão de marketing" },
+  { code: "1.1401.90.00", desc: "Serviços de consultoria em gestão não classificados em outras subposições" },
+  // 17.02 - Datilografia, digitação, estenografia, secretaria
+  { code: "1.1602.20.00", desc: "Serviços de escritório e suporte administrativo" },
+  // 17.06 - Propaganda e publicidade
+  { code: "1.1701.10.00", desc: "Serviços de publicidade" },
+  { code: "1.1701.20.00", desc: "Serviços de venda de espaço ou tempo para publicidade" },
+  // 17.19 - Contabilidade
+  { code: "1.1301.10.00", desc: "Serviços de contabilidade e auditoria contábil" },
+  { code: "1.1301.20.00", desc: "Serviços de escrituração contábil" },
+  // 17.20 - Auditoria
+  { code: "1.1301.30.00", desc: "Serviços de auditoria financeira" },
+  // 17.22 - Assessoria, análise, avaliação, consultoria
+  { code: "1.1602.10.00", desc: "Serviços de consultoria empresarial e de gestão de relações públicas" },
+  // 25.01 a 25.04 - Serviços funerários
+  { code: "1.2601.10.00", desc: "Serviços funerários" },
+  { code: "1.2601.90.00", desc: "Serviços funerários não classificados em outras subposições" },
 ];
 
 interface StepServicoProps {
