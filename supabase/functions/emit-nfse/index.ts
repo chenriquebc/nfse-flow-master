@@ -20,14 +20,20 @@ async function mtlsFetch(
   keyPem: string,
   contentType = "application/xml",
 ): Promise<{ status: number; body: string }> {
-  const proxyUrl = Deno.env.get("MTLS_PROXY_URL");
+  const proxyUrlRaw = Deno.env.get("MTLS_PROXY_URL")?.trim();
   const proxyToken = Deno.env.get("MTLS_PROXY_TOKEN");
 
-  if (!proxyUrl || !proxyToken) {
+  if (!proxyUrlRaw || !proxyToken) {
     throw new Error("MTLS_PROXY_URL and MTLS_PROXY_TOKEN must be configured");
   }
 
-  const proxyResponse = await fetch(`${proxyUrl}/proxy`, {
+  const proxyBase = /^https?:\/\//i.test(proxyUrlRaw)
+    ? proxyUrlRaw
+    : `https://${proxyUrlRaw}`;
+
+  const proxyEndpoint = new URL("/proxy", proxyBase).toString();
+
+  const proxyResponse = await fetch(proxyEndpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
