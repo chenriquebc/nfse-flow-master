@@ -83,8 +83,10 @@ export default function Invoices() {
   const [loading, setLoading] = useState(true);
   const [emitting, setEmitting] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState<string | null>(null);
+  const [resending, setResending] = useState<string | null>(null);
   const [confirmEmit, setConfirmEmit] = useState<string | null>(null);
   const [confirmCancel, setConfirmCancel] = useState<string | null>(null);
+  const [confirmResend, setConfirmResend] = useState<string | null>(null);
   const [eventLogInvoice, setEventLogInvoice] = useState<Invoice | null>(null);
   const [events, setEvents] = useState<InvoiceEvent[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
