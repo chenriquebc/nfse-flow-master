@@ -56,6 +56,7 @@ interface Invoice {
   status: string;
   competence_date: string;
   created_at: string;
+  metadata?: any;
   companies: { legal_name: string } | null;
 }
 
