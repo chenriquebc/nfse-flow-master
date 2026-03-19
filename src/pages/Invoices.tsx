@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Search, FileText, Download, Send, XCircle, Loader2, AlertTriangle, CheckCircle2, Clock, Info, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Search, FileText, Download, Send, XCircle, Loader2, AlertTriangle, CheckCircle2, Clock, Info, ChevronDown, ChevronUp, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 
 interface Invoice {
@@ -83,8 +83,10 @@ export default function Invoices() {
   const [loading, setLoading] = useState(true);
   const [emitting, setEmitting] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState<string | null>(null);
+  const [resending, setResending] = useState<string | null>(null);
   const [confirmEmit, setConfirmEmit] = useState<string | null>(null);
   const [confirmCancel, setConfirmCancel] = useState<string | null>(null);
+  const [confirmResend, setConfirmResend] = useState<string | null>(null);
   const [eventLogInvoice, setEventLogInvoice] = useState<Invoice | null>(null);
   const [events, setEvents] = useState<InvoiceEvent[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
@@ -175,6 +177,40 @@ export default function Invoices() {
       toast.error("Erro de comunicação ao cancelar nota");
     } finally {
       setCancelling(null);
+    }
+  };
+
+  const handleResend = async (invoiceId: string) => {
+    setConfirmResend(null);
+    setResending(invoiceId);
+    try {
+      // Reset status to draft first
+      await supabase
+        .from("nfse_invoices")
+        .update({ status: "draft" as any })
+        .eq("id", invoiceId);
+
+      // Then emit
+      const { data, error } = await supabase.functions.invoke("emit-nfse", {
+        body: { invoice_id: invoiceId },
+      });
+
+      if (error) {
+        toast.error("Erro ao reenviar nota", { description: error.message });
+      } else if (data?.success) {
+        toast.success("NFS-e autorizada com sucesso!", {
+          description: data.chave_acesso ? `Chave: ${data.chave_acesso}` : undefined,
+        });
+      } else {
+        toast.error("Nota rejeitada novamente", {
+          description: data?.error_message || "Verifique os dados e tente novamente",
+        });
+      }
+      await fetchInvoices();
+    } catch (e) {
+      toast.error("Erro de comunicação ao reenviar nota");
+    } finally {
+      setResending(null);
     }
   };
 
@@ -333,6 +369,23 @@ export default function Invoices() {
                               <>
                                 <Button
                                   size="sm"
+                                  variant="default"
+                                  className="h-7 text-xs"
+                                  disabled={resending === inv.id}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setConfirmResend(inv.id);
+                                  }}
+                                >
+                                  {resending === inv.id ? (
+                                    <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                                  ) : (
+                                    <RotateCcw className="h-3 w-3 mr-1" />
+                                  )}
+                                  Reenviar
+                                </Button>
+                                <Button
+                                  size="sm"
                                   variant="ghost"
                                   className="h-7 text-xs text-destructive"
                                   onClick={(e) => {
@@ -399,6 +452,24 @@ export default function Invoices() {
             <AlertDialogCancel>Voltar</AlertDialogCancel>
             <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => confirmCancel && handleCancel(confirmCancel)}>
               Cancelar NFS-e
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirm Resend Dialog */}
+      <AlertDialog open={!!confirmResend} onOpenChange={() => setConfirmResend(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reenviar Nota Fiscal</AlertDialogTitle>
+            <AlertDialogDescription>
+              A nota será reenviada com os mesmos dados ao portal nacional da NFS-e. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => confirmResend && handleResend(confirmResend)}>
+              Reenviar NFS-e
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
