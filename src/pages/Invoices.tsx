@@ -330,7 +330,7 @@ export default function Invoices() {
                           {inv.companies?.legal_name || "—"}
                         </TableCell>
                         <TableCell className="text-sm">
-                          {new Date(inv.competence_date).toLocaleDateString("pt-BR")}
+                          {inv.competence_date.split("-").reverse().join("/")}
                         </TableCell>
                         <TableCell className="text-right font-medium">
                           {formatCurrency(Number(inv.service_value))}
