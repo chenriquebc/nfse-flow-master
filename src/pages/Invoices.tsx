@@ -517,7 +517,7 @@ export default function Invoices() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Competência:</span>
-                    <span className="font-medium">{new Date(confirmCancel.competence_date).toLocaleDateString("pt-BR")}</span>
+                    <span className="font-medium">{confirmCancel.competence_date.split("-").reverse().join("/")}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Empresa:</span>

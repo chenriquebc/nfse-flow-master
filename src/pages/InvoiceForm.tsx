@@ -124,7 +124,7 @@ export default function InvoiceForm() {
         }
         setForm({
           company_id: data.company_id || "",
-          competence_date: data.competence_date || new Date().toISOString().split("T")[0],
+          competence_date: data.competence_date || (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; })(),
           tax_assessment_regime: (data as any).tax_assessment_regime || "1",
           taker_document: data.taker_document || "",
           taker_name: data.taker_name || "",
