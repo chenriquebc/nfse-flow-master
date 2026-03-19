@@ -90,8 +90,45 @@ export default function Certificates() {
     }
 
     setUploading(true);
-    const filePath = `${tenant.id}/${companyId}/${Date.now()}_${file.name}`;
 
+    // 1. Parse certificate to extract metadata
+    let certMeta: { subject?: string; issuer?: string; serial_number?: string; valid_from?: string; valid_until?: string; legal_name?: string; document?: string } = {};
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("password", password);
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+
+      const parseRes = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-certificate`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: formData,
+        }
+      );
+
+      if (parseRes.ok) {
+        certMeta = await parseRes.json();
+      } else {
+        const err = await parseRes.json().catch(() => ({ error: "Erro ao ler certificado" }));
+        toast.error("Erro ao processar certificado", { description: err.error });
+        setUploading(false);
+        return;
+      }
+    } catch (e: any) {
+      toast.error("Erro ao processar certificado", { description: e.message });
+      setUploading(false);
+      return;
+    }
+
+    // 2. Upload file to storage
+    const filePath = `${tenant.id}/${companyId}/${Date.now()}_${file.name}`;
     const { error: uploadError } = await supabase.storage
       .from("certificates")
       .upload(filePath, file);
@@ -102,20 +139,25 @@ export default function Certificates() {
       return;
     }
 
-    // Store cert record (password would be encrypted server-side in production)
+    // 3. Save certificate record with extracted metadata
     const { error } = await supabase.from("certificates").insert({
       tenant_id: tenant.id,
       company_id: companyId,
       file_name: file.name,
       file_path: filePath,
-      password_encrypted: password, // In production, encrypt via edge function
+      password_encrypted: password,
       is_active: true,
+      subject: certMeta.subject || null,
+      issuer: certMeta.issuer || null,
+      serial_number: certMeta.serial_number || null,
+      valid_from: certMeta.valid_from || null,
+      valid_until: certMeta.valid_until || null,
     });
 
     if (error) {
       toast.error("Erro ao salvar certificado", { description: error.message });
     } else {
-      toast.success("Certificado enviado com sucesso!");
+      toast.success("Certificado instalado com sucesso!");
       setOpen(false);
       setFile(null);
       setPassword("");
