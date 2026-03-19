@@ -210,8 +210,10 @@ export default function InvoiceForm() {
         if (!form.company_id) { toast.error("Selecione uma empresa"); return false; }
         return true;
       case 1:
-        if (!form.taker_document.trim()) { toast.error("Informe o CPF/CNPJ do tomador"); return false; }
-        if (!form.taker_name.trim()) { toast.error("Informe o nome do tomador"); return false; }
+        if (form.taker_location !== "nao_informado") {
+          if (!form.taker_document.trim()) { toast.error("Informe o CPF/CNPJ do tomador"); return false; }
+          if (!form.taker_name.trim()) { toast.error("Informe o nome do tomador"); return false; }
+        }
         return true;
       case 2:
         if (!form.service_description.trim()) { toast.error("Descreva o serviço"); return false; }
