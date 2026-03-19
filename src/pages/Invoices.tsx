@@ -457,6 +457,24 @@ export default function Invoices() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Confirm Resend Dialog */}
+      <AlertDialog open={!!confirmResend} onOpenChange={() => setConfirmResend(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reenviar Nota Fiscal</AlertDialogTitle>
+            <AlertDialogDescription>
+              A nota será reenviada com os mesmos dados ao portal nacional da NFS-e. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => confirmResend && handleResend(confirmResend)}>
+              Reenviar NFS-e
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Event Log Dialog */}
       <Dialog open={!!eventLogInvoice} onOpenChange={(open) => !open && setEventLogInvoice(null)}>
         <DialogContent className="max-w-2xl max-h-[85vh]">
