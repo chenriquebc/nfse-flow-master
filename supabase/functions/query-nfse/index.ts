@@ -308,7 +308,8 @@ Deno.serve(async (req) => {
       const pad = (n: number) => String(n).padStart(2, "0");
       const dhEvento = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}${tzOffset}`;
       const reason = body.reason || "Cancelamento solicitado pelo emitente";
-      const eventId = `ID${chave}e10110100001`;
+      const nSeqEvento = "001";
+      const eventId = `IDe101101${chave}${nSeqEvento}`;
 
       const cancelXml = `<?xml version="1.0" encoding="UTF-8"?><pedRegEvento xmlns="http://www.sped.fazenda.gov.br/nfse" versao="1.00"><infPedReg Id="${eventId}"><tpAmb>1</tpAmb><verAplic>NFSE-FLOW-1.0</verAplic><dhEvento>${dhEvento}</dhEvento><nSeqEvento>1</nSeqEvento><chNFSe>${chave}</chNFSe><tpEvento>e101101</tpEvento><detEvento><e101101><xMotivo>${reason}</xMotivo></e101101></detEvento></infPedReg></pedRegEvento>`;
 
