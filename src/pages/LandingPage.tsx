@@ -434,9 +434,9 @@ export default function LandingPage() {
                 </p>
                 <p className="mt-1 text-xs font-bold uppercase tracking-wide text-foreground">{s.label}</p>
                 <p className="mt-0.5 text-[11px] text-muted-foreground">{s.sub}</p>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </StaggerChildren>
           {/* Micro-CTA after numbers */}
           <div className="mt-8 text-center">
             <button onClick={() => scrollTo("pricing")} className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1">
