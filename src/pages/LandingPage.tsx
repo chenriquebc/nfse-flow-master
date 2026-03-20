@@ -420,7 +420,7 @@ export default function LandingPage() {
       {/* ─── SOCIAL PROOF NUMBERS ─── */}
       <section className="border-y border-border bg-card">
         <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6">
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
+          <StaggerChildren className="grid grid-cols-2 gap-8 sm:grid-cols-4">
             {[
               { value: 15000, suffix: "+", label: "HORAS ECONOMIZADAS", sub: "vs. emissão manual (1 nota = 8 min)", icon: "🕐" },
               { value: 2.3, suffix: "M", prefix: "R$ ", label: "EVITADOS EM MULTAS", sub: "Por alertas automáticos de prazos", icon: "💰", decimals: 1 },
