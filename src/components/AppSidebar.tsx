@@ -97,6 +97,19 @@ export default function AppSidebar({ onNavigate }: AppSidebarProps) {
             </Link>
           );
         })}
+
+        {isAdmin && (
+          <div className="pt-3 mt-3 border-t border-sidebar-border">
+            <Link
+              to="/admin"
+              onClick={handleNav}
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all duration-150"
+            >
+              <Shield className="h-[18px] w-[18px] shrink-0" />
+              Painel Admin
+            </Link>
+          </div>
+        )}
       </nav>
 
       {/* User footer */}
