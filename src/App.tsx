@@ -23,6 +23,8 @@ import SettingsPage from "@/pages/SettingsPage";
 import AdminLayout from "@/pages/admin/AdminLayout";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminAccounts from "@/pages/admin/AdminAccounts";
+import AdminFinancial from "@/pages/admin/AdminFinancial";
+import AdminAnalytics from "@/pages/admin/AdminAnalytics";
 import AdminAuditLogs from "@/pages/admin/AdminAuditLogs";
 import NotFound from "@/pages/NotFound";
 
@@ -55,6 +57,8 @@ const App = () => (
               <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
                 <Route index element={<AdminDashboard />} />
                 <Route path="accounts" element={<AdminAccounts />} />
+                <Route path="financial" element={<AdminFinancial />} />
+                <Route path="analytics" element={<AdminAnalytics />} />
                 <Route path="logs" element={<AdminAuditLogs />} />
               </Route>
 
