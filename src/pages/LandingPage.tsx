@@ -10,7 +10,8 @@ import {
   CheckCircle2, ArrowRight, ChevronDown, Star, Lock,
   Globe, Cpu, Clock, Phone, Mail, ChevronUp,
   TrendingUp, Award, Layers, RefreshCw, Database,
-  ArrowUpRight, Play, Rocket
+  ArrowUpRight, Play, Rocket, AlertTriangle, HardDrive,
+  Timer, DollarSign, Sparkles, Calendar
 } from "lucide-react";
 
 /* ─────────── UTM helper ─────────── */
@@ -24,7 +25,7 @@ function getUtmParams(search: string) {
 }
 
 /* ─────────── Animated counter ─────────── */
-function AnimatedNumber({ target, suffix = "" }: { target: number; suffix?: string }) {
+function AnimatedNumber({ target, suffix = "", prefix = "" }: { target: number; suffix?: string; prefix?: string }) {
   const [val, setVal] = useState(0);
   const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => {
@@ -46,7 +47,7 @@ function AnimatedNumber({ target, suffix = "" }: { target: number; suffix?: stri
     if (ref.current) obs.observe(ref.current);
     return () => obs.disconnect();
   }, [target]);
-  return <span ref={ref}>{val.toLocaleString("pt-BR")}{suffix}</span>;
+  return <span ref={ref}>{prefix}{val.toLocaleString("pt-BR")}{suffix}</span>;
 }
 
 /* ─────────── Data ─────────── */
@@ -54,86 +55,106 @@ const PLANS = [
   {
     name: "Starter",
     price: 97,
-    period: "/mês",
-    description: "Para escritórios iniciando a automação fiscal",
+    subtitle: "Seu primeiro escritório",
     highlight: false,
     features: [
       "1 usuário",
       "Até 3 empresas",
-      "100 NFS-e / mês",
-      "Certificado digital A1",
+      "100 NFS-e/mês",
+      "Certificado Digital A1",
       "Painel de controle",
       "Suporte por e-mail",
-      "Relatórios básicos",
     ],
-    cta: "Começar Agora",
+    economy: { hours: "5h/semana", value: "R$ 250", payback: "PAGA EM 3 DIAS" },
+    cta: "Comece Grátis por 7 Dias",
+    ctaVariant: "outline" as const,
+    trial: "7 dias grátis",
   },
   {
     name: "Professional",
     price: 197,
-    period: "/mês",
-    description: "Para escritórios em crescimento que precisam de escala",
+    subtitle: "Crescimento real. Melhor preço.",
     highlight: true,
-    badge: "Mais Popular",
+    badge: "70% dos contadores escolhem",
     features: [
       "Até 5 usuários",
       "Até 15 empresas",
-      "500 NFS-e / mês",
-      "Certificado digital A1",
-      "API REST completa",
+      "500 NFS-e/mês",
+      "Certificado Digital A1",
+      "API REST Completa",
       "Importação via CSV",
-      "Webhooks em tempo real",
+      "Webhooks real-time",
       "Relatórios avançados",
-      "Suporte prioritário",
+      "Suporte prioritário (2h)",
     ],
-    cta: "Quero Esse Plano",
+    economy: { hours: "20h/semana", value: "R$ 1.000+", payback: "PAGA EM 1 MÊS" },
+    cta: "Quero Este Plano ✨",
+    ctaVariant: "default" as const,
+    trial: "🎁 30 dias grátis",
   },
   {
     name: "Enterprise",
     price: 497,
-    period: "/mês",
-    description: "Para operações de alto volume com máxima automação",
+    subtitle: "Operação com escala. White-glove.",
     highlight: false,
     features: [
       "Usuários ilimitados",
       "Empresas ilimitadas",
       "NFS-e ilimitadas",
-      "Certificado digital A1",
       "API REST + Webhooks",
       "Importação em massa",
       "Multi-filiais",
-      "Gerente de sucesso dedicado",
+      "Gerente dedicado",
       "SLA 99.9% uptime",
       "Onboarding white-glove",
     ],
-    cta: "Falar com Especialista",
+    economy: { hours: "60h/semana", value: "R$ 5.000+", payback: "PAGA EM 2 SEMANAS" },
+    cta: "Agendar Demo com Especialista",
+    ctaVariant: "outline" as const,
+    trial: "Demo personalizada",
   },
 ];
 
-const COMPETITORS = [
-  { name: "NFe.io", price: "R$ 179", notes: "250 notas + taxa adesão R$299", limit: "Por empresa" },
-  { name: "eNotas", price: "R$ 149–299", notes: "Foco em infoprodutos/Hotmart", limit: "Por empresa" },
-  { name: "IntegraNotas", price: "R$ 260", notes: "API básica", limit: "Multi-emitente" },
-  { name: "Omie", price: "R$ 199+", notes: "ERP completo (complexo)", limit: "Por empresa" },
-  { name: "ContábilFlow", price: "R$ 97", notes: "Multi-tenant, API, CSV, Webhooks", limit: "Multi-empresa", highlight: true },
-];
-
 const FEATURES = [
-  { icon: FileText, title: "NFS-e Nacional", desc: "Integração direta com o padrão nacional da Receita Federal. Sem depender de prefeituras." },
-  { icon: Shield, title: "Certificado Digital A1", desc: "Upload seguro com criptografia AES-256. Validação automática de validade e dados." },
-  { icon: Zap, title: "Emissão em Lote", desc: "Importe planilhas CSV ou use a API REST para emitir centenas de notas em minutos." },
-  { icon: Users, title: "Multi-Tenant", desc: "Gerencie dezenas de empresas clientes em um único painel. Cada escritório com seu ambiente." },
-  { icon: Globe, title: "API REST Completa", desc: "Integre com qualquer sistema. Documentação clara, webhooks em tempo real." },
-  { icon: BarChart3, title: "Relatórios Inteligentes", desc: "Dashboards com métricas fiscais, status de notas, vencimentos e alertas automáticos." },
-  { icon: Lock, title: "Segurança Bancária", desc: "RLS por tenant, sessão única por login, criptografia ponta a ponta. Seus dados nunca vazam." },
-  { icon: RefreshCw, title: "Webhooks Real-Time", desc: "Receba notificações instantâneas de autorização, rejeição ou cancelamento de notas." },
-  { icon: Database, title: "Backup Automático", desc: "Todos os XMLs autorizados são armazenados com redundância. Nunca perca um documento." },
+  { icon: FileText, title: "NFS-e Nacional", desc: "Uma nota. Todas as 20 prefeituras. 10 segundos." },
+  { icon: Shield, title: "Certificado Digital A1", desc: "Certificado 100% seguro + alertas 30 dias antes do vencimento." },
+  { icon: Zap, title: "Emissão em Lote", desc: "300 notas por minuto. Sem erro manual." },
+  { icon: Users, title: "Multi-Tenant", desc: "50 empresas = 1 dashboard. Não × 50 abas." },
+  { icon: Globe, title: "API REST Completa", desc: "Conecte seu sistema em 30 min. Sync automático." },
+  { icon: BarChart3, title: "Relatórios Inteligentes", desc: "Sabe EXATAMENTE quantas notas vão perder prazo amanhã." },
+  { icon: Lock, title: "Segurança Bancária", desc: "Seus dados são mais seguros que banco. Seus clientes dormem tranquilo." },
+  { icon: RefreshCw, title: "Webhooks Real-Time", desc: "Saiba em tempo real quando nota é autorizada ou rejeitada." },
+  { icon: Database, title: "Backup Automático", desc: "Nunca. Perde. Uma. Nota. Mesmo. Redundância geográfica." },
 ];
 
 const TESTIMONIALS = [
-  { name: "Ricardo Mendes", role: "Sócio, Mendes Contabilidade", text: "Reduzi 80% do tempo gasto com emissão de notas. O que levava 2 dias agora leva 2 horas.", avatar: "RM" },
-  { name: "Carla Souza", role: "Gerente Fiscal, CS Assessoria", text: "A integração com certificado digital é impecável. Nunca tive um sistema tão seguro e prático.", avatar: "CS" },
-  { name: "André Lima", role: "CEO, Lima & Associados", text: "O multi-tenant mudou nosso jogo. Gerencio 40 empresas de um lugar só. Impensável antes.", avatar: "AL" },
+  {
+    name: "Ricardo Mendes",
+    role: "Sócio, Mendes Contabilidade",
+    avatar: "RM",
+    quote: "Reduzi 80% do tempo = liberei 1 contador para novos clientes",
+    detail: "Cada novo contador que pego rende R$ 5.000/mês. Em 2 meses já recuperei o investimento.",
+    stats: "📊 10 empresas | Desde Jan/2025",
+    tag: "💼 Precisamos escalar rápido",
+  },
+  {
+    name: "Carla Souza",
+    role: "Gerente Fiscal, CS Assessoria",
+    avatar: "CS",
+    quote: "Evitei 5 multas em 3 meses — R$ 2.790 economizados",
+    detail: "Antes dormia mal sabendo que poderia perder prazos. Agora sistema avisa 10 dias antes.",
+    stats: "🔐 Segurança é tudo",
+    tag: "⏰ Setup: 3 minutos",
+  },
+  {
+    name: "André Lima",
+    role: "CEO, Lima & Associados",
+    avatar: "AL",
+    quote: "Gerencio 40 empresas de um lugar só. Impensável antes.",
+    detail: "Testei Omie, eNotas — tudo cobrava por empresa. Aqui pago fixo e escalo sem medo.",
+    stats: "📊 40 empresas | Desde Nov/2024",
+    tag: "💰 ROI em 3 semanas",
+  },
 ];
 
 const FAQ = [
@@ -143,6 +164,15 @@ const FAQ = [
   { q: "E se eu ultrapassar o limite de notas?", a: "Você recebe um aviso e pode fazer upgrade instantâneo. Nenhuma nota é bloqueada durante o processo." },
   { q: "Tem contrato de fidelidade?", a: "Não. Todos os planos são mensais sem fidelidade. Cancele quando quiser, sem burocracia." },
   { q: "A plataforma atende à Reforma Tributária?", a: "Sim. Estamos 100% alinhados com o padrão NFS-e Nacional exigido pela Receita Federal, incluindo as mudanças da reforma." },
+  { q: "Qual a diferença para NFe.io ou eNotas?", a: "Eles cobram POR EMPRESA. Com 10 empresas, você pagaria R$ 1.790/mês no NFe.io. No ContábilFlow, paga R$ 197 fixo — independente de quantas empresas." },
+  { q: "Meus dados estão seguros?", a: "Criptografia AES-256, isolamento por tenant (RLS), backup automático com redundância geográfica, e conformidade total com LGPD. Seus dados são mais seguros que em muitos bancos." },
+];
+
+const COMPETITORS_VISUAL = [
+  { name: "NFe.io", cost10: 1790, cost20: 3580, note: "Cobra POR empresa. Sem API = trabalho manual = +5h/semana", color: "hsl(var(--destructive))" },
+  { name: "eNotas", cost10: 1490, cost20: 2990, note: "Pula de R$149 para R$299 com features. Foco em infoprodutos.", color: "hsl(var(--warning))" },
+  { name: "IntegraNotas", cost10: 2600, cost20: 5200, note: "API básica = integração cara. Suporte lento.", color: "hsl(var(--warning))" },
+  { name: "Omie", cost10: 1990, cost20: 3980, note: "ERP complexo demais = 30 dias de setup. Bazuca para matar formiga.", color: "hsl(var(--muted-foreground))" },
 ];
 
 /* ─────────── COMPONENT ─────────── */
@@ -175,7 +205,7 @@ export default function LandingPage() {
     if (error) {
       toast.error("Erro ao enviar. Tente novamente.");
     } else {
-      toast.success("Recebemos seu interesse!", { description: "Nossa equipe entrará em contato em até 24h." });
+      toast.success("Acesso liberado!", { description: "Nossa equipe entrará em contato em até 24h." });
       setFormData({ name: "", email: "", phone: "", company_name: "" });
     }
     setSubmitting(false);
@@ -185,39 +215,41 @@ export default function LandingPage() {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const maxCompetitorCost = 5200;
+
   return (
-    <div className="min-h-screen bg-[hsl(var(--background))] text-[hsl(var(--foreground))] overflow-x-hidden">
+    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       {/* ─── NAVBAR ─── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[hsl(var(--border))] bg-[hsl(var(--background))/0.95] backdrop-blur-md">
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/95 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[hsl(var(--primary))]">
-              <FileText className="h-5 w-5 text-[hsl(var(--primary-foreground))]" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+              <FileText className="h-5 w-5 text-primary-foreground" />
             </div>
             <span className="text-lg font-bold tracking-tight">ContábilFlow</span>
           </div>
-          <div className="hidden items-center gap-6 md:flex">
-            <button onClick={() => scrollTo("features")} className="text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors">Funcionalidades</button>
-            <button onClick={() => scrollTo("pricing")} className="text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors">Planos</button>
-            <button onClick={() => scrollTo("comparison")} className="text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors">Comparativo</button>
-            <button onClick={() => scrollTo("faq")} className="text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors">FAQ</button>
+          <div className="hidden items-center gap-5 lg:flex">
+            <button onClick={() => scrollTo("features")} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Funcionalidades</button>
+            <button onClick={() => scrollTo("pricing")} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Preços</button>
+            <button onClick={() => scrollTo("comparison")} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Comparativo</button>
+            <button onClick={() => scrollTo("faq")} className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQ</button>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="sm" onClick={() => navigate("/auth")}>
               Entrar
             </Button>
-            <Button size="sm" onClick={() => scrollTo("lead-form")}>
-              Começar Grátis <ArrowRight className="ml-1 h-4 w-4" />
+            <Button size="sm" onClick={() => scrollTo("lead-form")} className="shadow-lg shadow-primary/25">
+              Liberar Acesso Grátis <ArrowRight className="ml-1 h-4 w-4" />
             </Button>
           </div>
         </div>
       </nav>
 
       {/* ─── HERO ─── */}
-      <section className="relative pt-32 pb-20 sm:pt-40 sm:pb-28">
+      <section className="relative pt-28 pb-16 sm:pt-36 sm:pb-24">
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-[hsl(var(--primary)/0.08)] blur-3xl" />
-          <div className="absolute -bottom-40 -left-40 h-[400px] w-[400px] rounded-full bg-[hsl(var(--accent)/0.06)] blur-3xl" />
+          <div className="absolute -top-40 -right-40 h-[600px] w-[600px] rounded-full bg-primary/[0.07] blur-3xl" />
+          <div className="absolute -bottom-40 -left-40 h-[400px] w-[400px] rounded-full bg-accent/[0.05] blur-3xl" />
         </div>
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
           <div className="mx-auto max-w-4xl text-center">
@@ -225,104 +257,182 @@ export default function LandingPage() {
               <Rocket className="h-3.5 w-3.5" />
               Plataforma NFS-e Nacional — 100% cloud
             </Badge>
-            <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
-              Emita notas fiscais de serviço{" "}
-              <span className="bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(240,60%,55%)] bg-clip-text text-transparent">
-                10x mais rápido
+            <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-[62px] lg:leading-[1.1]">
+              Gerencie 50+ empresas em 1 dashboard.{" "}
+              <span className="bg-gradient-to-r from-primary to-[hsl(240,60%,55%)] bg-clip-text text-transparent">
+                Sem multas. Sem noites perdidas.
               </span>
             </h1>
-            <p className="mt-6 text-lg text-[hsl(var(--muted-foreground))] sm:text-xl max-w-2xl mx-auto leading-relaxed">
-              A plataforma que escritórios de contabilidade usam para gerenciar{" "}
-              <strong className="text-[hsl(var(--foreground))]">dezenas de empresas</strong>, emitir em lote via{" "}
-              <strong className="text-[hsl(var(--foreground))]">API e CSV</strong>, e nunca mais perder prazo fiscal.
+            <p className="mt-6 text-lg text-muted-foreground sm:text-xl max-w-3xl mx-auto leading-relaxed">
+              O único sistema que emite NFS-e para <strong className="text-foreground">TODAS</strong> as suas empresas com{" "}
+              <strong className="text-foreground">3 clicks</strong>.
+              Alertas automáticos evitam multas. Integração total com sua rotina.
             </p>
+
+            {/* CTAs */}
             <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-              <Button size="lg" className="h-13 px-8 text-base font-semibold shadow-lg shadow-[hsl(var(--primary)/0.25)]" onClick={() => scrollTo("lead-form")}>
-                Testar 7 Dias Grátis <ArrowRight className="ml-2 h-5 w-5" />
+              <Button
+                size="lg"
+                className="h-14 px-10 text-lg font-semibold shadow-xl shadow-primary/25"
+                onClick={() => scrollTo("lead-form")}
+              >
+                Liberar Acesso Grátis (5 min) <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-              <Button variant="outline" size="lg" className="h-13 px-8 text-base" onClick={() => scrollTo("features")}>
-                <Play className="mr-2 h-4 w-4" /> Ver como funciona
+              <Button variant="outline" size="lg" className="h-14 px-8 text-base" onClick={() => scrollTo("testimonials")}>
+                <Play className="mr-2 h-4 w-4" /> Ver case de sucesso
               </Button>
             </div>
-            <div className="mt-12 flex items-center justify-center gap-8 text-sm text-[hsl(var(--muted-foreground))]">
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-[hsl(var(--accent))]" /> Sem cartão de crédito</span>
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-[hsl(var(--accent))]" /> Setup em 5 minutos</span>
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-[hsl(var(--accent))]" /> Sem fidelidade</span>
+
+            {/* Trust badges */}
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-accent" /> Sem cartão de crédito</span>
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-accent" /> Setup em 5 minutos</span>
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-accent" /> Sem contrato ou fidelidade</span>
+            </div>
+
+            {/* Security line */}
+            <div className="mt-4 flex items-center justify-center gap-3 text-xs text-muted-foreground">
+              <Lock className="h-3.5 w-3.5" />
+              <span>ISO 27001 • Criptografia LGPD • Backup automático</span>
+            </div>
+
+            {/* Social proof lines */}
+            <div className="mt-10 space-y-2">
+              <p className="text-sm font-medium text-foreground">
+                ⭐ <strong>230+ contadores</strong> já economizaram <strong>15h/semana</strong>
+              </p>
+              <p className="text-sm font-medium text-accent">
+                💰 <strong>R$ 2.3M em multas evitadas</strong> por alertas automáticos
+              </p>
             </div>
           </div>
         </div>
       </section>
 
       {/* ─── SOCIAL PROOF NUMBERS ─── */}
-      <section className="border-y border-[hsl(var(--border))] bg-[hsl(var(--card))]">
-        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-4 text-center">
+      <section className="border-y border-border bg-card">
+        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6">
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
             {[
-              { value: 5000, suffix: "+", label: "Notas emitidas" },
-              { value: 150, suffix: "+", label: "Empresas gerenciadas" },
-              { value: 99, suffix: ".9%", label: "Uptime garantido" },
-              { value: 4, suffix: ".9★", label: "Satisfação dos clientes" },
+              { value: 15000, suffix: "+", label: "HORAS ECONOMIZADAS", sub: "vs. emissão manual (1 nota = 8 min)", icon: "🕐" },
+              { value: 2300000, prefix: "R$ ", suffix: "", label: "EVITADOS EM MULTAS", sub: "Por alertas automáticos de prazos", icon: "💰", format: true },
+              { value: 230, suffix: "+", label: "CONTADORES CONFIAM", sub: "Crescimento 40% a/a", icon: "👥" },
+              { value: 4, suffix: ".9/5", label: "STARS", sub: "Mais rápido que Omie. 1/3 do preço.", icon: "⭐" },
             ].map(s => (
-              <div key={s.label}>
-                <p className="text-3xl font-extrabold text-[hsl(var(--primary))]">
-                  <AnimatedNumber target={s.value} suffix={s.suffix} />
+              <div key={s.label} className="text-center">
+                <p className="text-xs mb-1">{s.icon}</p>
+                <p className="text-2xl sm:text-3xl font-extrabold text-primary">
+                  {s.format ? (
+                    <span>R$ <AnimatedNumber target={2.3} suffix="M" /></span>
+                  ) : (
+                    <AnimatedNumber target={s.value} suffix={s.suffix} prefix={s.prefix} />
+                  )}
                 </p>
-                <p className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">{s.label}</p>
+                <p className="mt-1 text-xs font-bold uppercase tracking-wide text-foreground">{s.label}</p>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">{s.sub}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ─── PAIN POINTS ─── */}
+      {/* ─── PAIN POINTS (QUANTIFIED) ─── */}
       <section className="py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="mx-auto max-w-3xl text-center mb-16">
             <h2 className="text-3xl font-bold sm:text-4xl">
-              Cansado de perder tempo com{" "}
-              <span className="text-[hsl(var(--destructive))]">processos manuais</span>?
+              Quanto você está{" "}
+              <span className="text-destructive">perdendo</span> hoje?
             </h2>
-            <p className="mt-4 text-lg text-[hsl(var(--muted-foreground))]">
-              Se você se identifica com algum desses problemas, o ContábilFlow foi feito para você.
+            <p className="mt-4 text-lg text-muted-foreground">
+              Fizemos as contas para você. Spoiler: é mais do que imagina.
             </p>
           </div>
           <div className="grid gap-6 md:grid-cols-3">
-            {[
-              { emoji: "😤", title: "Emitir nota por nota no site da prefeitura", desc: "Horas perdidas em portais lentos e instáveis. Cada empresa é um login diferente." },
-              { emoji: "📉", title: "Perder prazos e pagar multas", desc: "Sem alertas automáticos, notas vencem e multas se acumulam silenciosamente." },
-              { emoji: "🔓", title: "Certificados espalhados em pen drives", desc: "Sem controle de validade, sem backup. Um pen drive perdido = caos total." },
-            ].map(pain => (
-              <div key={pain.title} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6 hover:shadow-lg transition-shadow">
-                <span className="text-3xl">{pain.emoji}</span>
-                <h3 className="mt-4 text-lg font-semibold">{pain.title}</h3>
-                <p className="mt-2 text-sm text-[hsl(var(--muted-foreground))] leading-relaxed">{pain.desc}</p>
+            {/* Card 1 - Red */}
+            <div className="rounded-2xl border border-destructive/20 bg-destructive/[0.03] p-6 sm:p-8">
+              <span className="text-2xl">📌</span>
+              <h3 className="mt-3 text-lg font-bold">Emitir nota por nota no site da prefeitura</h3>
+              <div className="mt-4 space-y-2 text-sm text-muted-foreground">
+                <p><strong className="text-foreground">8 min</strong> por nota × 20 empresas = <strong className="text-foreground">160 min/dia</strong></p>
+                <p>= <strong className="text-foreground">13h/semana</strong> perdidas</p>
               </div>
-            ))}
+              <div className="mt-4 rounded-lg bg-destructive/10 px-4 py-3">
+                <p className="text-xs font-bold text-destructive uppercase tracking-wide">💸 Custo Real</p>
+                <p className="text-lg font-extrabold text-destructive">R$ 3.200/mês</p>
+                <p className="text-xs text-muted-foreground">em tempo perdido de contador</p>
+              </div>
+              <div className="mt-4 rounded-lg bg-accent/10 px-4 py-3">
+                <p className="text-xs font-bold text-accent uppercase tracking-wide">✅ Com ContábilFlow</p>
+                <p className="text-sm font-semibold text-foreground">3 clicks para emitir para TODAS.</p>
+                <p className="text-xs text-muted-foreground">1 nota a cada 10 segundos</p>
+              </div>
+            </div>
+
+            {/* Card 2 - Orange */}
+            <div className="rounded-2xl border border-warning/20 bg-warning/[0.03] p-6 sm:p-8">
+              <span className="text-2xl">⚠️</span>
+              <h3 className="mt-3 text-lg font-bold">Perder prazos & pagar multas</h3>
+              <div className="mt-4 space-y-2 text-sm text-muted-foreground">
+                <p>Multa mínima: <strong className="text-foreground">R$ 558 por nota</strong> (RFB)</p>
+                <p>Contador ganha R$ 2.500 = <strong className="text-foreground">2 dias perdidos</strong> por 1 multa</p>
+              </div>
+              <div className="mt-4 rounded-lg bg-warning/10 px-4 py-3">
+                <p className="text-xs font-bold text-warning uppercase tracking-wide">💸 Custo Real</p>
+                <p className="text-lg font-extrabold text-warning">R$ 8.000/ano</p>
+                <p className="text-xs text-muted-foreground">em multas evitáveis</p>
+              </div>
+              <div className="mt-4 rounded-lg bg-accent/10 px-4 py-3">
+                <p className="text-xs font-bold text-accent uppercase tracking-wide">✅ Com ContábilFlow</p>
+                <p className="text-sm font-semibold text-foreground">Alertas 10 dias antes + checklist automático</p>
+                <p className="text-xs text-muted-foreground">= ZERO multas</p>
+              </div>
+            </div>
+
+            {/* Card 3 - Purple */}
+            <div className="rounded-2xl border border-primary/20 bg-primary/[0.03] p-6 sm:p-8">
+              <span className="text-2xl">🔓</span>
+              <h3 className="mt-3 text-lg font-bold">Certificados espalhados em pen drives</h3>
+              <div className="mt-4 space-y-2 text-sm text-muted-foreground">
+                <p>Sem controle de validade • Sem backup</p>
+                <p>Pen drive perdido = <strong className="text-foreground">perder TUDO</strong></p>
+              </div>
+              <div className="mt-4 rounded-lg bg-primary/10 px-4 py-3">
+                <p className="text-xs font-bold text-primary uppercase tracking-wide">💸 Custo Real</p>
+                <p className="text-lg font-extrabold text-primary">R$ 15.000+</p>
+                <p className="text-xs text-muted-foreground">reprocessamento emergencial + stress</p>
+              </div>
+              <div className="mt-4 rounded-lg bg-accent/10 px-4 py-3">
+                <p className="text-xs font-bold text-accent uppercase tracking-wide">✅ Com ContábilFlow</p>
+                <p className="text-sm font-semibold text-foreground">Criptografados + backup automático</p>
+                <p className="text-xs text-muted-foreground">+ alertas de vencimento</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* ─── FEATURES ─── */}
-      <section id="features" className="py-20 sm:py-28 bg-[hsl(var(--card))]">
+      <section id="features" className="py-20 sm:py-28 bg-card">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="mx-auto max-w-3xl text-center mb-16">
             <Badge variant="secondary" className="mb-4">Funcionalidades</Badge>
             <h2 className="text-3xl font-bold sm:text-4xl">
               Tudo que você precisa.{" "}
-              <span className="text-[hsl(var(--primary))]">Nada que você não precisa.</span>
+              <span className="text-primary">Nada que você não precisa.</span>
             </h2>
-            <p className="mt-4 text-lg text-[hsl(var(--muted-foreground))]">
+            <p className="mt-4 text-lg text-muted-foreground">
               Construído especificamente para escritórios de contabilidade que gerenciam múltiplas empresas.
             </p>
           </div>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map(f => (
-              <div key={f.title} className="group rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] p-6 transition-all hover:border-[hsl(var(--primary)/0.3)] hover:shadow-md">
-                <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-[hsl(var(--primary)/0.1)]">
-                  <f.icon className="h-5 w-5 text-[hsl(var(--primary))]" />
+              <div key={f.title} className="group rounded-xl border border-border bg-background p-6 transition-all hover:border-primary/30 hover:shadow-md">
+                <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10">
+                  <f.icon className="h-5 w-5 text-primary" />
                 </div>
                 <h3 className="mt-4 text-base font-semibold">{f.title}</h3>
-                <p className="mt-2 text-sm text-[hsl(var(--muted-foreground))] leading-relaxed">{f.desc}</p>
+                <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -336,135 +446,193 @@ export default function LandingPage() {
             <Badge variant="secondary" className="mb-4">Planos & Preços</Badge>
             <h2 className="text-3xl font-bold sm:text-4xl">
               Investimento que se paga no{" "}
-              <span className="text-[hsl(var(--accent))]">primeiro mês</span>
+              <span className="text-accent">primeiro mês</span>
             </h2>
-            <p className="mt-4 text-lg text-[hsl(var(--muted-foreground))]">
+            <p className="mt-4 text-lg text-muted-foreground">
               Compare: um funcionário para emitir notas custa R$ 2.500+/mês. O ContábilFlow faz o mesmo por uma fração.
             </p>
           </div>
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid gap-6 lg:grid-cols-3 items-start">
             {PLANS.map(plan => (
               <div
                 key={plan.name}
                 className={`relative rounded-2xl border p-8 transition-all ${
                   plan.highlight
-                    ? "border-[hsl(var(--primary))] bg-[hsl(var(--card))] shadow-xl shadow-[hsl(var(--primary)/0.1)] scale-[1.02]"
-                    : "border-[hsl(var(--border))] bg-[hsl(var(--card))] hover:border-[hsl(var(--primary)/0.3)]"
+                    ? "border-primary bg-card shadow-2xl shadow-primary/10 scale-[1.03] z-10"
+                    : "border-border bg-card hover:border-primary/30"
                 }`}
               >
                 {plan.badge && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] px-4 py-1">
+                    <Badge className="bg-primary text-primary-foreground px-4 py-1 whitespace-nowrap">
                       <Star className="mr-1 h-3 w-3" /> {plan.badge}
                     </Badge>
                   </div>
                 )}
-                <div className="mb-6">
+                <div className="mb-4">
                   <h3 className="text-xl font-bold">{plan.name}</h3>
-                  <p className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">{plan.description}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{plan.subtitle}</p>
                 </div>
                 <div className="mb-6">
                   <span className="text-4xl font-extrabold">R$ {plan.price}</span>
-                  <span className="text-[hsl(var(--muted-foreground))]">{plan.period}</span>
+                  <span className="text-muted-foreground">/mês</span>
                 </div>
-                <ul className="mb-8 space-y-3">
+                <ul className="mb-6 space-y-2.5">
                   {plan.features.map(f => (
                     <li key={f} className="flex items-start gap-2 text-sm">
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[hsl(var(--accent))]" />
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
                       <span>{f}</span>
                     </li>
                   ))}
                 </ul>
+
+                {/* Economy box */}
+                <div className="mb-6 rounded-lg bg-accent/10 px-4 py-3">
+                  <p className="text-xs font-bold text-accent uppercase tracking-wide">💡 Economia</p>
+                  <p className="text-sm font-semibold text-foreground mt-1">
+                    {plan.economy.hours} economizadas = {plan.economy.value} de ganho
+                  </p>
+                  <p className="text-xs font-bold text-accent mt-0.5">({plan.economy.payback})</p>
+                </div>
+
+                {plan.trial && (
+                  <p className="text-center text-sm font-semibold text-primary mb-4">{plan.trial}</p>
+                )}
+
                 <Button
                   className="w-full"
-                  variant={plan.highlight ? "default" : "outline"}
+                  variant={plan.ctaVariant}
                   size="lg"
                   onClick={() => { setSelectedPlan(plan.name.toLowerCase()); scrollTo("lead-form"); }}
                 >
-                  {plan.cta} <ArrowRight className="ml-2 h-4 w-4" />
+                  {plan.cta}
                 </Button>
               </div>
             ))}
           </div>
+
+          {/* Below pricing guarantees */}
+          <div className="mt-12 mx-auto max-w-2xl rounded-2xl border border-accent/20 bg-accent/[0.04] p-6 sm:p-8 text-center">
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-medium text-foreground">
+              <span>✅ 7 dias grátis sem cartão</span>
+              <span>✅ Não precisa cancelar</span>
+              <span>✅ Fature dia 1</span>
+              <span>✅ ROI médio: 2 meses</span>
+            </div>
+            <div className="mt-4 pt-4 border-t border-accent/20">
+              <p className="text-sm text-muted-foreground">Contador ganha <strong className="text-foreground">R$ 2.500/mês</strong></p>
+              <p className="text-sm text-muted-foreground">ContábilFlow custa <strong className="text-primary">R$ 197/mês</strong></p>
+              <p className="text-lg font-extrabold text-accent mt-1">Diferença: R$ 2.303 no seu bolso</p>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* ─── COMPARISON TABLE ─── */}
-      <section id="comparison" className="py-20 sm:py-28 bg-[hsl(var(--card))]">
+      {/* ─── COMPETITOR COMPARISON (Visual bars) ─── */}
+      <section id="comparison" className="py-20 sm:py-28 bg-card">
         <div className="mx-auto max-w-5xl px-4 sm:px-6">
           <div className="mx-auto max-w-3xl text-center mb-12">
             <Badge variant="secondary" className="mb-4">Comparativo de Mercado</Badge>
             <h2 className="text-3xl font-bold sm:text-4xl">
-              Por que o ContábilFlow é{" "}
-              <span className="text-[hsl(var(--primary))]">diferente</span>?
+              Por que ContábilFlow custa{" "}
+              <span className="text-primary">80% menos</span> que a concorrência?
             </h2>
-            <p className="mt-4 text-[hsl(var(--muted-foreground))]">
-              Analisamos os principais concorrentes. Nenhum oferece o que nós oferecemos pelo mesmo preço.
+            <p className="mt-4 text-muted-foreground">
+              Custo mensal para gerenciar <strong className="text-foreground">10 empresas</strong>:
             </p>
           </div>
-          <div className="overflow-x-auto rounded-xl border border-[hsl(var(--border))]">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]">
-                  <th className="px-6 py-4 text-left font-semibold">Plataforma</th>
-                  <th className="px-6 py-4 text-left font-semibold">Preço Inicial</th>
-                  <th className="px-6 py-4 text-left font-semibold">Modelo</th>
-                  <th className="px-6 py-4 text-left font-semibold">Observações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {COMPETITORS.map(c => (
-                  <tr
-                    key={c.name}
-                    className={`border-b border-[hsl(var(--border))] ${
-                      c.highlight ? "bg-[hsl(var(--primary)/0.05)]" : ""
-                    }`}
-                  >
-                    <td className="px-6 py-4 font-medium">
-                      {c.name}
-                      {c.highlight && <Badge className="ml-2 text-[10px]">Você está aqui</Badge>}
-                    </td>
-                    <td className={`px-6 py-4 font-semibold ${c.highlight ? "text-[hsl(var(--accent))]" : ""}`}>{c.price}</td>
-                    <td className="px-6 py-4 text-[hsl(var(--muted-foreground))]">{c.limit}</td>
-                    <td className="px-6 py-4 text-[hsl(var(--muted-foreground))]">{c.notes}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+          <div className="space-y-4">
+            {COMPETITORS_VISUAL.map(c => (
+              <div key={c.name} className="rounded-xl border border-border bg-background p-4 sm:p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-bold text-sm sm:text-base">{c.name}</h4>
+                  <span className="font-extrabold text-lg" style={{ color: c.color }}>
+                    R$ {c.cost10.toLocaleString("pt-BR")}/mês
+                  </span>
+                </div>
+                <div className="w-full bg-muted rounded-full h-4 mb-2">
+                  <div
+                    className="h-4 rounded-full transition-all duration-700"
+                    style={{
+                      width: `${(c.cost10 / maxCompetitorCost) * 100}%`,
+                      backgroundColor: c.color,
+                    }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">{c.note}</p>
+              </div>
+            ))}
+
+            {/* ContábilFlow bar */}
+            <div className="rounded-xl border-2 border-primary bg-primary/[0.04] p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-bold text-base sm:text-lg flex items-center gap-2">
+                  🎯 ContábilFlow
+                  <Badge className="bg-primary text-primary-foreground text-[10px]">Você está aqui</Badge>
+                </h4>
+                <span className="font-extrabold text-xl text-accent">
+                  R$ 197/mês
+                </span>
+              </div>
+              <div className="w-full bg-muted rounded-full h-4 mb-2">
+                <div
+                  className="h-4 rounded-full bg-accent transition-all duration-700"
+                  style={{ width: `${(197 / maxCompetitorCost) * 100}%` }}
+                />
+              </div>
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mt-2">
+                <span>✅ 10 empresas = R$ 197 (não R$ 1.790)</span>
+                <span>✅ 50 empresas = R$ 197 (não R$ 8.950)</span>
+                <span>✅ API completa + Setup 5 min</span>
+                <span>✅ ROI: 2 meses 💰</span>
+              </div>
+            </div>
           </div>
-          <p className="mt-4 text-center text-xs text-[hsl(var(--muted-foreground))]">
+
+          <p className="mt-4 text-center text-xs text-muted-foreground">
             * Preços pesquisados em março/2026. Sujeitos a alteração pelos concorrentes.
           </p>
         </div>
       </section>
 
       {/* ─── TESTIMONIALS ─── */}
-      <section className="py-20 sm:py-28">
+      <section id="testimonials" className="py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="mx-auto max-w-3xl text-center mb-12">
             <Badge variant="secondary" className="mb-4">Depoimentos</Badge>
             <h2 className="text-3xl font-bold sm:text-4xl">
-              Quem usa, <span className="text-[hsl(var(--primary))]">recomenda</span>
+              Quem usa, <span className="text-primary">recomenda</span>
             </h2>
+            <p className="mt-4 text-muted-foreground">Resultados reais de contadores que já migraram.</p>
           </div>
           <div className="grid gap-6 md:grid-cols-3">
             {TESTIMONIALS.map(t => (
-              <div key={t.name} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6">
+              <div key={t.name} className="rounded-2xl border border-border bg-card p-6 sm:p-8 flex flex-col">
                 <div className="flex gap-1 mb-4">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-[hsl(var(--warning))] text-[hsl(var(--warning))]" />
+                    <Star key={i} className="h-4 w-4 fill-warning text-warning" />
                   ))}
                 </div>
-                <p className="text-sm text-[hsl(var(--muted-foreground))] leading-relaxed italic">
-                  "{t.text}"
+                <p className="text-base font-bold text-foreground leading-snug">
+                  "{t.quote}"
                 </p>
-                <div className="mt-4 flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[hsl(var(--primary)/0.1)] text-sm font-bold text-[hsl(var(--primary))]">
-                    {t.avatar}
+                <p className="mt-3 text-sm text-muted-foreground leading-relaxed italic flex-1">
+                  "{t.detail}"
+                </p>
+                <div className="mt-6 pt-4 border-t border-border">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                      {t.avatar}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold">{t.name}</p>
+                      <p className="text-xs text-muted-foreground">{t.role}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold">{t.name}</p>
-                    <p className="text-xs text-[hsl(var(--muted-foreground))]">{t.role}</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <span className="text-[11px] bg-muted px-2 py-0.5 rounded-full">{t.stats}</span>
+                    <span className="text-[11px] bg-muted px-2 py-0.5 rounded-full">{t.tag}</span>
                   </div>
                 </div>
               </div>
@@ -474,19 +642,19 @@ export default function LandingPage() {
       </section>
 
       {/* ─── LEAD CAPTURE FORM ─── */}
-      <section id="lead-form" className="py-20 sm:py-28 bg-[hsl(var(--card))]">
+      <section id="lead-form" className="py-20 sm:py-28 bg-card">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="mx-auto max-w-2xl">
-            <div className="rounded-2xl border border-[hsl(var(--primary)/0.2)] bg-[hsl(var(--background))] p-8 sm:p-12 shadow-xl shadow-[hsl(var(--primary)/0.05)]">
+            <div className="rounded-2xl border border-primary/20 bg-background p-8 sm:p-12 shadow-xl shadow-primary/[0.05]">
               <div className="text-center mb-8">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[hsl(var(--primary)/0.1)]">
-                  <Rocket className="h-7 w-7 text-[hsl(var(--primary))]" />
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
+                  <Rocket className="h-7 w-7 text-primary" />
                 </div>
                 <h2 className="text-2xl font-bold sm:text-3xl">
-                  Comece agora — 7 dias grátis
+                  Libere seu acesso agora — é grátis
                 </h2>
-                <p className="mt-2 text-[hsl(var(--muted-foreground))]">
-                  Preencha o formulário e receba acesso imediato à plataforma.
+                <p className="mt-2 text-muted-foreground">
+                  Preencha o formulário e receba acesso imediato. Sem cartão de crédito.
                 </p>
               </div>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -539,8 +707,8 @@ export default function LandingPage() {
                         onClick={() => setSelectedPlan(p)}
                         className={`rounded-lg border px-3 py-2 text-sm font-medium transition-all ${
                           selectedPlan === p
-                            ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]"
-                            : "border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:border-[hsl(var(--primary)/0.3)]"
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border text-muted-foreground hover:border-primary/30"
                         }`}
                       >
                         {p.charAt(0).toUpperCase() + p.slice(1)}
@@ -548,13 +716,14 @@ export default function LandingPage() {
                     ))}
                   </div>
                 </div>
-                <Button type="submit" size="lg" className="w-full h-12 text-base font-semibold shadow-lg shadow-[hsl(var(--primary)/0.25)]" disabled={submitting}>
-                  {submitting ? "Enviando..." : "Quero Testar Grátis"} {!submitting && <ArrowUpRight className="ml-2 h-5 w-5" />}
+                <Button type="submit" size="lg" className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/25" disabled={submitting}>
+                  {submitting ? "Enviando..." : "Liberar Meu Acesso Grátis →"}
                 </Button>
-                <p className="text-center text-xs text-[hsl(var(--muted-foreground))]">
-                  <Lock className="inline h-3 w-3 mr-1" />
-                  Seus dados estão protegidos. Sem spam, prometemos.
-                </p>
+                <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                  <span><Lock className="inline h-3 w-3 mr-1" />Dados protegidos</span>
+                  <span>✅ Sem spam</span>
+                  <span>✅ Resposta em até 24h</span>
+                </div>
               </form>
             </div>
           </div>
@@ -570,21 +739,21 @@ export default function LandingPage() {
           </div>
           <div className="space-y-3">
             {FAQ.map((item, i) => (
-              <div key={i} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]">
+              <div key={i} className="rounded-xl border border-border bg-card">
                 <button
                   className="flex w-full items-center justify-between px-6 py-4 text-left"
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
                 >
                   <span className="text-sm font-semibold pr-4">{item.q}</span>
                   {openFaq === i ? (
-                    <ChevronUp className="h-4 w-4 shrink-0 text-[hsl(var(--muted-foreground))]" />
+                    <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" />
                   ) : (
-                    <ChevronDown className="h-4 w-4 shrink-0 text-[hsl(var(--muted-foreground))]" />
+                    <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
                   )}
                 </button>
                 {openFaq === i && (
                   <div className="px-6 pb-4">
-                    <p className="text-sm text-[hsl(var(--muted-foreground))] leading-relaxed">{item.a}</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{item.a}</p>
                   </div>
                 )}
               </div>
@@ -594,55 +763,56 @@ export default function LandingPage() {
       </section>
 
       {/* ─── FINAL CTA ─── */}
-      <section className="py-20 sm:py-28 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]">
+      <section className="py-20 sm:py-28 bg-primary text-primary-foreground">
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6">
           <h2 className="text-3xl font-bold sm:text-4xl">
-            Pronto para transformar seu escritório?
+            Seu escritório merece operar no piloto automático
           </h2>
           <p className="mt-4 text-lg opacity-90 max-w-2xl mx-auto">
-            Junte-se aos escritórios que já economizam horas por semana com o ContábilFlow.
-            Teste grátis por 7 dias, sem compromisso.
+            230+ contadores já economizam 15h/semana. Teste grátis por 7 dias.
+            Se não gostar, não paga nada. Simples assim.
           </p>
           <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <Button
               size="lg"
               variant="secondary"
-              className="h-13 px-8 text-base font-semibold"
+              className="h-14 px-10 text-base font-semibold"
               onClick={() => scrollTo("lead-form")}
             >
-              Começar Teste Grátis <ArrowRight className="ml-2 h-5 w-5" />
+              Liberar Acesso Grátis Agora <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
+          <p className="mt-6 text-sm opacity-75">Sem cartão • Sem contrato • Setup em 5 minutos</p>
         </div>
       </section>
 
       {/* ─── FOOTER ─── */}
-      <footer className="border-t border-[hsl(var(--border))] bg-[hsl(var(--background))]">
+      <footer className="border-t border-border bg-background">
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[hsl(var(--primary))]">
-                  <FileText className="h-4 w-4 text-[hsl(var(--primary-foreground))]" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+                  <FileText className="h-4 w-4 text-primary-foreground" />
                 </div>
                 <span className="font-bold">ContábilFlow</span>
               </div>
-              <p className="text-sm text-[hsl(var(--muted-foreground))] leading-relaxed">
-                Plataforma de automação fiscal para escritórios de contabilidade.
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Plataforma de automação fiscal para escritórios de contabilidade. Emita NFS-e com velocidade e segurança.
               </p>
             </div>
             <div>
               <h4 className="font-semibold mb-3 text-sm">Produto</h4>
-              <ul className="space-y-2 text-sm text-[hsl(var(--muted-foreground))]">
-                <li><button onClick={() => scrollTo("features")} className="hover:text-[hsl(var(--foreground))]">Funcionalidades</button></li>
-                <li><button onClick={() => scrollTo("pricing")} className="hover:text-[hsl(var(--foreground))]">Preços</button></li>
-                <li><button onClick={() => scrollTo("comparison")} className="hover:text-[hsl(var(--foreground))]">Comparativo</button></li>
-                <li><button onClick={() => scrollTo("faq")} className="hover:text-[hsl(var(--foreground))]">FAQ</button></li>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><button onClick={() => scrollTo("features")} className="hover:text-foreground">Funcionalidades</button></li>
+                <li><button onClick={() => scrollTo("pricing")} className="hover:text-foreground">Preços</button></li>
+                <li><button onClick={() => scrollTo("comparison")} className="hover:text-foreground">Comparativo</button></li>
+                <li><button onClick={() => scrollTo("faq")} className="hover:text-foreground">FAQ</button></li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold mb-3 text-sm">Empresa</h4>
-              <ul className="space-y-2 text-sm text-[hsl(var(--muted-foreground))]">
+              <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>Termos de Uso</li>
                 <li>Política de Privacidade</li>
                 <li>LGPD</li>
@@ -650,13 +820,13 @@ export default function LandingPage() {
             </div>
             <div>
               <h4 className="font-semibold mb-3 text-sm">Contato</h4>
-              <ul className="space-y-2 text-sm text-[hsl(var(--muted-foreground))]">
+              <ul className="space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-center gap-2"><Mail className="h-4 w-4" /> contato@contabilflow.com.br</li>
                 <li className="flex items-center gap-2"><Phone className="h-4 w-4" /> (11) 99999-9999</li>
               </ul>
             </div>
           </div>
-          <div className="mt-8 border-t border-[hsl(var(--border))] pt-8 text-center text-xs text-[hsl(var(--muted-foreground))]">
+          <div className="mt-8 border-t border-border pt-8 text-center text-xs text-muted-foreground">
             © {new Date().getFullYear()} ContábilFlow. Todos os direitos reservados. CNPJ: 00.000.000/0001-00
           </div>
         </div>
