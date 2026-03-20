@@ -534,7 +534,7 @@ export default function LandingPage() {
       {/* ─── FEATURES ─── */}
       <section id="features" className="py-20 sm:py-28 bg-card">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="mx-auto max-w-3xl text-center mb-16">
+          <FadeUp className="mx-auto max-w-3xl text-center mb-16">
             <Badge variant="secondary" className="mb-4">Funcionalidades</Badge>
             <h2 className="text-3xl font-bold sm:text-4xl">
               9 Recursos de Emissão de NFS-e que{" "}
@@ -543,10 +543,10 @@ export default function LandingPage() {
             <p className="mt-4 text-lg text-muted-foreground">
               Construído especificamente para escritórios de contabilidade que gerenciam múltiplas empresas.
             </p>
-          </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          </FadeUp>
+          <StaggerChildren className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map(f => (
-              <div key={f.title} className="group rounded-xl border border-border bg-background p-6 transition-all hover:border-primary/30 hover:shadow-md">
+              <motion.div key={f.title} variants={staggerItem} className="group rounded-xl border border-border bg-background p-6 transition-all hover:border-primary/30 hover:shadow-md">
                 <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10">
                   <f.icon className="h-5 w-5 text-primary" />
                 </div>
