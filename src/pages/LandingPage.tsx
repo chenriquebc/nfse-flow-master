@@ -255,6 +255,35 @@ export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sliderValue, setSliderValue] = useState([15]);
   const [showUrgency, setShowUrgency] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+
+  const handleCheckout = async (planKey: string) => {
+    const priceId = PLAN_PRICE_IDS[planKey];
+    if (!priceId) return;
+
+    // Check if user is logged in
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast.info("Faça login para assinar", { description: "Você será redirecionado para a página de login." });
+      navigate("/auth?redirect=/#pricing&plan=" + planKey);
+      return;
+    }
+
+    setCheckoutLoading(planKey);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        body: { priceId },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, "_blank");
+      }
+    } catch (err: any) {
+      toast.error("Erro ao iniciar checkout", { description: err.message });
+    } finally {
+      setCheckoutLoading(null);
+    }
+  };
 
   // Urgency tooltip after 5s
   useEffect(() => {
