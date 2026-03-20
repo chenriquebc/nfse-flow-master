@@ -65,7 +65,16 @@ serve(async (req) => {
 
     if (hasActive) {
       const sub = subscriptions.data[0];
-      subscriptionEnd = new Date(sub.current_period_end * 1000).toISOString();
+      try {
+        const endTs = typeof sub.current_period_end === 'number' 
+          ? sub.current_period_end 
+          : Number(sub.current_period_end);
+        if (!isNaN(endTs) && endTs > 0) {
+          subscriptionEnd = new Date(endTs * 1000).toISOString();
+        }
+      } catch (e) {
+        logStep("Could not parse period end", { raw: sub.current_period_end });
+      }
       priceId = sub.items.data[0].price.id;
       productId = sub.items.data[0].price.product;
       logStep("Active subscription", { priceId, productId, end: subscriptionEnd });
