@@ -65,7 +65,7 @@ const App = () => (
                 <Route path="logs" element={<AdminAuditLogs />} />
               </Route>
 
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/" element={<LandingPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </TenantProvider>
