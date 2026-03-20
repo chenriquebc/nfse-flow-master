@@ -351,6 +351,8 @@ export default function LandingPage() {
               <Rocket className="h-3.5 w-3.5" />
               Plataforma NFS-e Nacional — 100% Cloud — Pronta para Reforma Tributária 2025
             </Badge>
+            </FadeUp>
+            <FadeUp delay={0.1}>
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-[62px] lg:leading-[1.1]">
               Gerencie 50+ Empresas em 1 Dashboard.{" "}
               <span className="bg-gradient-to-r from-primary to-[hsl(240,60%,55%)] bg-clip-text text-transparent">
