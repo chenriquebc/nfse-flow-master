@@ -810,16 +810,16 @@ export default function LandingPage() {
       {/* ─── TESTIMONIALS ─── */}
       <section id="testimonials" className="py-20 sm:py-28 bg-card">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="mx-auto max-w-3xl text-center mb-12">
+          <FadeUp className="mx-auto max-w-3xl text-center mb-12">
             <Badge variant="secondary" className="mb-4">Depoimentos</Badge>
             <h2 className="text-3xl font-bold sm:text-4xl">
               Quem usa, <span className="text-primary">recomenda</span>
             </h2>
             <p className="mt-4 text-muted-foreground">Resultados reais de contadores que já migraram.</p>
-          </div>
-          <div className="grid gap-6 md:grid-cols-3">
+          </FadeUp>
+          <StaggerChildren className="grid gap-6 md:grid-cols-3">
             {TESTIMONIALS.map(t => (
-              <div key={t.name} className="rounded-2xl border border-border bg-background p-6 sm:p-8 flex flex-col">
+              <motion.div key={t.name} variants={staggerItem} className="rounded-2xl border border-border bg-background p-6 sm:p-8 flex flex-col">
                 <div className="flex gap-1 mb-4">
                   {[...Array(5)].map((_, i) => (
                     <Star key={i} className="h-4 w-4 fill-warning text-warning" />
