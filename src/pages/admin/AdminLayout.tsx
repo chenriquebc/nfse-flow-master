@@ -16,6 +16,7 @@ import {
 const adminNav = [
   { label: "Visão Geral", href: "/admin", icon: LayoutDashboard },
   { label: "Contas", href: "/admin/accounts", icon: Users },
+  { label: "Leads", href: "/admin/leads", icon: UserPlus },
   { label: "Financeiro", href: "/admin/financial", icon: DollarSign },
   { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
   { label: "Logs", href: "/admin/logs", icon: ScrollText },
