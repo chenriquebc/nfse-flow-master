@@ -93,7 +93,6 @@ export default function AdminLayout() {
           <Outlet />
         </div>
       </main>
-      </main>
     </div>
   );
 }
