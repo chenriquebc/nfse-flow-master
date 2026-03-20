@@ -43,6 +43,7 @@ const App = () => (
           <TenantProvider>
             <Routes>
               <Route path="/auth" element={<Auth />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/activate" element={<ProtectedRoute><Activate /></ProtectedRoute>} />
               <Route path="/onboarding" element={<ProtectedRoute><ActivationGate><Onboarding /></ActivationGate></ProtectedRoute>} />
               <Route path="/dashboard" element={<ProtectedRoute><ActivationGate><TenantGate><Dashboard /></TenantGate></ActivationGate></ProtectedRoute>} />
