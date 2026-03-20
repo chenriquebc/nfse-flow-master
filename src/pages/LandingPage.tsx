@@ -345,7 +345,8 @@ export default function LandingPage() {
           <div className="absolute -bottom-40 -left-40 h-[400px] w-[400px] rounded-full bg-accent/[0.05] blur-3xl" />
         </div>
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="mx-auto max-w-4xl text-center">
+           <div className="mx-auto max-w-4xl text-center">
+            <FadeUp>
             <Badge variant="secondary" className="mb-6 gap-1.5 px-4 py-1.5 text-sm">
               <Rocket className="h-3.5 w-3.5" />
               Plataforma NFS-e Nacional — 100% Cloud — Pronta para Reforma Tributária 2025
