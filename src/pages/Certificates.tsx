@@ -124,12 +124,47 @@ export default function Certificates() {
       return;
     }
 
-    // 2. Auto-create company from certificate data
+    // 2. Auto-create company from certificate data, enriched with RFB
     const legalName = certMeta.legal_name || file.name.replace(/\.(pfx|p12)$/i, "");
     const doc = certMeta.document?.replace(/[^\d]/g, "") || "";
 
+    // Try to enrich with RFB data if we have a CNPJ
+    let rfbData: any = null;
+    let ibgeCode = "";
+    if (doc && doc.length === 14) {
+      try {
+        rfbData = await fetchCnpj(doc);
+        ibgeCode = await resolveIbgeCode(rfbData.municipio, rfbData.uf);
+      } catch {
+        // RFB lookup failed, continue with cert data only
+      }
+    }
+
     // Check if company with same CNPJ already exists
     let companyId: string;
+    const companyPayload: any = {
+      tenant_id: tenant.id,
+      legal_name: rfbData?.razao_social || legalName,
+      document: doc,
+      ...(rfbData ? {
+        trade_name: rfbData.nome_fantasia || null,
+        address_street: rfbData.logradouro || null,
+        address_number: rfbData.numero || null,
+        address_complement: rfbData.complemento || null,
+        address_neighborhood: rfbData.bairro || null,
+        address_city: rfbData.municipio || null,
+        address_city_code: ibgeCode || (rfbData.codigo_municipio ? String(rfbData.codigo_municipio) : null),
+        address_state: rfbData.uf || null,
+        address_zip: rfbData.cep ? rfbData.cep.replace(/\D/g, "") : null,
+        email: rfbData.email || null,
+        phone: rfbData.telefone || null,
+        cnae_code: rfbData.cnae_fiscal ? String(rfbData.cnae_fiscal) : null,
+        secondary_cnae_codes: rfbData.cnaes_secundarios?.length
+          ? rfbData.cnaes_secundarios.map((c: any) => String(c.codigo))
+          : [],
+      } : {}),
+    };
+
     if (doc) {
       const { data: existing } = await supabase
         .from("companies")
@@ -140,14 +175,15 @@ export default function Certificates() {
 
       if (existing) {
         companyId = existing.id;
+        // Update existing company with RFB data if available
+        if (rfbData) {
+          const { tenant_id, document: _d, ...updateFields } = companyPayload;
+          await supabase.from("companies").update(updateFields).eq("id", existing.id);
+        }
       } else {
         const { data: newCompany, error: companyError } = await supabase
           .from("companies")
-          .insert({
-            tenant_id: tenant.id,
-            legal_name: legalName,
-            document: doc,
-          })
+          .insert(companyPayload)
           .select("id")
           .single();
 
@@ -159,14 +195,9 @@ export default function Certificates() {
         companyId = newCompany.id;
       }
     } else {
-      // No CNPJ found — create company with name only
       const { data: newCompany, error: companyError } = await supabase
         .from("companies")
-        .insert({
-          tenant_id: tenant.id,
-          legal_name: legalName,
-          document: "",
-        })
+        .insert({ tenant_id: tenant.id, legal_name: legalName, document: "" })
         .select("id")
         .single();
 
