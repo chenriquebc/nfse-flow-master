@@ -85,8 +85,14 @@ export default function AdminLayout() {
       </aside>
 
       {/* Content */}
-      <main className="flex-1 overflow-y-auto p-6 lg:p-8">
-        <Outlet />
+      <main className="flex-1 overflow-y-auto">
+        <div className="flex items-center justify-end gap-2 border-b border-border px-6 py-3 lg:px-8">
+          <AdminNotifications />
+        </div>
+        <div className="p-6 lg:p-8">
+          <Outlet />
+        </div>
+      </main>
       </main>
     </div>
   );
