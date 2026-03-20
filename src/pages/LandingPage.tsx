@@ -938,7 +938,7 @@ export default function LandingPage() {
             <Badge variant="secondary" className="mb-4">Dúvidas Frequentes</Badge>
             <h2 className="text-3xl font-bold sm:text-4xl">Perguntas comuns</h2>
           </FadeUp>
-          </div>
+          <FadeUp delay={0.1}>
           <div className="space-y-3">
             {FAQ.map((item, i) => (
               <div key={i} className="rounded-xl border border-border bg-background">
