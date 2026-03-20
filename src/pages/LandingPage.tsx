@@ -99,9 +99,16 @@ function AnimatedNumber({ target, suffix = "", prefix = "", decimals = 0 }: { ta
 }
 
 /* ─────────── Data ─────────── */
+const PLAN_PRICE_IDS: Record<string, string> = {
+  starter: "price_1TD6ALAgGS1pODqVHX2hHoqc",
+  professional: "price_1TD6BvAgGS1pODqVLan5avYK",
+  enterprise: "price_1TD6CSAgGS1pODqVQCmYokmU",
+};
+
 const PLANS = [
   {
     name: "Starter",
+    key: "starter",
     price: 97,
     subtitle: "Seu primeiro escritório",
     highlight: false,
@@ -122,6 +129,7 @@ const PLANS = [
   },
   {
     name: "Professional",
+    key: "professional",
     price: 197,
     subtitle: "Crescimento real. Melhor preço.",
     highlight: true,
@@ -146,6 +154,7 @@ const PLANS = [
   },
   {
     name: "Enterprise",
+    key: "enterprise",
     price: 497,
     subtitle: "Operação com escala. White-glove.",
     highlight: false,
@@ -246,6 +255,35 @@ export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sliderValue, setSliderValue] = useState([15]);
   const [showUrgency, setShowUrgency] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+
+  const handleCheckout = async (planKey: string) => {
+    const priceId = PLAN_PRICE_IDS[planKey];
+    if (!priceId) return;
+
+    // Check if user is logged in
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast.info("Faça login para assinar", { description: "Você será redirecionado para a página de login." });
+      navigate("/auth?redirect=/#pricing&plan=" + planKey);
+      return;
+    }
+
+    setCheckoutLoading(planKey);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        body: { priceId },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, "_blank");
+      }
+    } catch (err: any) {
+      toast.error("Erro ao iniciar checkout", { description: err.message });
+    } finally {
+      setCheckoutLoading(null);
+    }
+  };
 
   // Urgency tooltip after 5s
   useEffect(() => {
@@ -628,9 +666,10 @@ export default function LandingPage() {
                   className="w-full"
                   variant={plan.ctaVariant}
                   size="lg"
-                  onClick={() => { setSelectedPlan(plan.name.toLowerCase()); scrollTo("lead-form"); }}
+                  disabled={checkoutLoading === plan.key}
+                  onClick={() => handleCheckout(plan.key)}
                 >
-                  {plan.cta}
+                  {checkoutLoading === plan.key ? "Redirecionando..." : plan.cta}
                 </Button>
                 {/* Secondary CTA link */}
                 <div className="mt-3 text-center">
