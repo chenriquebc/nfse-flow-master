@@ -973,6 +973,7 @@ export default function LandingPage() {
 
       {/* ─── FINAL CTA ─── */}
       <section className="py-20 sm:py-28 bg-primary text-primary-foreground">
+        <FadeUp>
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6">
           <h2 className="text-3xl font-bold sm:text-4xl">
             Seu escritório merece operar no piloto automático
