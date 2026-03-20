@@ -927,7 +927,7 @@ export default function LandingPage() {
                 </div>
               </form>
             </div>
-          </div>
+          </FadeUp>
         </div>
       </section>
 
