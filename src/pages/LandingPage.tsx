@@ -1001,6 +1001,7 @@ export default function LandingPage() {
           </p>
           <p className="mt-2 text-sm opacity-60">Sem cartão • Sem contrato • Setup em 5 minutos</p>
         </div>
+        </FadeUp>
       </section>
 
       {/* ─── FOOTER ─── */}
