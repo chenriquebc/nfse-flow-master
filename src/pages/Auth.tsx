@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Navigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,9 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Eye, EyeOff, Shield } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Auth() {
-  const { user, signIn, signUp } = useAuth();
+  const { user, signIn, signUp, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [isAdminLogin, setIsAdminLogin] = useState(false);
   const [email, setEmail] = useState("");
@@ -18,7 +20,30 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  if (user) return <Navigate to="/dashboard" replace />;
+  // When user is already logged in, check admin status and redirect
+  useEffect(() => {
+    if (!user || authLoading) return;
+
+    const checkAndRedirect = async () => {
+      const { data: isAdmin } = await supabase.rpc("is_platform_admin", { _user_id: user.id });
+      if (isAdmin) {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
+    };
+
+    checkAndRedirect();
+  }, [user, authLoading, navigate]);
+
+  // Show spinner while checking logged-in user
+  if (user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +53,25 @@ export default function Auth() {
       const { error } = await signIn(email, password);
       if (error) {
         toast.error("Erro ao entrar", { description: error.message });
+        setLoading(false);
+        return;
       }
+
+      // If admin login, verify admin status
+      if (isAdminLogin) {
+        const { data: { user: loggedUser } } = await supabase.auth.getUser();
+        if (loggedUser) {
+          const { data: isAdmin } = await supabase.rpc("is_platform_admin", { _user_id: loggedUser.id });
+          if (!isAdmin) {
+            toast.error("Acesso negado", { description: "Você não é um administrador da plataforma." });
+            await supabase.auth.signOut();
+            setLoading(false);
+            return;
+          }
+          // Redirect happens via useEffect
+        }
+      }
+      // Normal login redirect happens via useEffect
     } else {
       if (!fullName.trim()) {
         toast.error("Informe seu nome completo");
