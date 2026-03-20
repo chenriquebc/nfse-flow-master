@@ -7,6 +7,7 @@ import {
   ScrollText,
   DollarSign,
   BarChart3,
+  UserPlus,
   LogOut,
   ArrowLeft,
   Shield,
