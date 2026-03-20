@@ -480,7 +480,7 @@ export default function LandingPage() {
               <button onClick={() => scrollTo("calculator")} className="mt-4 text-xs text-primary hover:underline inline-flex items-center gap-1">
                 Ver economia para meu escritório <ArrowRight className="h-3 w-3" />
               </button>
-            </div>
+            </motion.div>
 
             {/* Card 2 */}
             <div className="rounded-2xl border border-warning/20 bg-warning/[0.03] p-6 sm:p-8">
