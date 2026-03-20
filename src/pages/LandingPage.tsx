@@ -1,4 +1,43 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { motion, useInView } from "framer-motion";
+
+/* ─────────── Animation helpers ─────────── */
+function FadeUp({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-60px" });
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 24 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.5, delay, ease: [0.25, 0.46, 0.45, 0.94] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function StaggerChildren({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-40px" });
+  return (
+    <motion.div
+      ref={ref}
+      initial="hidden"
+      animate={inView ? "visible" : "hidden"}
+      variants={{ visible: { transition: { staggerChildren: 0.08 } } }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+const staggerItem = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" as const } },
+};
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -306,25 +345,32 @@ export default function LandingPage() {
           <div className="absolute -bottom-40 -left-40 h-[400px] w-[400px] rounded-full bg-accent/[0.05] blur-3xl" />
         </div>
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="mx-auto max-w-4xl text-center">
+           <div className="mx-auto max-w-4xl text-center">
+            <FadeUp>
             <Badge variant="secondary" className="mb-6 gap-1.5 px-4 py-1.5 text-sm">
               <Rocket className="h-3.5 w-3.5" />
               Plataforma NFS-e Nacional — 100% Cloud — Pronta para Reforma Tributária 2025
             </Badge>
+            </FadeUp>
+            <FadeUp delay={0.1}>
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-[62px] lg:leading-[1.1]">
               Gerencie 50+ Empresas em 1 Dashboard.{" "}
               <span className="bg-gradient-to-r from-primary to-[hsl(240,60%,55%)] bg-clip-text text-transparent">
                 Emita NFS-e sem Erros. Sem Multas. Sem Noites Perdidas.
               </span>
             </h1>
+            </FadeUp>
+            <FadeUp delay={0.2}>
             <p className="mt-6 text-lg text-muted-foreground sm:text-xl max-w-3xl mx-auto leading-relaxed">
               O único sistema que emite <strong className="text-foreground">Nota Fiscal de Serviço</strong> para{" "}
               <strong className="text-foreground">TODAS</strong> as suas empresas com{" "}
               <strong className="text-foreground">3 cliques</strong>.
               Alertas automáticos evitam multas. Integração total com sua rotina (API + CSV).
             </p>
+            </FadeUp>
 
             {/* CTAs */}
+            <FadeUp delay={0.3}>
             <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center relative">
               <Button
                 size="lg"
@@ -346,6 +392,7 @@ export default function LandingPage() {
               )}
             </div>
 
+            </FadeUp>
             {/* Trust badges */}
             <div className="mt-14 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
               <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-accent" /> Sem cartão de crédito</span>
@@ -373,23 +420,23 @@ export default function LandingPage() {
       {/* ─── SOCIAL PROOF NUMBERS ─── */}
       <section className="border-y border-border bg-card">
         <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6">
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
+          <StaggerChildren className="grid grid-cols-2 gap-8 sm:grid-cols-4">
             {[
               { value: 15000, suffix: "+", label: "HORAS ECONOMIZADAS", sub: "vs. emissão manual (1 nota = 8 min)", icon: "🕐" },
               { value: 2.3, suffix: "M", prefix: "R$ ", label: "EVITADOS EM MULTAS", sub: "Por alertas automáticos de prazos", icon: "💰", decimals: 1 },
               { value: 230, suffix: "+", label: "CONTADORES CONFIAM", sub: "Crescimento 40% a/a", icon: "👥" },
               { value: 4.9, suffix: "/5", label: "STARS", sub: "Mais rápido que Omie. 1/3 do preço.", icon: "⭐", decimals: 1 },
             ].map(s => (
-              <div key={s.label} className="text-center">
+              <motion.div key={s.label} variants={staggerItem} className="text-center">
                 <p className="text-xs mb-1">{s.icon}</p>
                 <p className="text-2xl sm:text-3xl font-extrabold text-primary">
                   <AnimatedNumber target={s.value} suffix={s.suffix} prefix={s.prefix || ""} decimals={s.decimals || 0} />
                 </p>
                 <p className="mt-1 text-xs font-bold uppercase tracking-wide text-foreground">{s.label}</p>
                 <p className="mt-0.5 text-[11px] text-muted-foreground">{s.sub}</p>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </StaggerChildren>
           {/* Micro-CTA after numbers */}
           <div className="mt-8 text-center">
             <button onClick={() => scrollTo("pricing")} className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1">
@@ -402,7 +449,7 @@ export default function LandingPage() {
       {/* ─── PAIN POINTS (QUANTIFIED) ─── */}
       <section className="py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="mx-auto max-w-3xl text-center mb-16">
+          <FadeUp className="mx-auto max-w-3xl text-center mb-16">
             <h2 className="text-3xl font-bold sm:text-4xl">
               Quanto você está{" "}
               <span className="text-destructive">perdendo</span> hoje com emissão manual de NFS-e?
@@ -410,10 +457,10 @@ export default function LandingPage() {
             <p className="mt-4 text-lg text-muted-foreground">
               Fizemos as contas para você. Spoiler: é mais do que imagina.
             </p>
-          </div>
-          <div className="grid gap-6 md:grid-cols-3">
+          </FadeUp>
+          <StaggerChildren className="grid gap-6 md:grid-cols-3">
             {/* Card 1 */}
-            <div className="rounded-2xl border border-destructive/20 bg-destructive/[0.03] p-6 sm:p-8">
+            <motion.div variants={staggerItem} className="rounded-2xl border border-destructive/20 bg-destructive/[0.03] p-6 sm:p-8">
               <span className="text-2xl">📌</span>
               <h3 className="mt-3 text-lg font-bold">Emitir Nota Fiscal por Nota no Site da Prefeitura</h3>
               <div className="mt-4 space-y-2 text-sm text-muted-foreground">
@@ -433,10 +480,10 @@ export default function LandingPage() {
               <button onClick={() => scrollTo("calculator")} className="mt-4 text-xs text-primary hover:underline inline-flex items-center gap-1">
                 Ver economia para meu escritório <ArrowRight className="h-3 w-3" />
               </button>
-            </div>
+            </motion.div>
 
             {/* Card 2 */}
-            <div className="rounded-2xl border border-warning/20 bg-warning/[0.03] p-6 sm:p-8">
+            <motion.div variants={staggerItem} className="rounded-2xl border border-warning/20 bg-warning/[0.03] p-6 sm:p-8">
               <span className="text-2xl">⚠️</span>
               <h3 className="mt-3 text-lg font-bold">Perder Prazos & Pagar Multas</h3>
               <div className="mt-4 space-y-2 text-sm text-muted-foreground">
@@ -456,10 +503,10 @@ export default function LandingPage() {
               <button onClick={() => scrollTo("calculator")} className="mt-4 text-xs text-primary hover:underline inline-flex items-center gap-1">
                 Ver economia para meu escritório <ArrowRight className="h-3 w-3" />
               </button>
-            </div>
+            </motion.div>
 
             {/* Card 3 */}
-            <div className="rounded-2xl border border-primary/20 bg-primary/[0.03] p-6 sm:p-8">
+            <motion.div variants={staggerItem} className="rounded-2xl border border-primary/20 bg-primary/[0.03] p-6 sm:p-8">
               <span className="text-2xl">🔓</span>
               <h3 className="mt-3 text-lg font-bold">Certificados Espalhados em Pen Drives</h3>
               <div className="mt-4 space-y-2 text-sm text-muted-foreground">
@@ -479,15 +526,15 @@ export default function LandingPage() {
               <button onClick={() => scrollTo("calculator")} className="mt-4 text-xs text-primary hover:underline inline-flex items-center gap-1">
                 Ver economia para meu escritório <ArrowRight className="h-3 w-3" />
               </button>
-            </div>
-          </div>
+            </motion.div>
+          </StaggerChildren>
         </div>
       </section>
 
       {/* ─── FEATURES ─── */}
       <section id="features" className="py-20 sm:py-28 bg-card">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="mx-auto max-w-3xl text-center mb-16">
+          <FadeUp className="mx-auto max-w-3xl text-center mb-16">
             <Badge variant="secondary" className="mb-4">Funcionalidades</Badge>
             <h2 className="text-3xl font-bold sm:text-4xl">
               9 Recursos de Emissão de NFS-e que{" "}
@@ -496,18 +543,18 @@ export default function LandingPage() {
             <p className="mt-4 text-lg text-muted-foreground">
               Construído especificamente para escritórios de contabilidade que gerenciam múltiplas empresas.
             </p>
-          </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          </FadeUp>
+          <StaggerChildren className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map(f => (
-              <div key={f.title} className="group rounded-xl border border-border bg-background p-6 transition-all hover:border-primary/30 hover:shadow-md">
+              <motion.div key={f.title} variants={staggerItem} className="group rounded-xl border border-border bg-background p-6 transition-all hover:border-primary/30 hover:shadow-md">
                 <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10">
                   <f.icon className="h-5 w-5 text-primary" />
                 </div>
                 <h3 className="mt-4 text-base font-semibold">{f.title}</h3>
                 <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </StaggerChildren>
           {/* CTA after features */}
           <div className="mt-12 text-center">
             <Button variant="outline" onClick={() => scrollTo("pricing")}>
@@ -520,7 +567,7 @@ export default function LandingPage() {
       {/* ─── PRICING ─── */}
       <section id="pricing" className="py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="mx-auto max-w-3xl text-center mb-16">
+          <FadeUp className="mx-auto max-w-3xl text-center mb-16">
             <Badge variant="secondary" className="mb-4">Planos & Preços</Badge>
             <h2 className="text-3xl font-bold sm:text-4xl">
               Investimento que se paga no{" "}
@@ -529,7 +576,7 @@ export default function LandingPage() {
             <p className="mt-4 text-lg text-muted-foreground">
               Compare: um funcionário para emitir notas custa R$ 2.500+/mês. O ContábilFlow faz o mesmo por uma fração.
             </p>
-          </div>
+          </FadeUp>
           <div className="grid gap-6 lg:grid-cols-3 items-start">
             {PLANS.map(plan => (
               <div
@@ -618,7 +665,7 @@ export default function LandingPage() {
       {/* ─── COMPETITOR COMPARISON ─── */}
       <section id="comparison" className="py-20 sm:py-28 bg-card">
         <div className="mx-auto max-w-5xl px-4 sm:px-6">
-          <div className="mx-auto max-w-3xl text-center mb-12">
+          <FadeUp className="mx-auto max-w-3xl text-center mb-12">
             <Badge variant="secondary" className="mb-4">Comparativo de Mercado</Badge>
             <h2 className="text-3xl font-bold sm:text-4xl">
               Por que ContábilFlow custa{" "}
@@ -627,7 +674,7 @@ export default function LandingPage() {
             <p className="mt-4 text-muted-foreground">
               Custo mensal para gerenciar <strong className="text-foreground">10 empresas</strong>:
             </p>
-          </div>
+          </FadeUp>
 
           <div className="space-y-4">
             {COMPETITORS_VISUAL.map(c => (
@@ -692,6 +739,7 @@ export default function LandingPage() {
 
       {/* ─── SAVINGS CALCULATOR ─── */}
       <section id="calculator" className="py-20 sm:py-28">
+        <FadeUp>
         <div className="mx-auto max-w-2xl px-4 sm:px-6">
           <div className="rounded-2xl border-2 border-primary/20 bg-card p-8 sm:p-12 shadow-xl">
             <div className="text-center mb-8">
@@ -757,21 +805,22 @@ export default function LandingPage() {
             </Button>
           </div>
         </div>
+        </FadeUp>
       </section>
 
       {/* ─── TESTIMONIALS ─── */}
       <section id="testimonials" className="py-20 sm:py-28 bg-card">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="mx-auto max-w-3xl text-center mb-12">
+          <FadeUp className="mx-auto max-w-3xl text-center mb-12">
             <Badge variant="secondary" className="mb-4">Depoimentos</Badge>
             <h2 className="text-3xl font-bold sm:text-4xl">
               Quem usa, <span className="text-primary">recomenda</span>
             </h2>
             <p className="mt-4 text-muted-foreground">Resultados reais de contadores que já migraram.</p>
-          </div>
-          <div className="grid gap-6 md:grid-cols-3">
+          </FadeUp>
+          <StaggerChildren className="grid gap-6 md:grid-cols-3">
             {TESTIMONIALS.map(t => (
-              <div key={t.name} className="rounded-2xl border border-border bg-background p-6 sm:p-8 flex flex-col">
+              <motion.div key={t.name} variants={staggerItem} className="rounded-2xl border border-border bg-background p-6 sm:p-8 flex flex-col">
                 <div className="flex gap-1 mb-4">
                   {[...Array(5)].map((_, i) => (
                     <Star key={i} className="h-4 w-4 fill-warning text-warning" />
@@ -805,16 +854,16 @@ export default function LandingPage() {
                 >
                   Ver resultado similar no seu caso <ArrowRight className="h-3 w-3" />
                 </button>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </StaggerChildren>
         </div>
       </section>
 
       {/* ─── LEAD CAPTURE FORM (Simplified) ─── */}
       <section id="lead-form" className="py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="mx-auto max-w-lg">
+          <FadeUp className="mx-auto max-w-lg">
             <div className="rounded-2xl border border-primary/20 bg-card p-8 sm:p-12 shadow-xl shadow-primary/[0.05]">
               <div className="text-center mb-8">
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
@@ -878,17 +927,18 @@ export default function LandingPage() {
                 </div>
               </form>
             </div>
-          </div>
+          </FadeUp>
         </div>
       </section>
 
       {/* ─── FAQ ─── */}
       <section id="faq" className="py-20 sm:py-28 bg-card">
         <div className="mx-auto max-w-3xl px-4 sm:px-6">
-          <div className="text-center mb-12">
+          <FadeUp className="text-center mb-12">
             <Badge variant="secondary" className="mb-4">Dúvidas Frequentes</Badge>
             <h2 className="text-3xl font-bold sm:text-4xl">Perguntas comuns</h2>
-          </div>
+          </FadeUp>
+          <FadeUp delay={0.1}>
           <div className="space-y-3">
             {FAQ.map((item, i) => (
               <div key={i} className="rounded-xl border border-border bg-background">
@@ -919,11 +969,13 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+          </FadeUp>
         </div>
       </section>
 
       {/* ─── FINAL CTA ─── */}
       <section className="py-20 sm:py-28 bg-primary text-primary-foreground">
+        <FadeUp>
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6">
           <h2 className="text-3xl font-bold sm:text-4xl">
             Seu escritório merece operar no piloto automático
@@ -949,6 +1001,7 @@ export default function LandingPage() {
           </p>
           <p className="mt-2 text-sm opacity-60">Sem cartão • Sem contrato • Setup em 5 minutos</p>
         </div>
+        </FadeUp>
       </section>
 
       {/* ─── FOOTER ─── */}
