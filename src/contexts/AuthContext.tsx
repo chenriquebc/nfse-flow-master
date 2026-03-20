@@ -21,10 +21,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let initialSessionResolved = false;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Ignore TOKEN_REFRESHED to avoid re-renders on window focus / alt-tab
+      if (event === "TOKEN_REFRESHED") {
+        setSession(session);
+        setUser(session?.user ?? null);
+        return;
+      }
       setSession(session);
       setUser(session?.user ?? null);
-      // Only set loading=false from listener after initial session is resolved
       if (initialSessionResolved) {
         setLoading(false);
       }

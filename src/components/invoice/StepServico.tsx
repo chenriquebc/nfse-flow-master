@@ -213,6 +213,66 @@ function TaxCodeCombobox({ value, onChange, label, codes, placeholder }: {
   );
 }
 
+function IssqnCityCombobox({ value, municipios, onChange }: {
+  value: string;
+  municipios: MunicipioIBGE[];
+  onChange: (name: string, code: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const filtered = useMemo(() => searchMunicipios(municipios, search), [municipios, search]);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between h-12 text-left font-normal"
+        >
+          <span className="truncate">
+            {value || "Digite ao menos 3 letras..."}
+          </span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <Command shouldFilter={false}>
+          <CommandInput placeholder="Buscar município..." value={search} onValueChange={setSearch} />
+          <CommandList>
+            {search.length < 3 ? (
+              <div className="py-6 text-center text-sm text-muted-foreground">
+                Digite ao menos 3 caracteres para buscar...
+              </div>
+            ) : filtered.length === 0 ? (
+              <CommandEmpty>Nenhum município encontrado.</CommandEmpty>
+            ) : (
+              <CommandGroup>
+                {filtered.map((m) => (
+                  <CommandItem
+                    key={m.id}
+                    value={String(m.id)}
+                    onSelect={() => {
+                      onChange(`${m.nome}/${m.uf}`, String(m.id));
+                      setOpen(false);
+                      setSearch("");
+                    }}
+                  >
+                    <Check className={cn("mr-2 h-4 w-4", value === `${m.nome}/${m.uf}` ? "opacity-100" : "opacity-0")} />
+                    <span className="truncate">{m.nome}/{m.uf} ({m.id})</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export default function StepServico({ form, set }: StepServicoProps) {
   const [municipios, setMunicipios] = useState<MunicipioIBGE[]>([]);
   const [munSearch, setMunSearch] = useState("");
