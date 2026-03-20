@@ -1,17 +1,17 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 import {
-  Shield, Zap, BarChart3, FileText, Users, Building2,
+  Shield, Zap, BarChart3, FileText, Users,
   CheckCircle2, ArrowRight, ChevronDown, Star, Lock,
   Globe, Cpu, Clock, Phone, Mail, ChevronUp,
-  TrendingUp, Award, Layers, RefreshCw, Database,
-  ArrowUpRight, Play, Rocket, AlertTriangle, HardDrive,
-  Timer, DollarSign, Sparkles, Calendar
+  RefreshCw, Database, Play, Rocket, Menu, X,
+  Calculator, ArrowUpRight,
 } from "lucide-react";
 
 /* ─────────── UTM helper ─────────── */
@@ -25,7 +25,7 @@ function getUtmParams(search: string) {
 }
 
 /* ─────────── Animated counter ─────────── */
-function AnimatedNumber({ target, suffix = "", prefix = "" }: { target: number; suffix?: string; prefix?: string }) {
+function AnimatedNumber({ target, suffix = "", prefix = "", decimals = 0 }: { target: number; suffix?: string; prefix?: string; decimals?: number }) {
   const [val, setVal] = useState(0);
   const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => {
@@ -33,10 +33,13 @@ function AnimatedNumber({ target, suffix = "", prefix = "" }: { target: number; 
       ([entry]) => {
         if (entry.isIntersecting) {
           let start = 0;
-          const step = Math.max(1, Math.floor(target / 40));
+          const totalSteps = 40;
+          const step = target / totalSteps;
+          let current = 0;
           const timer = setInterval(() => {
-            start += step;
-            if (start >= target) { setVal(target); clearInterval(timer); }
+            current++;
+            start = Math.min(target, step * current);
+            if (current >= totalSteps) { setVal(target); clearInterval(timer); }
             else setVal(start);
           }, 30);
           obs.disconnect();
@@ -47,7 +50,13 @@ function AnimatedNumber({ target, suffix = "", prefix = "" }: { target: number; 
     if (ref.current) obs.observe(ref.current);
     return () => obs.disconnect();
   }, [target]);
-  return <span ref={ref}>{prefix}{val.toLocaleString("pt-BR")}{suffix}</span>;
+  return (
+    <span ref={ref}>
+      {prefix}
+      {decimals > 0 ? val.toFixed(decimals) : val.toLocaleString("pt-BR")}
+      {suffix}
+    </span>
+  );
 }
 
 /* ─────────── Data ─────────── */
@@ -66,9 +75,11 @@ const PLANS = [
       "Suporte por e-mail",
     ],
     economy: { hours: "5h/semana", value: "R$ 250", payback: "PAGA EM 3 DIAS" },
-    cta: "Comece Grátis por 7 Dias",
+    cta: "Comece Grátis",
     ctaVariant: "outline" as const,
     trial: "7 dias grátis",
+    ctaSecondary: "ou compare planos →",
+    ctaSecondaryTarget: "pricing",
   },
   {
     name: "Professional",
@@ -88,9 +99,11 @@ const PLANS = [
       "Suporte prioritário (2h)",
     ],
     economy: { hours: "20h/semana", value: "R$ 1.000+", payback: "PAGA EM 1 MÊS" },
-    cta: "Quero Este Plano ✨",
+    cta: "Quero Este Plano (70% escolhem) ✨",
     ctaVariant: "default" as const,
     trial: "🎁 30 dias grátis",
+    ctaSecondary: "Dúvidas? FAQ →",
+    ctaSecondaryTarget: "faq",
   },
   {
     name: "Enterprise",
@@ -112,6 +125,8 @@ const PLANS = [
     cta: "Agendar Demo com Especialista",
     ctaVariant: "outline" as const,
     trial: "Demo personalizada",
+    ctaSecondary: "Falar com especialista →",
+    ctaSecondaryTarget: "lead-form",
   },
 ];
 
@@ -164,7 +179,11 @@ const FAQ = [
   { q: "E se eu ultrapassar o limite de notas?", a: "Você recebe um aviso e pode fazer upgrade instantâneo. Nenhuma nota é bloqueada durante o processo." },
   { q: "Tem contrato de fidelidade?", a: "Não. Todos os planos são mensais sem fidelidade. Cancele quando quiser, sem burocracia." },
   { q: "A plataforma atende à Reforma Tributária?", a: "Sim. Estamos 100% alinhados com o padrão NFS-e Nacional exigido pela Receita Federal, incluindo as mudanças da reforma." },
-  { q: "Qual a diferença para NFe.io ou eNotas?", a: "Eles cobram POR EMPRESA. Com 10 empresas, você pagaria R$ 1.790/mês no NFe.io. No ContábilFlow, paga R$ 197 fixo — independente de quantas empresas." },
+  {
+    q: "Qual a diferença para NFe.io ou eNotas?",
+    a: "Eles cobram POR EMPRESA. Com 10 empresas, você pagaria R$ 1.790/mês no NFe.io. No ContábilFlow, paga R$ 197 fixo — independente de quantas empresas.",
+    hasCta: true,
+  },
   { q: "Meus dados estão seguros?", a: "Criptografia AES-256, isolamento por tenant (RLS), backup automático com redundância geográfica, e conformidade total com LGPD. Seus dados são mais seguros que em muitos bancos." },
 ];
 
@@ -181,23 +200,35 @@ export default function LandingPage() {
   const location = useLocation();
   const utm = getUtmParams(location.search);
 
-  const [formData, setFormData] = useState({ name: "", email: "", phone: "", company_name: "" });
+  const [formData, setFormData] = useState({ name: "", email: "" });
   const [selectedPlan, setSelectedPlan] = useState("professional");
   const [submitting, setSubmitting] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sliderValue, setSliderValue] = useState([15]);
+  const [showUrgency, setShowUrgency] = useState(false);
+
+  // Urgency tooltip after 5s
+  useEffect(() => {
+    const timer = setTimeout(() => setShowUrgency(true), 5000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.email) {
+    if (!formData.name.trim() || !formData.email.trim()) {
       toast.error("Preencha seu nome e e-mail");
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast.error("E-mail inválido");
       return;
     }
     setSubmitting(true);
     const { error } = await supabase.from("leads").insert({
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone || null,
-      company_name: formData.company_name || null,
+      name: formData.name.trim(),
+      email: formData.email.trim(),
       plan_interest: selectedPlan,
       source: "landing_page",
       ...utm,
@@ -205,17 +236,26 @@ export default function LandingPage() {
     if (error) {
       toast.error("Erro ao enviar. Tente novamente.");
     } else {
-      toast.success("Acesso liberado!", { description: "Nossa equipe entrará em contato em até 24h." });
-      setFormData({ name: "", email: "", phone: "", company_name: "" });
+      toast.success("Acesso liberado! 🎉", { description: "Nossa equipe entrará em contato em até 24h." });
+      setFormData({ name: "", email: "" });
     }
     setSubmitting(false);
   };
 
-  const scrollTo = (id: string) => {
+  const scrollTo = useCallback((id: string) => {
+    setMobileMenuOpen(false);
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, []);
 
   const maxCompetitorCost = 5200;
+
+  // Calculator values
+  const numCompanies = sliderValue[0];
+  const costOmie = numCompanies * 199;
+  const costNfeio = numCompanies * 179;
+  const costEnotas = numCompanies * 149;
+  const costCf = numCompanies <= 3 ? 97 : numCompanies <= 15 ? 197 : 497;
+  const savings = Math.max(costNfeio, costOmie) - costCf;
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
@@ -235,14 +275,28 @@ export default function LandingPage() {
             <button onClick={() => scrollTo("faq")} className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQ</button>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => navigate("/auth")}>
+            <Button variant="ghost" size="sm" onClick={() => navigate("/auth")} className="hidden sm:inline-flex">
               Entrar
             </Button>
-            <Button size="sm" onClick={() => scrollTo("lead-form")} className="shadow-lg shadow-primary/25">
+            <Button size="sm" onClick={() => scrollTo("lead-form")} className="shadow-lg shadow-primary/25 hidden sm:inline-flex">
               Liberar Acesso Grátis <ArrowRight className="ml-1 h-4 w-4" />
             </Button>
+            <button className="lg:hidden p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
         </div>
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden border-t border-border bg-background px-4 py-4 space-y-3">
+            <button onClick={() => scrollTo("features")} className="block w-full text-left text-sm py-2 text-muted-foreground">Funcionalidades</button>
+            <button onClick={() => scrollTo("pricing")} className="block w-full text-left text-sm py-2 text-muted-foreground">Preços</button>
+            <button onClick={() => scrollTo("comparison")} className="block w-full text-left text-sm py-2 text-muted-foreground">Comparativo</button>
+            <button onClick={() => scrollTo("faq")} className="block w-full text-left text-sm py-2 text-muted-foreground">FAQ</button>
+            <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => { setMobileMenuOpen(false); navigate("/auth"); }}>Entrar</Button>
+            <Button size="sm" className="w-full" onClick={() => scrollTo("lead-form")}>Liberar Acesso Grátis</Button>
+          </div>
+        )}
       </nav>
 
       {/* ─── HERO ─── */}
@@ -255,43 +309,50 @@ export default function LandingPage() {
           <div className="mx-auto max-w-4xl text-center">
             <Badge variant="secondary" className="mb-6 gap-1.5 px-4 py-1.5 text-sm">
               <Rocket className="h-3.5 w-3.5" />
-              Plataforma NFS-e Nacional — 100% cloud
+              Plataforma NFS-e Nacional — 100% Cloud — Pronta para Reforma Tributária 2025
             </Badge>
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-[62px] lg:leading-[1.1]">
-              Gerencie 50+ empresas em 1 dashboard.{" "}
+              Gerencie 50+ Empresas em 1 Dashboard.{" "}
               <span className="bg-gradient-to-r from-primary to-[hsl(240,60%,55%)] bg-clip-text text-transparent">
-                Sem multas. Sem noites perdidas.
+                Emita NFS-e sem Erros. Sem Multas. Sem Noites Perdidas.
               </span>
             </h1>
             <p className="mt-6 text-lg text-muted-foreground sm:text-xl max-w-3xl mx-auto leading-relaxed">
-              O único sistema que emite NFS-e para <strong className="text-foreground">TODAS</strong> as suas empresas com{" "}
-              <strong className="text-foreground">3 clicks</strong>.
-              Alertas automáticos evitam multas. Integração total com sua rotina.
+              O único sistema que emite <strong className="text-foreground">Nota Fiscal de Serviço</strong> para{" "}
+              <strong className="text-foreground">TODAS</strong> as suas empresas com{" "}
+              <strong className="text-foreground">3 cliques</strong>.
+              Alertas automáticos evitam multas. Integração total com sua rotina (API + CSV).
             </p>
 
             {/* CTAs */}
-            <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+            <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center relative">
               <Button
                 size="lg"
                 className="h-14 px-10 text-lg font-semibold shadow-xl shadow-primary/25"
                 onClick={() => scrollTo("lead-form")}
               >
-                Liberar Acesso Grátis (5 min) <ArrowRight className="ml-2 h-5 w-5" />
+                ⚡ Liberar Acesso Grátis (5 min) <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <Button variant="outline" size="lg" className="h-14 px-8 text-base" onClick={() => scrollTo("testimonials")}>
-                <Play className="mr-2 h-4 w-4" /> Ver case de sucesso
+                <Play className="mr-2 h-4 w-4" /> Ver Demo (3 min)
               </Button>
+              {/* Urgency tooltip */}
+              {showUrgency && (
+                <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap animate-fade-in">
+                  <span className="text-xs text-muted-foreground bg-card border border-border px-3 py-1.5 rounded-full shadow-sm">
+                    ⚡ 230+ contadores já começaram. Seu turno?
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Trust badges */}
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
+            <div className="mt-14 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
               <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-accent" /> Sem cartão de crédito</span>
               <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-accent" /> Setup em 5 minutos</span>
               <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-accent" /> Sem contrato ou fidelidade</span>
             </div>
-
-            {/* Security line */}
-            <div className="mt-4 flex items-center justify-center gap-3 text-xs text-muted-foreground">
+            <div className="mt-3 flex items-center justify-center gap-3 text-xs text-muted-foreground">
               <Lock className="h-3.5 w-3.5" />
               <span>ISO 27001 • Criptografia LGPD • Backup automático</span>
             </div>
@@ -315,23 +376,25 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
             {[
               { value: 15000, suffix: "+", label: "HORAS ECONOMIZADAS", sub: "vs. emissão manual (1 nota = 8 min)", icon: "🕐" },
-              { value: 2300000, prefix: "R$ ", suffix: "", label: "EVITADOS EM MULTAS", sub: "Por alertas automáticos de prazos", icon: "💰", format: true },
+              { value: 2.3, suffix: "M", prefix: "R$ ", label: "EVITADOS EM MULTAS", sub: "Por alertas automáticos de prazos", icon: "💰", decimals: 1 },
               { value: 230, suffix: "+", label: "CONTADORES CONFIAM", sub: "Crescimento 40% a/a", icon: "👥" },
-              { value: 4, suffix: ".9/5", label: "STARS", sub: "Mais rápido que Omie. 1/3 do preço.", icon: "⭐" },
+              { value: 4.9, suffix: "/5", label: "STARS", sub: "Mais rápido que Omie. 1/3 do preço.", icon: "⭐", decimals: 1 },
             ].map(s => (
               <div key={s.label} className="text-center">
                 <p className="text-xs mb-1">{s.icon}</p>
                 <p className="text-2xl sm:text-3xl font-extrabold text-primary">
-                  {s.format ? (
-                    <span>R$ <AnimatedNumber target={2.3} suffix="M" /></span>
-                  ) : (
-                    <AnimatedNumber target={s.value} suffix={s.suffix} prefix={s.prefix} />
-                  )}
+                  <AnimatedNumber target={s.value} suffix={s.suffix} prefix={s.prefix || ""} decimals={s.decimals || 0} />
                 </p>
                 <p className="mt-1 text-xs font-bold uppercase tracking-wide text-foreground">{s.label}</p>
                 <p className="mt-0.5 text-[11px] text-muted-foreground">{s.sub}</p>
               </div>
             ))}
+          </div>
+          {/* Micro-CTA after numbers */}
+          <div className="mt-8 text-center">
+            <button onClick={() => scrollTo("pricing")} className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1">
+              Ver planos e economias <ArrowRight className="h-3 w-3" />
+            </button>
           </div>
         </div>
       </section>
@@ -342,17 +405,17 @@ export default function LandingPage() {
           <div className="mx-auto max-w-3xl text-center mb-16">
             <h2 className="text-3xl font-bold sm:text-4xl">
               Quanto você está{" "}
-              <span className="text-destructive">perdendo</span> hoje?
+              <span className="text-destructive">perdendo</span> hoje com emissão manual de NFS-e?
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
               Fizemos as contas para você. Spoiler: é mais do que imagina.
             </p>
           </div>
           <div className="grid gap-6 md:grid-cols-3">
-            {/* Card 1 - Red */}
+            {/* Card 1 */}
             <div className="rounded-2xl border border-destructive/20 bg-destructive/[0.03] p-6 sm:p-8">
               <span className="text-2xl">📌</span>
-              <h3 className="mt-3 text-lg font-bold">Emitir nota por nota no site da prefeitura</h3>
+              <h3 className="mt-3 text-lg font-bold">Emitir Nota Fiscal por Nota no Site da Prefeitura</h3>
               <div className="mt-4 space-y-2 text-sm text-muted-foreground">
                 <p><strong className="text-foreground">8 min</strong> por nota × 20 empresas = <strong className="text-foreground">160 min/dia</strong></p>
                 <p>= <strong className="text-foreground">13h/semana</strong> perdidas</p>
@@ -364,15 +427,18 @@ export default function LandingPage() {
               </div>
               <div className="mt-4 rounded-lg bg-accent/10 px-4 py-3">
                 <p className="text-xs font-bold text-accent uppercase tracking-wide">✅ Com ContábilFlow</p>
-                <p className="text-sm font-semibold text-foreground">3 clicks para emitir para TODAS.</p>
+                <p className="text-sm font-semibold text-foreground">Emita todas as suas NFS-e em 3 cliques</p>
                 <p className="text-xs text-muted-foreground">1 nota a cada 10 segundos</p>
               </div>
+              <button onClick={() => scrollTo("calculator")} className="mt-4 text-xs text-primary hover:underline inline-flex items-center gap-1">
+                Ver economia para meu escritório <ArrowRight className="h-3 w-3" />
+              </button>
             </div>
 
-            {/* Card 2 - Orange */}
+            {/* Card 2 */}
             <div className="rounded-2xl border border-warning/20 bg-warning/[0.03] p-6 sm:p-8">
               <span className="text-2xl">⚠️</span>
-              <h3 className="mt-3 text-lg font-bold">Perder prazos & pagar multas</h3>
+              <h3 className="mt-3 text-lg font-bold">Perder Prazos & Pagar Multas</h3>
               <div className="mt-4 space-y-2 text-sm text-muted-foreground">
                 <p>Multa mínima: <strong className="text-foreground">R$ 558 por nota</strong> (RFB)</p>
                 <p>Contador ganha R$ 2.500 = <strong className="text-foreground">2 dias perdidos</strong> por 1 multa</p>
@@ -387,12 +453,15 @@ export default function LandingPage() {
                 <p className="text-sm font-semibold text-foreground">Alertas 10 dias antes + checklist automático</p>
                 <p className="text-xs text-muted-foreground">= ZERO multas</p>
               </div>
+              <button onClick={() => scrollTo("calculator")} className="mt-4 text-xs text-primary hover:underline inline-flex items-center gap-1">
+                Ver economia para meu escritório <ArrowRight className="h-3 w-3" />
+              </button>
             </div>
 
-            {/* Card 3 - Purple */}
+            {/* Card 3 */}
             <div className="rounded-2xl border border-primary/20 bg-primary/[0.03] p-6 sm:p-8">
               <span className="text-2xl">🔓</span>
-              <h3 className="mt-3 text-lg font-bold">Certificados espalhados em pen drives</h3>
+              <h3 className="mt-3 text-lg font-bold">Certificados Espalhados em Pen Drives</h3>
               <div className="mt-4 space-y-2 text-sm text-muted-foreground">
                 <p>Sem controle de validade • Sem backup</p>
                 <p>Pen drive perdido = <strong className="text-foreground">perder TUDO</strong></p>
@@ -407,6 +476,9 @@ export default function LandingPage() {
                 <p className="text-sm font-semibold text-foreground">Criptografados + backup automático</p>
                 <p className="text-xs text-muted-foreground">+ alertas de vencimento</p>
               </div>
+              <button onClick={() => scrollTo("calculator")} className="mt-4 text-xs text-primary hover:underline inline-flex items-center gap-1">
+                Ver economia para meu escritório <ArrowRight className="h-3 w-3" />
+              </button>
             </div>
           </div>
         </div>
@@ -418,8 +490,8 @@ export default function LandingPage() {
           <div className="mx-auto max-w-3xl text-center mb-16">
             <Badge variant="secondary" className="mb-4">Funcionalidades</Badge>
             <h2 className="text-3xl font-bold sm:text-4xl">
-              Tudo que você precisa.{" "}
-              <span className="text-primary">Nada que você não precisa.</span>
+              9 Recursos de Emissão de NFS-e que{" "}
+              <span className="text-primary">seu escritório precisa</span>
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
               Construído especificamente para escritórios de contabilidade que gerenciam múltiplas empresas.
@@ -435,6 +507,12 @@ export default function LandingPage() {
                 <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
               </div>
             ))}
+          </div>
+          {/* CTA after features */}
+          <div className="mt-12 text-center">
+            <Button variant="outline" onClick={() => scrollTo("pricing")}>
+              Ver planos e começar agora <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
           </div>
         </div>
       </section>
@@ -507,6 +585,15 @@ export default function LandingPage() {
                 >
                   {plan.cta}
                 </Button>
+                {/* Secondary CTA link */}
+                <div className="mt-3 text-center">
+                  <button
+                    onClick={() => scrollTo(plan.ctaSecondaryTarget || "faq")}
+                    className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {plan.ctaSecondary}
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -528,14 +615,14 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── COMPETITOR COMPARISON (Visual bars) ─── */}
+      {/* ─── COMPETITOR COMPARISON ─── */}
       <section id="comparison" className="py-20 sm:py-28 bg-card">
         <div className="mx-auto max-w-5xl px-4 sm:px-6">
           <div className="mx-auto max-w-3xl text-center mb-12">
             <Badge variant="secondary" className="mb-4">Comparativo de Mercado</Badge>
             <h2 className="text-3xl font-bold sm:text-4xl">
               Por que ContábilFlow custa{" "}
-              <span className="text-primary">80% menos</span> que a concorrência?
+              <span className="text-primary">80% menos</span> que Omie, NFe.io e eNotas?
             </h2>
             <p className="mt-4 text-muted-foreground">
               Custo mensal para gerenciar <strong className="text-foreground">10 empresas</strong>:
@@ -593,11 +680,87 @@ export default function LandingPage() {
           <p className="mt-4 text-center text-xs text-muted-foreground">
             * Preços pesquisados em março/2026. Sujeitos a alteração pelos concorrentes.
           </p>
+
+          {/* CTA after comparison */}
+          <div className="mt-8 text-center">
+            <Button variant="outline" onClick={() => scrollTo("calculator")}>
+              <Calculator className="mr-2 h-4 w-4" /> Simular economia para meu escritório
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── SAVINGS CALCULATOR ─── */}
+      <section id="calculator" className="py-20 sm:py-28">
+        <div className="mx-auto max-w-2xl px-4 sm:px-6">
+          <div className="rounded-2xl border-2 border-primary/20 bg-card p-8 sm:p-12 shadow-xl">
+            <div className="text-center mb-8">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
+                <Calculator className="h-7 w-7 text-primary" />
+              </div>
+              <h2 className="text-2xl font-bold sm:text-3xl">🧮 Quanto você economizará?</h2>
+            </div>
+
+            <div className="mb-8">
+              <label className="text-sm font-medium mb-3 block">
+                Quantas empresas você gerencia? <strong className="text-primary">{numCompanies}</strong>
+              </label>
+              <Slider
+                value={sliderValue}
+                onValueChange={setSliderValue}
+                min={1}
+                max={50}
+                step={1}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-muted-foreground mt-2">
+                <span>1</span>
+                <span>50</span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex justify-between items-center py-2 border-b border-border">
+                <span className="text-sm text-muted-foreground">Com Omie:</span>
+                <span className="font-bold text-destructive">R$ {costOmie.toLocaleString("pt-BR")}/mês</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-border">
+                <span className="text-sm text-muted-foreground">Com NFe.io:</span>
+                <span className="font-bold text-destructive">R$ {costNfeio.toLocaleString("pt-BR")}/mês</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-border">
+                <span className="text-sm text-muted-foreground">Com eNotas:</span>
+                <span className="font-bold text-destructive">R$ {costEnotas.toLocaleString("pt-BR")}/mês</span>
+              </div>
+              <div className="flex justify-between items-center py-3 bg-primary/5 rounded-lg px-4 -mx-4">
+                <span className="text-sm font-semibold text-foreground">Com ContábilFlow:</span>
+                <span className="font-extrabold text-xl text-accent">R$ {costCf}/mês</span>
+              </div>
+            </div>
+
+            <div className="mt-6 rounded-xl bg-accent/10 p-6 text-center">
+              <p className="text-sm text-muted-foreground">Você economiza</p>
+              <p className="text-3xl font-extrabold text-accent">
+                R$ {savings.toLocaleString("pt-BR")}/mês! 🎉
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                = R$ {(savings * 12).toLocaleString("pt-BR")}/ano
+              </p>
+            </div>
+
+            <Button
+              size="lg"
+              className="w-full mt-6 h-12 text-base font-semibold shadow-lg shadow-primary/25"
+              onClick={() => scrollTo("lead-form")}
+            >
+              Liberar este acesso → <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </div>
         </div>
       </section>
 
       {/* ─── TESTIMONIALS ─── */}
-      <section id="testimonials" className="py-20 sm:py-28">
+      <section id="testimonials" className="py-20 sm:py-28 bg-card">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="mx-auto max-w-3xl text-center mb-12">
             <Badge variant="secondary" className="mb-4">Depoimentos</Badge>
@@ -608,7 +771,7 @@ export default function LandingPage() {
           </div>
           <div className="grid gap-6 md:grid-cols-3">
             {TESTIMONIALS.map(t => (
-              <div key={t.name} className="rounded-2xl border border-border bg-card p-6 sm:p-8 flex flex-col">
+              <div key={t.name} className="rounded-2xl border border-border bg-background p-6 sm:p-8 flex flex-col">
                 <div className="flex gap-1 mb-4">
                   {[...Array(5)].map((_, i) => (
                     <Star key={i} className="h-4 w-4 fill-warning text-warning" />
@@ -635,67 +798,56 @@ export default function LandingPage() {
                     <span className="text-[11px] bg-muted px-2 py-0.5 rounded-full">{t.tag}</span>
                   </div>
                 </div>
+                {/* Micro-CTA below testimonial */}
+                <button
+                  onClick={() => scrollTo("pricing")}
+                  className="mt-4 text-xs text-primary hover:underline inline-flex items-center gap-1 self-start"
+                >
+                  Ver resultado similar no seu caso <ArrowRight className="h-3 w-3" />
+                </button>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ─── LEAD CAPTURE FORM ─── */}
-      <section id="lead-form" className="py-20 sm:py-28 bg-card">
+      {/* ─── LEAD CAPTURE FORM (Simplified) ─── */}
+      <section id="lead-form" className="py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="mx-auto max-w-2xl">
-            <div className="rounded-2xl border border-primary/20 bg-background p-8 sm:p-12 shadow-xl shadow-primary/[0.05]">
+          <div className="mx-auto max-w-lg">
+            <div className="rounded-2xl border border-primary/20 bg-card p-8 sm:p-12 shadow-xl shadow-primary/[0.05]">
               <div className="text-center mb-8">
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
                   <Rocket className="h-7 w-7 text-primary" />
                 </div>
                 <h2 className="text-2xl font-bold sm:text-3xl">
-                  Libere seu acesso agora — é grátis
+                  Libere seu acesso — é grátis
                 </h2>
                 <p className="mt-2 text-muted-foreground">
-                  Preencha o formulário e receba acesso imediato. Sem cartão de crédito.
+                  Acesso imediato sem cartão de crédito
                 </p>
               </div>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className="text-sm font-medium mb-1.5 block">Nome completo *</label>
-                    <Input
-                      value={formData.name}
-                      onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
-                      placeholder="Seu nome"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium mb-1.5 block">E-mail profissional *</label>
-                    <Input
-                      type="email"
-                      value={formData.email}
-                      onChange={e => setFormData(p => ({ ...p, email: e.target.value }))}
-                      placeholder="voce@empresa.com"
-                      required
-                    />
-                  </div>
+                <div>
+                  <label className="text-sm font-medium mb-1.5 block">Nome completo *</label>
+                  <Input
+                    value={formData.name}
+                    onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
+                    placeholder="Seu nome"
+                    required
+                    maxLength={100}
+                  />
                 </div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className="text-sm font-medium mb-1.5 block">WhatsApp</label>
-                    <Input
-                      value={formData.phone}
-                      onChange={e => setFormData(p => ({ ...p, phone: e.target.value }))}
-                      placeholder="(00) 00000-0000"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium mb-1.5 block">Nome do escritório</label>
-                    <Input
-                      value={formData.company_name}
-                      onChange={e => setFormData(p => ({ ...p, company_name: e.target.value }))}
-                      placeholder="Seu escritório"
-                    />
-                  </div>
+                <div>
+                  <label className="text-sm font-medium mb-1.5 block">E-mail profissional *</label>
+                  <Input
+                    type="email"
+                    value={formData.email}
+                    onChange={e => setFormData(p => ({ ...p, email: e.target.value }))}
+                    placeholder="voce@empresa.com"
+                    required
+                    maxLength={255}
+                  />
                 </div>
                 <div>
                   <label className="text-sm font-medium mb-2 block">Plano de interesse</label>
@@ -711,7 +863,7 @@ export default function LandingPage() {
                             : "border-border text-muted-foreground hover:border-primary/30"
                         }`}
                       >
-                        {p.charAt(0).toUpperCase() + p.slice(1)}
+                        {p === "professional" ? "⭐ Pro" : p.charAt(0).toUpperCase() + p.slice(1)}
                       </button>
                     ))}
                   </div>
@@ -720,9 +872,9 @@ export default function LandingPage() {
                   {submitting ? "Enviando..." : "Liberar Meu Acesso Grátis →"}
                 </Button>
                 <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                  <span><Lock className="inline h-3 w-3 mr-1" />Dados protegidos</span>
                   <span>✅ Sem spam</span>
                   <span>✅ Resposta em até 24h</span>
+                  <span>✅ 230+ já se juntaram</span>
                 </div>
               </form>
             </div>
@@ -731,7 +883,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── FAQ ─── */}
-      <section id="faq" className="py-20 sm:py-28">
+      <section id="faq" className="py-20 sm:py-28 bg-card">
         <div className="mx-auto max-w-3xl px-4 sm:px-6">
           <div className="text-center mb-12">
             <Badge variant="secondary" className="mb-4">Dúvidas Frequentes</Badge>
@@ -739,7 +891,7 @@ export default function LandingPage() {
           </div>
           <div className="space-y-3">
             {FAQ.map((item, i) => (
-              <div key={i} className="rounded-xl border border-border bg-card">
+              <div key={i} className="rounded-xl border border-border bg-background">
                 <button
                   className="flex w-full items-center justify-between px-6 py-4 text-left"
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
@@ -754,6 +906,14 @@ export default function LandingPage() {
                 {openFaq === i && (
                   <div className="px-6 pb-4">
                     <p className="text-sm text-muted-foreground leading-relaxed">{item.a}</p>
+                    {item.hasCta && (
+                      <button
+                        onClick={() => scrollTo("lead-form")}
+                        className="mt-3 text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
+                      >
+                        Vou testar ContábilFlow <ArrowRight className="h-3 w-3" />
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -782,7 +942,12 @@ export default function LandingPage() {
               Liberar Acesso Grátis Agora <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
-          <p className="mt-6 text-sm opacity-75">Sem cartão • Sem contrato • Setup em 5 minutos</p>
+          <p className="mt-4 text-sm opacity-75">
+            <button onClick={() => navigate("/auth")} className="underline hover:opacity-100 transition-opacity">
+              Já tem conta? Entrar →
+            </button>
+          </p>
+          <p className="mt-2 text-sm opacity-60">Sem cartão • Sem contrato • Setup em 5 minutos</p>
         </div>
       </section>
 
@@ -804,10 +969,10 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold mb-3 text-sm">Produto</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><button onClick={() => scrollTo("features")} className="hover:text-foreground">Funcionalidades</button></li>
-                <li><button onClick={() => scrollTo("pricing")} className="hover:text-foreground">Preços</button></li>
-                <li><button onClick={() => scrollTo("comparison")} className="hover:text-foreground">Comparativo</button></li>
-                <li><button onClick={() => scrollTo("faq")} className="hover:text-foreground">FAQ</button></li>
+                <li><button onClick={() => scrollTo("features")} className="hover:text-foreground transition-colors">Funcionalidades</button></li>
+                <li><button onClick={() => scrollTo("pricing")} className="hover:text-foreground transition-colors">Preços</button></li>
+                <li><button onClick={() => scrollTo("comparison")} className="hover:text-foreground transition-colors">Comparativo</button></li>
+                <li><button onClick={() => scrollTo("faq")} className="hover:text-foreground transition-colors">FAQ</button></li>
               </ul>
             </div>
             <div>
