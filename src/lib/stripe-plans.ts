@@ -1,20 +1,20 @@
 export const STRIPE_PLANS = {
   starter: {
     name: "Starter",
-    price_id: "price_1TD6ALAgGS1pODqVHX2hHoqc",
-    product_id: "prod_UBT6n8G8vpirup",
+    price_id: "price_1TD7GeAWhwMVLtF9cL6vo9yD",
+    product_id: "prod_UBUFJGgu4DHefP",
     price: 97,
   },
   professional: {
     name: "Professional",
-    price_id: "price_1TD6BvAgGS1pODqVLan5avYK",
-    product_id: "prod_UBT8Y4qw6WBaMm",
+    price_id: "price_1TD7H2AWhwMVLtF9KKWSiULr",
+    product_id: "prod_UBUFH7snDsM3SP",
     price: 197,
   },
   enterprise: {
     name: "Enterprise",
-    price_id: "price_1TD6CSAgGS1pODqVQCmYokmU",
-    product_id: "prod_UBT8eilXMNN0ng",
+    price_id: "price_1TD7HNAWhwMVLtF9pNXReOYw",
+    product_id: "prod_UBUF3aUZvoR0fj",
     price: 497,
   },
 } as const;
