@@ -21,6 +21,7 @@ import InvoiceForm from "@/pages/InvoiceForm";
 import Certificates from "@/pages/Certificates";
 import Reports from "@/pages/Reports";
 import SettingsPage from "@/pages/SettingsPage";
+import SubscriptionPage from "@/pages/SubscriptionPage";
 import AdminLayout from "@/pages/admin/AdminLayout";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminAccounts from "@/pages/admin/AdminAccounts";
@@ -56,6 +57,7 @@ const App = () => (
               <Route path="/certificates" element={<ProtectedRoute><ActivationGate><TenantGate><Certificates /></TenantGate></ActivationGate></ProtectedRoute>} />
               <Route path="/reports" element={<ProtectedRoute><ActivationGate><TenantGate><Reports /></TenantGate></ActivationGate></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><ActivationGate><TenantGate><SettingsPage /></TenantGate></ActivationGate></ProtectedRoute>} />
+              <Route path="/subscription" element={<ProtectedRoute><ActivationGate><TenantGate><SubscriptionPage /></TenantGate></ActivationGate></ProtectedRoute>} />
 
               {/* Admin routes */}
               <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>

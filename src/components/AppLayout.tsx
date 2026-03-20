@@ -3,6 +3,7 @@ import { Menu } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import AppSidebar from "./AppSidebar";
+import SubscriptionBanner from "./SubscriptionBanner";
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const isMobile = useIsMobile();
@@ -11,7 +12,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   if (isMobile) {
     return (
       <div className="min-h-screen bg-background">
-        {/* Mobile top bar */}
         <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background px-4">
           <button
             onClick={() => setOpen(true)}
@@ -22,7 +22,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <span className="text-sm font-bold text-foreground tracking-tight">NFS-e Pro</span>
         </header>
 
-        {/* Mobile drawer */}
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetContent side="left" className="w-72 p-0">
             <SheetTitle className="sr-only">Menu de navegação</SheetTitle>
@@ -32,6 +31,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
         <main className="min-h-[calc(100vh-3.5rem)]">
           <div className="p-4">
+            <SubscriptionBanner />
             {children}
           </div>
         </main>
@@ -46,6 +46,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </aside>
       <main className="ml-64 min-h-screen">
         <div className="p-6 lg:p-8 max-w-[1400px]">
+          <SubscriptionBanner />
           {children}
         </div>
       </main>
