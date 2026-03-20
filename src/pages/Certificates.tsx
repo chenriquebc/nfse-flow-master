@@ -268,9 +268,59 @@ export default function Certificates() {
     return diff > 0 && diff < 30 * 24 * 60 * 60 * 1000;
   };
 
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current++;
+    if (e.dataTransfer.items?.length) setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current--;
+    if (dragCounter.current === 0) setIsDragging(false);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    dragCounter.current = 0;
+    const droppedFile = e.dataTransfer.files?.[0];
+    if (droppedFile && /\.(pfx|p12)$/i.test(droppedFile.name)) {
+      setFile(droppedFile);
+      setOpen(true);
+    } else {
+      toast.error("Arquivo inválido", { description: "Envie um arquivo .pfx ou .p12" });
+    }
+  }, []);
+
   return (
     <AppLayout>
-      <div className="animate-fade-in">
+      <div
+        className="animate-fade-in"
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
+        {/* Drag overlay */}
+        {isDragging && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+            <div className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-primary p-12">
+              <Upload className="h-12 w-12 text-primary animate-bounce" />
+              <p className="text-lg font-semibold text-primary">Solte o certificado .pfx aqui</p>
+              <p className="text-sm text-muted-foreground">O arquivo será processado automaticamente</p>
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 page-header">
           <div>
             <h1 className="page-title">Certificados Digitais</h1>
@@ -293,19 +343,39 @@ export default function Certificates() {
               <div className="space-y-4 pt-2">
                 <div className="space-y-2">
                   <Label>Arquivo do certificado (.pfx)</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
+                  <div
+                    className={`relative flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 transition-colors cursor-pointer ${
+                      file ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-primary/50"
+                    }`}
+                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const f = e.dataTransfer.files?.[0];
+                      if (f && /\.(pfx|p12)$/i.test(f.name)) setFile(f);
+                      else toast.error("Arquivo inválido", { description: "Envie um .pfx ou .p12" });
+                    }}
+                    onClick={() => document.getElementById("cert-file-input")?.click()}
+                  >
+                    <input
+                      id="cert-file-input"
                       type="file"
                       accept=".pfx,.p12"
+                      className="hidden"
                       onChange={(e) => setFile(e.target.files?.[0] || null)}
                     />
+                    <Upload className="h-8 w-8 text-muted-foreground" />
+                    {file ? (
+                      <p className="text-sm font-medium text-primary">
+                        {file.name} ({(file.size / 1024).toFixed(1)} KB)
+                      </p>
+                    ) : (
+                      <>
+                        <p className="text-sm font-medium">Arraste o arquivo .pfx aqui</p>
+                        <p className="text-xs text-muted-foreground">ou clique para selecionar</p>
+                      </>
+                    )}
                   </div>
-                  {file && (
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Upload className="h-3 w-3" />
-                      {file.name} ({(file.size / 1024).toFixed(1)} KB)
-                    </p>
-                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>Senha do certificado</Label>
