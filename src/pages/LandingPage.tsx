@@ -506,7 +506,7 @@ export default function LandingPage() {
             </motion.div>
 
             {/* Card 3 */}
-            <div className="rounded-2xl border border-primary/20 bg-primary/[0.03] p-6 sm:p-8">
+            <motion.div variants={staggerItem} className="rounded-2xl border border-primary/20 bg-primary/[0.03] p-6 sm:p-8">
               <span className="text-2xl">🔓</span>
               <h3 className="mt-3 text-lg font-bold">Certificados Espalhados em Pen Drives</h3>
               <div className="mt-4 space-y-2 text-sm text-muted-foreground">
