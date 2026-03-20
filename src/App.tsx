@@ -27,6 +27,7 @@ import AdminAccounts from "@/pages/admin/AdminAccounts";
 import AdminFinancial from "@/pages/admin/AdminFinancial";
 import AdminAnalytics from "@/pages/admin/AdminAnalytics";
 import AdminAuditLogs from "@/pages/admin/AdminAuditLogs";
+import AdminLeads from "@/pages/admin/AdminLeads";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
