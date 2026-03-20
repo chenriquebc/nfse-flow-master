@@ -99,9 +99,16 @@ function AnimatedNumber({ target, suffix = "", prefix = "", decimals = 0 }: { ta
 }
 
 /* ─────────── Data ─────────── */
+const PLAN_PRICE_IDS: Record<string, string> = {
+  starter: "price_1TD6ALAgGS1pODqVHX2hHoqc",
+  professional: "price_1TD6BvAgGS1pODqVLan5avYK",
+  enterprise: "price_1TD6CSAgGS1pODqVQCmYokmU",
+};
+
 const PLANS = [
   {
     name: "Starter",
+    key: "starter",
     price: 97,
     subtitle: "Seu primeiro escritório",
     highlight: false,
@@ -122,6 +129,7 @@ const PLANS = [
   },
   {
     name: "Professional",
+    key: "professional",
     price: 197,
     subtitle: "Crescimento real. Melhor preço.",
     highlight: true,
@@ -146,6 +154,7 @@ const PLANS = [
   },
   {
     name: "Enterprise",
+    key: "enterprise",
     price: 497,
     subtitle: "Operação com escala. White-glove.",
     highlight: false,
