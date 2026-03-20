@@ -483,7 +483,7 @@ export default function LandingPage() {
             </motion.div>
 
             {/* Card 2 */}
-            <div className="rounded-2xl border border-warning/20 bg-warning/[0.03] p-6 sm:p-8">
+            <motion.div variants={staggerItem} className="rounded-2xl border border-warning/20 bg-warning/[0.03] p-6 sm:p-8">
               <span className="text-2xl">⚠️</span>
               <h3 className="mt-3 text-lg font-bold">Perder Prazos & Pagar Multas</h3>
               <div className="mt-4 space-y-2 text-sm text-muted-foreground">
