@@ -37,6 +37,7 @@ export default function AppSidebar({ onNavigate }: AppSidebarProps) {
   const location = useLocation();
   const { signOut, user } = useAuth();
   const { tenant, tenants, setCurrentTenant } = useTenant();
+  const { isAdmin } = usePlatformAdmin();
 
   const handleNav = () => {
     onNavigate?.();
