@@ -23,6 +23,8 @@ import SettingsPage from "@/pages/SettingsPage";
 import AdminLayout from "@/pages/admin/AdminLayout";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminAccounts from "@/pages/admin/AdminAccounts";
+import AdminFinancial from "@/pages/admin/AdminFinancial";
+import AdminAnalytics from "@/pages/admin/AdminAnalytics";
 import AdminAuditLogs from "@/pages/admin/AdminAuditLogs";
 import NotFound from "@/pages/NotFound";
 
