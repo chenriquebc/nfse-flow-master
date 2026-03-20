@@ -805,6 +805,7 @@ export default function LandingPage() {
             </Button>
           </div>
         </div>
+        </FadeUp>
       </section>
 
       {/* ─── TESTIMONIALS ─── */}
