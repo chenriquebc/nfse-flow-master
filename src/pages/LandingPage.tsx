@@ -666,9 +666,10 @@ export default function LandingPage() {
                   className="w-full"
                   variant={plan.ctaVariant}
                   size="lg"
-                  onClick={() => { setSelectedPlan(plan.name.toLowerCase()); scrollTo("lead-form"); }}
+                  disabled={checkoutLoading === plan.key}
+                  onClick={() => handleCheckout(plan.key)}
                 >
-                  {plan.cta}
+                  {checkoutLoading === plan.key ? "Redirecionando..." : plan.cta}
                 </Button>
                 {/* Secondary CTA link */}
                 <div className="mt-3 text-center">
