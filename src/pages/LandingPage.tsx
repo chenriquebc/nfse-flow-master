@@ -853,9 +853,9 @@ export default function LandingPage() {
                 >
                   Ver resultado similar no seu caso <ArrowRight className="h-3 w-3" />
                 </button>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </StaggerChildren>
         </div>
       </section>
 
