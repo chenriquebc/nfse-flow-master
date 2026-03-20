@@ -24,12 +24,13 @@ const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
 export function TenantProvider({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
+  const userId = user?.id ?? null;
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchTenants = async () => {
-    if (!user) {
+    if (!userId) {
       setTenants([]);
       setTenant(null);
       // Mantém loading ativo até o auth confirmar uma sessão válida
@@ -60,7 +61,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       return;
     }
     fetchTenants();
-  }, [user, authLoading]);
+  }, [userId, authLoading]);
 
   const setCurrentTenant = (id: string) => {
     const found = tenants.find(t => t.id === id);
