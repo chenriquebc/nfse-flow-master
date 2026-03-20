@@ -547,31 +547,58 @@ export type Database = {
           },
         ]
       }
+      platform_admins: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
+          activated_at: string | null
           avatar_url: string | null
           created_at: string
           email: string
           full_name: string
           id: string
+          must_change_password: boolean
+          provisioned_at: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          activated_at?: string | null
           avatar_url?: string | null
           created_at?: string
           email?: string
           full_name?: string
           id?: string
+          must_change_password?: boolean
+          provisioned_at?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          activated_at?: string | null
           avatar_url?: string | null
           created_at?: string
           email?: string
           full_name?: string
           id?: string
+          must_change_password?: boolean
+          provisioned_at?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -620,6 +647,9 @@ export type Database = {
           phone: string | null
           plan: string
           settings: Json | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_status: string
           updated_at: string
         }
         Insert: {
@@ -632,6 +662,9 @@ export type Database = {
           phone?: string | null
           plan?: string
           settings?: Json | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string
           updated_at?: string
         }
         Update: {
@@ -644,6 +677,9 @@ export type Database = {
           phone?: string | null
           plan?: string
           settings?: Json | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string
           updated_at?: string
         }
         Relationships: []
@@ -698,6 +734,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "operator" | "viewer"
