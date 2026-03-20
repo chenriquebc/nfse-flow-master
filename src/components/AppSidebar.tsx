@@ -8,9 +8,11 @@ import {
   LogOut,
   ChevronDown,
   Receipt,
+  Shield,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTenant } from "@/contexts/TenantContext";
+import { usePlatformAdmin } from "@/hooks/usePlatformAdmin";
 import {
   DropdownMenu,
   DropdownMenuContent,
