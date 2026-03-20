@@ -367,7 +367,13 @@ export default function StepServico({ form, set }: StepServicoProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Município de incidência do ISSQN</Label>
-              <Input className="h-12" value={form.issqn_city} onChange={(e) => set("issqn_city", e.target.value)} placeholder="Ex: São Paulo/SP" />
+              <IssqnCityCombobox
+                value={form.issqn_city}
+                municipios={municipios}
+                onChange={(name, code) => {
+                  set("issqn_city", name);
+                }}
+              />
             </div>
             <div className="space-y-2">
               <Label>Data de Competência</Label>
