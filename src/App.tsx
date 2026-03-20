@@ -12,6 +12,7 @@ import AdminRoute from "@/components/AdminRoute";
 import Auth from "@/pages/Auth";
 import Activate from "@/pages/Activate";
 import Onboarding from "@/pages/Onboarding";
+import LandingPage from "@/pages/LandingPage";
 import Dashboard from "@/pages/Dashboard";
 import Companies from "@/pages/Companies";
 import CompanyForm from "@/pages/CompanyForm";
@@ -26,6 +27,7 @@ import AdminAccounts from "@/pages/admin/AdminAccounts";
 import AdminFinancial from "@/pages/admin/AdminFinancial";
 import AdminAnalytics from "@/pages/admin/AdminAnalytics";
 import AdminAuditLogs from "@/pages/admin/AdminAuditLogs";
+import AdminLeads from "@/pages/admin/AdminLeads";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -59,10 +61,11 @@ const App = () => (
                 <Route path="accounts" element={<AdminAccounts />} />
                 <Route path="financial" element={<AdminFinancial />} />
                 <Route path="analytics" element={<AdminAnalytics />} />
+                <Route path="leads" element={<AdminLeads />} />
                 <Route path="logs" element={<AdminAuditLogs />} />
               </Route>
 
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/" element={<LandingPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </TenantProvider>
