@@ -359,14 +359,18 @@ export default function LandingPage() {
                 Emita NFS-e sem Erros. Sem Multas. Sem Noites Perdidas.
               </span>
             </h1>
+            </FadeUp>
+            <FadeUp delay={0.2}>
             <p className="mt-6 text-lg text-muted-foreground sm:text-xl max-w-3xl mx-auto leading-relaxed">
               O único sistema que emite <strong className="text-foreground">Nota Fiscal de Serviço</strong> para{" "}
               <strong className="text-foreground">TODAS</strong> as suas empresas com{" "}
               <strong className="text-foreground">3 cliques</strong>.
               Alertas automáticos evitam multas. Integração total com sua rotina (API + CSV).
             </p>
+            </FadeUp>
 
             {/* CTAs */}
+            <FadeUp delay={0.3}>
             <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center relative">
               <Button
                 size="lg"
