@@ -665,7 +665,7 @@ export default function LandingPage() {
       {/* ─── COMPETITOR COMPARISON ─── */}
       <section id="comparison" className="py-20 sm:py-28 bg-card">
         <div className="mx-auto max-w-5xl px-4 sm:px-6">
-          <div className="mx-auto max-w-3xl text-center mb-12">
+          <FadeUp className="mx-auto max-w-3xl text-center mb-12">
             <Badge variant="secondary" className="mb-4">Comparativo de Mercado</Badge>
             <h2 className="text-3xl font-bold sm:text-4xl">
               Por que ContábilFlow custa{" "}
@@ -674,7 +674,7 @@ export default function LandingPage() {
             <p className="mt-4 text-muted-foreground">
               Custo mensal para gerenciar <strong className="text-foreground">10 empresas</strong>:
             </p>
-          </div>
+          </FadeUp>
 
           <div className="space-y-4">
             {COMPETITORS_VISUAL.map(c => (
