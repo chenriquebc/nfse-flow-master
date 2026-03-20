@@ -27,6 +27,8 @@ const STEPS = [
   { label: "Revisão", description: "Confira os dados antes de salvar" },
 ];
 
+const INVOICE_DRAFT_STORAGE_KEY = "nfse_invoice_new_draft_v1";
+
 export default function InvoiceForm() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -37,6 +39,7 @@ export default function InvoiceForm() {
   const [loading, setLoading] = useState(false);
   const [loadingInvoice, setLoadingInvoice] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+  const [draftHydrated, setDraftHydrated] = useState(isEditing);
 
   const [form, setForm] = useState({
     company_id: "",
@@ -94,6 +97,45 @@ export default function InvoiceForm() {
     csll_value: "0",
     notes: "",
   });
+
+  useEffect(() => {
+    if (isEditing) return;
+
+    try {
+      const rawDraft = sessionStorage.getItem(INVOICE_DRAFT_STORAGE_KEY);
+      if (!rawDraft) return;
+
+      const parsed = JSON.parse(rawDraft) as {
+        form?: Partial<typeof form>;
+        currentStep?: number;
+      };
+
+      if (parsed.form && typeof parsed.form === "object") {
+        setForm((prev) => ({ ...prev, ...parsed.form }));
+      }
+
+      if (Number.isInteger(parsed.currentStep)) {
+        const restoredStep = Math.min(
+          Math.max(Number(parsed.currentStep), 0),
+          STEPS.length - 1,
+        );
+        setCurrentStep(restoredStep);
+      }
+    } catch {
+      sessionStorage.removeItem(INVOICE_DRAFT_STORAGE_KEY);
+    } finally {
+      setDraftHydrated(true);
+    }
+  }, [isEditing]);
+
+  useEffect(() => {
+    if (isEditing || !draftHydrated) return;
+
+    sessionStorage.setItem(
+      INVOICE_DRAFT_STORAGE_KEY,
+      JSON.stringify({ form, currentStep }),
+    );
+  }, [isEditing, draftHydrated, form, currentStep]);
 
   useEffect(() => {
     if (!tenant) return;
@@ -316,6 +358,7 @@ export default function InvoiceForm() {
     if (error) {
       toast.error("Erro ao salvar nota", { description: error.message });
     } else {
+      if (!isEditing) sessionStorage.removeItem(INVOICE_DRAFT_STORAGE_KEY);
       toast.success(isEditing ? "Nota fiscal atualizada!" : "Nota fiscal criada como rascunho!");
       navigate("/invoices");
     }
@@ -340,6 +383,9 @@ export default function InvoiceForm() {
       setEmitting(false);
       return;
     }
+
+    if (!isEditing) sessionStorage.removeItem(INVOICE_DRAFT_STORAGE_KEY);
+
     try {
       const { data: emitData, error: emitError } = await supabase.functions.invoke("emit-nfse", {
         body: { invoice_id: invoiceId },
