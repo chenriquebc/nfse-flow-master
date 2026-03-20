@@ -50,7 +50,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </aside>
       <main className="ml-64 min-h-screen">
         <div className="p-6 lg:p-8 max-w-[1400px]">
+          <SubscriptionBanner />
           {children}
+        </div>
+      </main>
         </div>
       </main>
     </div>
