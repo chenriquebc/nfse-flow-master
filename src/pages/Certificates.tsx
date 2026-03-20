@@ -45,6 +45,8 @@ export default function Certificates() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragCounter = useRef(0);
 
   const [password, setPassword] = useState("");
   const [file, setFile] = useState<File | null>(null);
