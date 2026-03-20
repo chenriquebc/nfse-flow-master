@@ -12,7 +12,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   if (isMobile) {
     return (
       <div className="min-h-screen bg-background">
-        {/* Mobile top bar */}
         <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background px-4">
           <button
             onClick={() => setOpen(true)}
@@ -23,7 +22,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <span className="text-sm font-bold text-foreground tracking-tight">NFS-e Pro</span>
         </header>
 
-        {/* Mobile drawer */}
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetContent side="left" className="w-72 p-0">
             <SheetTitle className="sr-only">Menu de navegação</SheetTitle>
@@ -35,8 +33,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <div className="p-4">
             <SubscriptionBanner />
             {children}
-          </div>
-        </main>
           </div>
         </main>
       </div>
@@ -52,8 +48,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <div className="p-6 lg:p-8 max-w-[1400px]">
           <SubscriptionBanner />
           {children}
-        </div>
-      </main>
         </div>
       </main>
     </div>
