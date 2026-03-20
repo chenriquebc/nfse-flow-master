@@ -1,5 +1,6 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import AdminNotifications from "@/components/admin/AdminNotifications";
 import {
   LayoutDashboard,
   Users,
