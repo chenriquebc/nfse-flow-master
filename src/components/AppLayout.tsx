@@ -33,7 +33,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
         <main className="min-h-[calc(100vh-3.5rem)]">
           <div className="p-4">
+            <SubscriptionBanner />
             {children}
+          </div>
+        </main>
           </div>
         </main>
       </div>
