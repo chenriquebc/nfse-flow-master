@@ -9,6 +9,7 @@ import {
   ChevronDown,
   Receipt,
   Shield,
+  CreditCard,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTenant } from "@/contexts/TenantContext";
