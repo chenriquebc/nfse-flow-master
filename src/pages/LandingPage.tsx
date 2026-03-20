@@ -969,6 +969,7 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+          </FadeUp>
         </div>
       </section>
 
