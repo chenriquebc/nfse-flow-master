@@ -526,8 +526,8 @@ export default function LandingPage() {
               <button onClick={() => scrollTo("calculator")} className="mt-4 text-xs text-primary hover:underline inline-flex items-center gap-1">
                 Ver economia para meu escritório <ArrowRight className="h-3 w-3" />
               </button>
-            </div>
-          </div>
+            </motion.div>
+          </StaggerChildren>
         </div>
       </section>
 
