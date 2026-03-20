@@ -427,7 +427,7 @@ export default function LandingPage() {
               { value: 230, suffix: "+", label: "CONTADORES CONFIAM", sub: "Crescimento 40% a/a", icon: "👥" },
               { value: 4.9, suffix: "/5", label: "STARS", sub: "Mais rápido que Omie. 1/3 do preço.", icon: "⭐", decimals: 1 },
             ].map(s => (
-              <div key={s.label} className="text-center">
+              <motion.div key={s.label} variants={staggerItem} className="text-center">
                 <p className="text-xs mb-1">{s.icon}</p>
                 <p className="text-2xl sm:text-3xl font-extrabold text-primary">
                   <AnimatedNumber target={s.value} suffix={s.suffix} prefix={s.prefix || ""} decimals={s.decimals || 0} />
