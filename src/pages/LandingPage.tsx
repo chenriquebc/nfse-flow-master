@@ -552,9 +552,9 @@ export default function LandingPage() {
                 </div>
                 <h3 className="mt-4 text-base font-semibold">{f.title}</h3>
                 <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </StaggerChildren>
           {/* CTA after features */}
           <div className="mt-12 text-center">
             <Button variant="outline" onClick={() => scrollTo("pricing")}>
