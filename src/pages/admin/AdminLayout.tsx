@@ -4,6 +4,8 @@ import {
   LayoutDashboard,
   Users,
   ScrollText,
+  DollarSign,
+  BarChart3,
   LogOut,
   ArrowLeft,
   Shield,
