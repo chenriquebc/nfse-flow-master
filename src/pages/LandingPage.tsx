@@ -862,7 +862,7 @@ export default function LandingPage() {
       {/* ─── LEAD CAPTURE FORM (Simplified) ─── */}
       <section id="lead-form" className="py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="mx-auto max-w-lg">
+          <FadeUp className="mx-auto max-w-lg">
             <div className="rounded-2xl border border-primary/20 bg-card p-8 sm:p-12 shadow-xl shadow-primary/[0.05]">
               <div className="text-center mb-8">
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
