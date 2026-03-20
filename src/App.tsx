@@ -12,6 +12,7 @@ import AdminRoute from "@/components/AdminRoute";
 import Auth from "@/pages/Auth";
 import Activate from "@/pages/Activate";
 import Onboarding from "@/pages/Onboarding";
+import LandingPage from "@/pages/LandingPage";
 import Dashboard from "@/pages/Dashboard";
 import Companies from "@/pages/Companies";
 import CompanyForm from "@/pages/CompanyForm";
