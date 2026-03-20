@@ -449,7 +449,7 @@ export default function LandingPage() {
       {/* ─── PAIN POINTS (QUANTIFIED) ─── */}
       <section className="py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="mx-auto max-w-3xl text-center mb-16">
+          <FadeUp className="mx-auto max-w-3xl text-center mb-16">
             <h2 className="text-3xl font-bold sm:text-4xl">
               Quanto você está{" "}
               <span className="text-destructive">perdendo</span> hoje com emissão manual de NFS-e?
@@ -457,8 +457,8 @@ export default function LandingPage() {
             <p className="mt-4 text-lg text-muted-foreground">
               Fizemos as contas para você. Spoiler: é mais do que imagina.
             </p>
-          </div>
-          <div className="grid gap-6 md:grid-cols-3">
+          </FadeUp>
+          <StaggerChildren className="grid gap-6 md:grid-cols-3">
             {/* Card 1 */}
             <div className="rounded-2xl border border-destructive/20 bg-destructive/[0.03] p-6 sm:p-8">
               <span className="text-2xl">📌</span>
