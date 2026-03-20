@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import AppLayout from "@/components/AppLayout";
+import { fetchCnpj, resolveIbgeCode } from "@/lib/api/brasilapi";
 import { useTenant } from "@/contexts/TenantContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,8 @@ export default function Certificates() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragCounter = useRef(0);
 
   const [password, setPassword] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -121,12 +124,47 @@ export default function Certificates() {
       return;
     }
 
-    // 2. Auto-create company from certificate data
+    // 2. Auto-create company from certificate data, enriched with RFB
     const legalName = certMeta.legal_name || file.name.replace(/\.(pfx|p12)$/i, "");
     const doc = certMeta.document?.replace(/[^\d]/g, "") || "";
 
+    // Try to enrich with RFB data if we have a CNPJ
+    let rfbData: any = null;
+    let ibgeCode = "";
+    if (doc && doc.length === 14) {
+      try {
+        rfbData = await fetchCnpj(doc);
+        ibgeCode = await resolveIbgeCode(rfbData.municipio, rfbData.uf);
+      } catch {
+        // RFB lookup failed, continue with cert data only
+      }
+    }
+
     // Check if company with same CNPJ already exists
     let companyId: string;
+    const companyPayload: any = {
+      tenant_id: tenant.id,
+      legal_name: rfbData?.razao_social || legalName,
+      document: doc,
+      ...(rfbData ? {
+        trade_name: rfbData.nome_fantasia || null,
+        address_street: rfbData.logradouro || null,
+        address_number: rfbData.numero || null,
+        address_complement: rfbData.complemento || null,
+        address_neighborhood: rfbData.bairro || null,
+        address_city: rfbData.municipio || null,
+        address_city_code: ibgeCode || (rfbData.codigo_municipio ? String(rfbData.codigo_municipio) : null),
+        address_state: rfbData.uf || null,
+        address_zip: rfbData.cep ? rfbData.cep.replace(/\D/g, "") : null,
+        email: rfbData.email || null,
+        phone: rfbData.telefone || null,
+        cnae_code: rfbData.cnae_fiscal ? String(rfbData.cnae_fiscal) : null,
+        secondary_cnae_codes: rfbData.cnaes_secundarios?.length
+          ? rfbData.cnaes_secundarios.map((c: any) => String(c.codigo))
+          : [],
+      } : {}),
+    };
+
     if (doc) {
       const { data: existing } = await supabase
         .from("companies")
@@ -137,14 +175,15 @@ export default function Certificates() {
 
       if (existing) {
         companyId = existing.id;
+        // Update existing company with RFB data if available
+        if (rfbData) {
+          const { tenant_id, document: _d, ...updateFields } = companyPayload;
+          await supabase.from("companies").update(updateFields).eq("id", existing.id);
+        }
       } else {
         const { data: newCompany, error: companyError } = await supabase
           .from("companies")
-          .insert({
-            tenant_id: tenant.id,
-            legal_name: legalName,
-            document: doc,
-          })
+          .insert(companyPayload)
           .select("id")
           .single();
 
@@ -156,14 +195,9 @@ export default function Certificates() {
         companyId = newCompany.id;
       }
     } else {
-      // No CNPJ found — create company with name only
       const { data: newCompany, error: companyError } = await supabase
         .from("companies")
-        .insert({
-          tenant_id: tenant.id,
-          legal_name: legalName,
-          document: "",
-        })
+        .insert({ tenant_id: tenant.id, legal_name: legalName, document: "" })
         .select("id")
         .single();
 
@@ -234,9 +268,59 @@ export default function Certificates() {
     return diff > 0 && diff < 30 * 24 * 60 * 60 * 1000;
   };
 
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current++;
+    if (e.dataTransfer.items?.length) setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current--;
+    if (dragCounter.current === 0) setIsDragging(false);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    dragCounter.current = 0;
+    const droppedFile = e.dataTransfer.files?.[0];
+    if (droppedFile && /\.(pfx|p12)$/i.test(droppedFile.name)) {
+      setFile(droppedFile);
+      setOpen(true);
+    } else {
+      toast.error("Arquivo inválido", { description: "Envie um arquivo .pfx ou .p12" });
+    }
+  }, []);
+
   return (
     <AppLayout>
-      <div className="animate-fade-in">
+      <div
+        className="animate-fade-in"
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
+        {/* Drag overlay */}
+        {isDragging && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+            <div className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-primary p-12">
+              <Upload className="h-12 w-12 text-primary animate-bounce" />
+              <p className="text-lg font-semibold text-primary">Solte o certificado .pfx aqui</p>
+              <p className="text-sm text-muted-foreground">O arquivo será processado automaticamente</p>
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 page-header">
           <div>
             <h1 className="page-title">Certificados Digitais</h1>
@@ -259,19 +343,39 @@ export default function Certificates() {
               <div className="space-y-4 pt-2">
                 <div className="space-y-2">
                   <Label>Arquivo do certificado (.pfx)</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
+                  <div
+                    className={`relative flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 transition-colors cursor-pointer ${
+                      file ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-primary/50"
+                    }`}
+                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const f = e.dataTransfer.files?.[0];
+                      if (f && /\.(pfx|p12)$/i.test(f.name)) setFile(f);
+                      else toast.error("Arquivo inválido", { description: "Envie um .pfx ou .p12" });
+                    }}
+                    onClick={() => document.getElementById("cert-file-input")?.click()}
+                  >
+                    <input
+                      id="cert-file-input"
                       type="file"
                       accept=".pfx,.p12"
+                      className="hidden"
                       onChange={(e) => setFile(e.target.files?.[0] || null)}
                     />
+                    <Upload className="h-8 w-8 text-muted-foreground" />
+                    {file ? (
+                      <p className="text-sm font-medium text-primary">
+                        {file.name} ({(file.size / 1024).toFixed(1)} KB)
+                      </p>
+                    ) : (
+                      <>
+                        <p className="text-sm font-medium">Arraste o arquivo .pfx aqui</p>
+                        <p className="text-xs text-muted-foreground">ou clique para selecionar</p>
+                      </>
+                    )}
                   </div>
-                  {file && (
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Upload className="h-3 w-3" />
-                      {file.name} ({(file.size / 1024).toFixed(1)} KB)
-                    </p>
-                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>Senha do certificado</Label>
