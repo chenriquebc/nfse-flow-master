@@ -567,7 +567,7 @@ export default function LandingPage() {
       {/* ─── PRICING ─── */}
       <section id="pricing" className="py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="mx-auto max-w-3xl text-center mb-16">
+          <FadeUp className="mx-auto max-w-3xl text-center mb-16">
             <Badge variant="secondary" className="mb-4">Planos & Preços</Badge>
             <h2 className="text-3xl font-bold sm:text-4xl">
               Investimento que se paga no{" "}
@@ -576,7 +576,7 @@ export default function LandingPage() {
             <p className="mt-4 text-lg text-muted-foreground">
               Compare: um funcionário para emitir notas custa R$ 2.500+/mês. O ContábilFlow faz o mesmo por uma fração.
             </p>
-          </div>
+          </FadeUp>
           <div className="grid gap-6 lg:grid-cols-3 items-start">
             {PLANS.map(plan => (
               <div
