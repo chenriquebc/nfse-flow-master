@@ -206,9 +206,16 @@ export default function Auth() {
           </CardContent>
         </Card>
 
-        {/* Admin link */}
+        {/* Bottom links */}
         {!isAdminLogin && (
-          <div className="mt-4 text-center">
+          <div className="mt-4 flex items-center justify-center gap-4">
+            <a
+              href="/"
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              ← Voltar para o site
+            </a>
+            <span className="text-muted-foreground/40">|</span>
             <button
               onClick={() => { setIsAdminLogin(true); setEmail(""); setPassword(""); }}
               className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
