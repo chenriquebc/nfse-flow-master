@@ -74,7 +74,7 @@ export default function UserManagement() {
     can_view_reports: false,
   });
 
-  const plan = tenant?.plan || "basic";
+  const plan = subscriptionPlan || "basic";
   const maxUsers = PLAN_USER_LIMITS[plan] ?? 0;
   const nonAdminMembers = members.filter(
     (m) => m.user_id !== user?.id

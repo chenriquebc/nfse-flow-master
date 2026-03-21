@@ -195,6 +195,23 @@ export default function Companies() {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1">
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      onClick={() => toggleEnvironment(c)}
+                                    >
+                                      <RefreshCw className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    Alternar para {c.environment === 1 ? "Homologação" : "Produção"}
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                               <Link to={`/companies/${c.id}`}>
                                 <Button variant="ghost" size="icon" className="h-8 w-8">
                                   <Pencil className="h-4 w-4" />
