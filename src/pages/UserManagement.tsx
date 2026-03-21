@@ -16,6 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { Users, Plus, Pencil, Trash2, AlertTriangle, Crown } from "lucide-react";
 import { toast } from "sonner";
 import TablePagination from "@/components/TablePagination";
+import { useSubscription } from "@/hooks/useSubscription";
 
 interface MemberRow {
   id: string;
