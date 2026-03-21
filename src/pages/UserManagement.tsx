@@ -77,12 +77,13 @@ export default function UserManagement() {
   const plan = subscriptionPlan || "basic";
   const maxUsers = PLAN_USER_LIMITS[plan] ?? 0;
   const nonAdminMembers = members.filter(
-    (m) => m.user_id !== user?.id
+    (m) => !m.user_roles?.some((r) => r.role === "admin")
   );
   const canCreateMore = maxUsers === Infinity || nonAdminMembers.length < maxUsers;
 
   const fetchMembers = async () => {
     if (!tenant) return;
+    setLoading(true);
     const { data: membersData } = await supabase
       .from("tenant_members")
       .select("*, user_roles(role), user_permissions(can_view, can_emit_invoices, can_cancel_invoices, can_manage_companies, can_view_reports)")
@@ -163,7 +164,6 @@ export default function UserManagement() {
     setSaving(true);
 
     if (editingMember) {
-      // Update permissions
       const { error } = await supabase
         .from("user_permissions")
         .upsert({
@@ -172,7 +172,6 @@ export default function UserManagement() {
           ...formPermissions,
         }, { onConflict: "user_id,tenant_id" });
 
-      // Update profile name if changed
       if (formName && formName !== editingMember.profiles?.full_name) {
         await supabase
           .from("profiles")
@@ -183,9 +182,13 @@ export default function UserManagement() {
       if (error) toast.error("Erro ao salvar permissões");
       else toast.success("Usuário atualizado!");
     } else {
-      // Create new user via provision-account edge function
       if (!formEmail || !formName) {
         toast.error("Preencha nome e e-mail");
+        setSaving(false);
+        return;
+      }
+      if (!formPassword || formPassword.length < 6) {
+        toast.error("Defina uma senha com pelo menos 6 caracteres");
         setSaving(false);
         return;
       }
@@ -194,43 +197,36 @@ export default function UserManagement() {
         body: {
           name: formName,
           email: formEmail,
-          password: formPassword || undefined,
+          password: formPassword,
           tenant_id: tenant.id,
           plan: tenant.plan,
           is_member: true,
         },
       });
 
-      if (error) {
-        toast.error("Erro ao criar usuário", { description: error.message });
+      // Check for errors - the edge function may return error in body even with 200
+      const errorMsg = error?.message || data?.error;
+      if (errorMsg) {
+        if (errorMsg.includes("already been registered") || errorMsg.includes("email_exists")) {
+          toast.error("E-mail já cadastrado", {
+            description: "Já existe um usuário com este e-mail. Tente outro endereço.",
+          });
+        } else {
+          toast.error("Erro ao criar usuário", { description: errorMsg });
+        }
         setSaving(false);
         return;
       }
 
       const newUserId = data?.user_id;
       if (newUserId) {
-        // Add to tenant_members if not already
-        await supabase.from("tenant_members").upsert({
-          tenant_id: tenant.id,
-          user_id: newUserId,
-          is_active: true,
-        }, { onConflict: "tenant_id,user_id" }).select();
-
-        // Set role as operator
-        await supabase.from("user_roles").upsert({
-          user_id: newUserId,
-          tenant_id: tenant.id,
-          role: "operator" as any,
-        }, { onConflict: "user_id,tenant_id" }).select();
-
-        // Set permissions
         await supabase.from("user_permissions").upsert({
           user_id: newUserId,
           tenant_id: tenant.id,
           ...formPermissions,
         }, { onConflict: "user_id,tenant_id" });
 
-        toast.success("Usuário criado!", { description: `Credenciais enviadas para ${formEmail}` });
+        toast.success("Usuário criado com sucesso!");
       } else {
         toast.error("Erro ao provisionar usuário");
       }
@@ -254,18 +250,14 @@ export default function UserManagement() {
 
   const handleDelete = async () => {
     if (!deleteTarget || !tenant) return;
-    // Remove from tenant_members
     await supabase.from("tenant_members").delete().eq("id", deleteTarget.id);
-    // Remove role
     await supabase.from("user_roles").delete().eq("user_id", deleteTarget.user_id).eq("tenant_id", tenant.id);
-    // Remove permissions
     await supabase.from("user_permissions").delete().eq("user_id", deleteTarget.user_id).eq("tenant_id", tenant.id);
     toast.success("Usuário removido");
     setDeleteTarget(null);
     fetchMembers();
   };
 
-  const isCurrentUser = (memberId: string) => memberId === user?.id;
   const isAdmin = (member: MemberRow) => member.user_roles?.some((r) => r.role === "admin");
   const paginated = nonAdminMembers.slice((page - 1) * pageSize, page * pageSize);
 
@@ -320,7 +312,7 @@ export default function UserManagement() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {members.filter(m => isCurrentUser(m.user_id) || isAdmin(m)).map((m) => (
+            {members.filter(m => isAdmin(m)).map((m) => (
               <div key={m.id} className="flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
                   {(m.profiles?.full_name || "A").charAt(0).toUpperCase()}
@@ -455,8 +447,8 @@ export default function UserManagement() {
                   <Input type="email" value={formEmail} onChange={(e) => setFormEmail(e.target.value)} placeholder="usuario@email.com" required />
                 </div>
                 <div className="space-y-2">
-                  <Label>Senha (opcional)</Label>
-                  <Input type="password" value={formPassword} onChange={(e) => setFormPassword(e.target.value)} placeholder="Deixe vazio para gerar automaticamente" />
+                  <Label>Senha</Label>
+                  <Input type="password" value={formPassword} onChange={(e) => setFormPassword(e.target.value)} placeholder="Mínimo 6 caracteres" required />
                 </div>
               </>
             )}
