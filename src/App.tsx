@@ -59,6 +59,7 @@ const App = () => (
               <Route path="/reports" element={<ProtectedRoute><ActivationGate><TenantGate><Reports /></TenantGate></ActivationGate></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><ActivationGate><TenantGate><SettingsPage /></TenantGate></ActivationGate></ProtectedRoute>} />
               <Route path="/subscription" element={<ProtectedRoute><ActivationGate><TenantGate><SubscriptionPage /></TenantGate></ActivationGate></ProtectedRoute>} />
+              <Route path="/users" element={<ProtectedRoute><ActivationGate><TenantGate><UserManagement /></TenantGate></ActivationGate></ProtectedRoute>} />
 
               {/* Admin routes */}
               <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>

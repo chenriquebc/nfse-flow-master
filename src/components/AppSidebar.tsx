@@ -28,6 +28,7 @@ const navItems = [
   { label: "Empresas", href: "/companies", icon: Building2 },
   { label: "Certificados", href: "/certificates", icon: ShieldCheck },
   { label: "Relatórios", href: "/reports", icon: Receipt },
+  { label: "Usuários", href: "/users", icon: Users },
   { label: "Assinatura", href: "/subscription", icon: CreditCard },
   { label: "Configurações", href: "/settings", icon: Settings },
 ];
