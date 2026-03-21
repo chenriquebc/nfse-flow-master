@@ -373,7 +373,7 @@ export default function Invoices() {
                                 Emitir
                               </Button>
                             )}
-                            {(inv.status === "rejected" || inv.status === "error") && (
+                            {(inv.status === "rejected" || inv.status === "error") && canEmit && (
                               <Button
                                 size="icon"
                                 variant="default"
