@@ -354,7 +354,7 @@ export default function Invoices() {
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
                             {/* Primary action button */}
-                            {inv.status === "draft" && (
+                            {inv.status === "draft" && canEmit && (
                               <Button
                                 size="sm"
                                 variant="default"
