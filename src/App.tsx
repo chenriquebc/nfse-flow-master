@@ -8,6 +8,7 @@ import { TenantProvider } from "@/contexts/TenantContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import TenantGate from "@/components/TenantGate";
 import ActivationGate from "@/components/ActivationGate";
+import PermissionGate from "@/components/PermissionGate";
 import AdminRoute from "@/components/AdminRoute";
 import Auth from "@/pages/Auth";
 import Activate from "@/pages/Activate";
