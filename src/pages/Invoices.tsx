@@ -320,7 +320,7 @@ export default function Invoices() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filtered.map((inv) => (
+                    {paginated.map((inv) => (
                       <TableRow key={inv.id} className="hover:bg-muted/50">
                         <TableCell className="font-mono text-sm">
                           {inv.invoice_number || inv.rps_number || "—"}
