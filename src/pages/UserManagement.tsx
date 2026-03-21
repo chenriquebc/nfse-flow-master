@@ -16,6 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { Users, Plus, Pencil, Trash2, AlertTriangle, Crown } from "lucide-react";
 import { toast } from "sonner";
 import TablePagination from "@/components/TablePagination";
+import { useSubscription } from "@/hooks/useSubscription";
 
 interface MemberRow {
   id: string;
@@ -51,6 +52,7 @@ const PERMISSION_LABELS: { key: string; label: string }[] = [
 export default function UserManagement() {
   const { tenant } = useTenant();
   const { user } = useAuth();
+  const { plan: subscriptionPlan, loading: subLoading } = useSubscription();
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -72,7 +74,7 @@ export default function UserManagement() {
     can_view_reports: false,
   });
 
-  const plan = tenant?.plan || "basic";
+  const plan = subscriptionPlan || "basic";
   const maxUsers = PLAN_USER_LIMITS[plan] ?? 0;
   const nonAdminMembers = members.filter(
     (m) => m.user_id !== user?.id

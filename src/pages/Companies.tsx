@@ -24,9 +24,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, Building2, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, Building2, Pencil, Trash2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import TablePagination from "@/components/TablePagination";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Company {
   id: string;
@@ -63,6 +64,20 @@ export default function Companies() {
   useEffect(() => {
     fetchCompanies();
   }, [tenant]);
+
+  const toggleEnvironment = async (company: Company) => {
+    const newEnv = company.environment === 1 ? 2 : 1;
+    const { error } = await supabase
+      .from("companies")
+      .update({ environment: newEnv })
+      .eq("id", company.id);
+    if (error) {
+      toast.error("Erro ao alterar ambiente", { description: error.message });
+    } else {
+      toast.success(`Ambiente alterado para ${newEnv === 1 ? "Produção" : "Homologação"}`);
+      fetchCompanies();
+    }
+  };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -180,6 +195,23 @@ export default function Companies() {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1">
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      onClick={() => toggleEnvironment(c)}
+                                    >
+                                      <RefreshCw className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    Alternar para {c.environment === 1 ? "Homologação" : "Produção"}
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                               <Link to={`/companies/${c.id}`}>
                                 <Button variant="ghost" size="icon" className="h-8 w-8">
                                   <Pencil className="h-4 w-4" />
