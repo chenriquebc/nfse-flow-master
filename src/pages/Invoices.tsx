@@ -306,6 +306,7 @@ export default function Invoices() {
                 </Link>
               </div>
             ) : (
+              <>
               <div className="rounded-lg border border-border overflow-x-auto">
                 <Table className="min-w-[740px]">
                   <TableHeader>
