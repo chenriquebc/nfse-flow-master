@@ -22,6 +22,7 @@ import Certificates from "@/pages/Certificates";
 import Reports from "@/pages/Reports";
 import SettingsPage from "@/pages/SettingsPage";
 import SubscriptionPage from "@/pages/SubscriptionPage";
+import UserManagement from "@/pages/UserManagement";
 import AdminLayout from "@/pages/admin/AdminLayout";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminAccounts from "@/pages/admin/AdminAccounts";
