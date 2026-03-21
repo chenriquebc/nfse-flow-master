@@ -63,7 +63,7 @@ serve(async (req) => {
       });
 
       if (authError) {
-        return new Response(JSON.stringify({ error: authError.message }), { status: 400, headers: corsHeaders });
+        return new Response(JSON.stringify({ error: authError.message }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
       const userId = authData.user.id;
@@ -95,7 +95,7 @@ serve(async (req) => {
     });
 
     if (authError) {
-      return new Response(JSON.stringify({ error: authError.message }), { status: 400, headers: corsHeaders });
+      return new Response(JSON.stringify({ error: authError.message }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const userId = authData.user.id;

@@ -15,6 +15,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useTenant } from "@/contexts/TenantContext";
 import { usePlatformAdmin } from "@/hooks/usePlatformAdmin";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,14 +23,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const navItems = [
+interface NavItem {
+  label: string;
+  href: string;
+  icon: any;
+  adminOnly?: boolean;
+  permission?: string;
+}
+
+const navItems: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Notas Fiscais", href: "/invoices", icon: FileText },
-  { label: "Empresas", href: "/companies", icon: Building2 },
-  { label: "Certificados", href: "/certificates", icon: ShieldCheck },
-  { label: "Relatórios", href: "/reports", icon: Receipt },
-  { label: "Usuários", href: "/users", icon: Users },
-  { label: "Assinatura", href: "/subscription", icon: CreditCard },
+  { label: "Empresas", href: "/companies", icon: Building2, permission: "can_manage_companies" },
+  { label: "Certificados", href: "/certificates", icon: ShieldCheck, permission: "can_manage_companies" },
+  { label: "Relatórios", href: "/reports", icon: Receipt, permission: "can_view_reports" },
+  { label: "Usuários", href: "/users", icon: Users, adminOnly: true },
+  { label: "Assinatura", href: "/subscription", icon: CreditCard, adminOnly: true },
   { label: "Configurações", href: "/settings", icon: Settings },
 ];
 
@@ -42,10 +51,17 @@ export default function AppSidebar({ onNavigate }: AppSidebarProps) {
   const { signOut, user } = useAuth();
   const { tenant, tenants, setCurrentTenant } = useTenant();
   const { isAdmin } = usePlatformAdmin();
+  const { permissions } = useUserPermissions();
 
   const handleNav = () => {
     onNavigate?.();
   };
+
+  const visibleItems = navItems.filter((item) => {
+    if (item.adminOnly && !permissions.isAdmin) return false;
+    if (item.permission && !permissions.isAdmin && !(permissions as any)[item.permission]) return false;
+    return true;
+  });
 
   return (
     <div className="flex h-full w-full flex-col bg-sidebar"
@@ -83,7 +99,7 @@ export default function AppSidebar({ onNavigate }: AppSidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        {navItems.map((item) => {
+        {visibleItems.map((item) => {
           const isActive = location.pathname === item.href || location.pathname.startsWith(item.href + "/");
           return (
             <Link
