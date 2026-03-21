@@ -104,6 +104,8 @@ export default function Invoices() {
   const [events, setEvents] = useState<InvoiceEvent[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const fetchEvents = async (invoiceId: string) => {
     setLoadingEvents(true);
