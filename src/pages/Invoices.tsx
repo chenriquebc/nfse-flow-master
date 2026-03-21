@@ -88,6 +88,10 @@ const EVENT_TYPE_CONFIG: Record<string, { label: string; icon: typeof Info; colo
 
 export default function Invoices() {
   const { tenant } = useTenant();
+  const { permissions } = useUserPermissions();
+  const canEmit = permissions.isAdmin || permissions.can_emit_invoices;
+  const canCancel = permissions.isAdmin || permissions.can_cancel_invoices;
+  const navigate = useNavigate();
   const navigate = useNavigate();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [search, setSearch] = useState("");
