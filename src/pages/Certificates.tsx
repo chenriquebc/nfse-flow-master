@@ -426,7 +426,7 @@ export default function Certificates() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {certificates.map((cert) => (
+                    {certificates.slice((page - 1) * pageSize, page * pageSize).map((cert) => (
                       <TableRow key={cert.id}>
                         <TableCell className="font-medium">
                           {cert.companies?.legal_name || "—"}
@@ -470,8 +470,13 @@ export default function Certificates() {
                   </TableBody>
                 </Table>
               </div>
-            )}
-          </CardContent>
+              <TablePagination
+                total={certificates.length}
+                page={page}
+                pageSize={pageSize}
+                onPageChange={setPage}
+                onPageSizeChange={setPageSize}
+              />
         </Card>
       </div>
     </AppLayout>
