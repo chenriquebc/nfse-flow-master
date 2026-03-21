@@ -30,19 +30,42 @@ const NO_PERMISSIONS: UserPermissions = {
   can_view_reports: false,
 };
 
+const permissionsCache = new Map<string, UserPermissions>();
+
+const getCacheKey = (userId?: string, tenantId?: string) => {
+  if (!userId || !tenantId) return null;
+  return `${userId}:${tenantId}`;
+};
+
 export function useUserPermissions() {
   const { user } = useAuth();
   const { tenant } = useTenant();
-  const [permissions, setPermissions] = useState<UserPermissions>(NO_PERMISSIONS);
-  const [loading, setLoading] = useState(true);
+
+  const initialCacheKey = getCacheKey(user?.id, tenant?.id);
+  const initialCachedPermissions = initialCacheKey ? permissionsCache.get(initialCacheKey) : undefined;
+
+  const [permissions, setPermissions] = useState<UserPermissions>(initialCachedPermissions ?? NO_PERMISSIONS);
+  const [loading, setLoading] = useState(!initialCachedPermissions);
 
   useEffect(() => {
     if (!user || !tenant) {
+      setPermissions(NO_PERMISSIONS);
       setLoading(false);
       return;
     }
 
-    // Don't reset permissions while refetching — keep previous values visible
+    const cacheKey = getCacheKey(user.id, tenant.id)!;
+    const cached = permissionsCache.get(cacheKey);
+
+    if (cached) {
+      setPermissions(cached);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+
+    let active = true;
+
     const fetchPermissions = async () => {
       const { data: roleData } = await supabase
         .from("user_roles")
@@ -51,31 +74,40 @@ export function useUserPermissions() {
         .eq("tenant_id", tenant.id)
         .maybeSingle();
 
+      let nextPermissions: UserPermissions;
+
       if (roleData?.role === "admin") {
-        setPermissions(FULL_PERMISSIONS);
-        setLoading(false);
-        return;
+        nextPermissions = FULL_PERMISSIONS;
+      } else {
+        const { data: permData } = await supabase
+          .from("user_permissions")
+          .select("can_view, can_emit_invoices, can_cancel_invoices, can_manage_companies, can_view_reports")
+          .eq("user_id", user.id)
+          .eq("tenant_id", tenant.id)
+          .maybeSingle();
+
+        nextPermissions = {
+          isAdmin: false,
+          can_view: permData?.can_view ?? true,
+          can_emit_invoices: permData?.can_emit_invoices ?? false,
+          can_cancel_invoices: permData?.can_cancel_invoices ?? false,
+          can_manage_companies: permData?.can_manage_companies ?? false,
+          can_view_reports: permData?.can_view_reports ?? false,
+        };
       }
 
-      const { data: permData } = await supabase
-        .from("user_permissions")
-        .select("can_view, can_emit_invoices, can_cancel_invoices, can_manage_companies, can_view_reports")
-        .eq("user_id", user.id)
-        .eq("tenant_id", tenant.id)
-        .maybeSingle();
+      permissionsCache.set(cacheKey, nextPermissions);
 
-      setPermissions({
-        isAdmin: false,
-        can_view: permData?.can_view ?? true,
-        can_emit_invoices: permData?.can_emit_invoices ?? false,
-        can_cancel_invoices: permData?.can_cancel_invoices ?? false,
-        can_manage_companies: permData?.can_manage_companies ?? false,
-        can_view_reports: permData?.can_view_reports ?? false,
-      });
+      if (!active) return;
+      setPermissions(nextPermissions);
       setLoading(false);
     };
 
     fetchPermissions();
+
+    return () => {
+      active = false;
+    };
   }, [user?.id, tenant?.id]);
 
   return { permissions, loading };
