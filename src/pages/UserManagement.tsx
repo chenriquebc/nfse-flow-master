@@ -83,12 +83,31 @@ export default function UserManagement() {
 
   const fetchMembers = async () => {
     if (!tenant) return;
-    const { data } = await supabase
+    const { data: membersData } = await supabase
       .from("tenant_members")
-      .select("*, profiles!inner(full_name, email), user_roles(role), user_permissions(can_view, can_emit_invoices, can_cancel_invoices, can_manage_companies, can_view_reports)")
+      .select("*, user_roles(role), user_permissions(can_view, can_emit_invoices, can_cancel_invoices, can_manage_companies, can_view_reports)")
       .eq("tenant_id", tenant.id)
       .order("created_at");
-    setMembers((data as unknown as MemberRow[]) || []);
+
+    if (!membersData || membersData.length === 0) {
+      setMembers([]);
+      setLoading(false);
+      return;
+    }
+
+    const userIds = membersData.map((m: any) => m.user_id);
+    const { data: profilesData } = await supabase
+      .from("profiles")
+      .select("user_id, full_name, email")
+      .in("user_id", userIds);
+
+    const profileMap = new Map((profilesData || []).map((p: any) => [p.user_id, p]));
+    const merged = membersData.map((m: any) => ({
+      ...m,
+      profiles: profileMap.get(m.user_id) || null,
+    }));
+
+    setMembers(merged as unknown as MemberRow[]);
     setLoading(false);
   };
 
