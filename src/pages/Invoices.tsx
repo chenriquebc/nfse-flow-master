@@ -259,12 +259,14 @@ export default function Invoices() {
               <Download className="mr-2 h-4 w-4" />
               Exportar
             </Button>
-            <Link to="/invoices/new">
-              <Button size="sm">
-                <Plus className="mr-2 h-4 w-4" />
-                Nova Nota
-              </Button>
-            </Link>
+            {canEmit && (
+              <Link to="/invoices/new">
+                <Button size="sm">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nova Nota
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
 
