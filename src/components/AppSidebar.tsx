@@ -10,6 +10,7 @@ import {
   Receipt,
   Shield,
   CreditCard,
+  Users,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTenant } from "@/contexts/TenantContext";
