@@ -42,8 +42,8 @@ export function useUserPermissions() {
       return;
     }
 
+    // Don't reset permissions while refetching — keep previous values visible
     const fetchPermissions = async () => {
-      // Check if user is admin for this tenant
       const { data: roleData } = await supabase
         .from("user_roles")
         .select("role")
@@ -57,7 +57,6 @@ export function useUserPermissions() {
         return;
       }
 
-      // Not admin, check specific permissions
       const { data: permData } = await supabase
         .from("user_permissions")
         .select("can_view, can_emit_invoices, can_cancel_invoices, can_manage_companies, can_view_reports")
@@ -77,7 +76,7 @@ export function useUserPermissions() {
     };
 
     fetchPermissions();
-  }, [user, tenant]);
+  }, [user?.id, tenant?.id]);
 
   return { permissions, loading };
 }
