@@ -36,6 +36,8 @@ export default function InvoiceForm() {
   const isEditing = Boolean(id);
   const { tenant } = useTenant();
   const { user } = useAuth();
+  const { permissions } = useUserPermissions();
+  const canEmit = permissions.isAdmin || permissions.can_emit_invoices;
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingInvoice, setLoadingInvoice] = useState(false);
