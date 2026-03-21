@@ -65,6 +65,20 @@ export default function Companies() {
     fetchCompanies();
   }, [tenant]);
 
+  const toggleEnvironment = async (company: Company) => {
+    const newEnv = company.environment === 1 ? 2 : 1;
+    const { error } = await supabase
+      .from("companies")
+      .update({ environment: newEnv })
+      .eq("id", company.id);
+    if (error) {
+      toast.error("Erro ao alterar ambiente", { description: error.message });
+    } else {
+      toast.success(`Ambiente alterado para ${newEnv === 1 ? "Produção" : "Homologação"}`);
+      fetchCompanies();
+    }
+  };
+
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
