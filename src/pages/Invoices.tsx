@@ -444,7 +444,7 @@ export default function Invoices() {
                                     Substituir
                                   </DropdownMenuItem>
                                 )}
-                                {inv.status === "authorized" && (
+                                {inv.status === "authorized" && canCancel && (
                                   <>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem
