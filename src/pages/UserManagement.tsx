@@ -84,9 +84,11 @@ export default function UserManagement() {
   const fetchMembers = async () => {
     if (!tenant) return;
     setLoading(true);
+
+    // Fetch tenant members (no joins - no FK relationships exist)
     const { data: membersData } = await supabase
       .from("tenant_members")
-      .select("*, user_roles(role), user_permissions(can_view, can_emit_invoices, can_cancel_invoices, can_manage_companies, can_view_reports)")
+      .select("*")
       .eq("tenant_id", tenant.id)
       .order("created_at");
 
@@ -97,15 +99,28 @@ export default function UserManagement() {
     }
 
     const userIds = membersData.map((m: any) => m.user_id);
-    const { data: profilesData } = await supabase
-      .from("profiles")
-      .select("user_id, full_name, email")
-      .in("user_id", userIds);
 
-    const profileMap = new Map((profilesData || []).map((p: any) => [p.user_id, p]));
+    // Fetch profiles, roles, and permissions in parallel
+    const [profilesRes, rolesRes, permsRes] = await Promise.all([
+      supabase.from("profiles").select("user_id, full_name, email").in("user_id", userIds),
+      supabase.from("user_roles").select("user_id, role").eq("tenant_id", tenant.id).in("user_id", userIds),
+      supabase.from("user_permissions").select("user_id, can_view, can_emit_invoices, can_cancel_invoices, can_manage_companies, can_view_reports").eq("tenant_id", tenant.id).in("user_id", userIds),
+    ]);
+
+    const profileMap = new Map((profilesRes.data || []).map((p: any) => [p.user_id, p]));
+    const rolesMap = new Map<string, { role: string }[]>();
+    (rolesRes.data || []).forEach((r: any) => {
+      const arr = rolesMap.get(r.user_id) || [];
+      arr.push({ role: r.role });
+      rolesMap.set(r.user_id, arr);
+    });
+    const permsMap = new Map((permsRes.data || []).map((p: any) => [p.user_id, p]));
+
     const merged = membersData.map((m: any) => ({
       ...m,
       profiles: profileMap.get(m.user_id) || null,
+      user_roles: rolesMap.get(m.user_id) || null,
+      user_permissions: permsMap.has(m.user_id) ? [permsMap.get(m.user_id)] : null,
     }));
 
     setMembers(merged as unknown as MemberRow[]);
