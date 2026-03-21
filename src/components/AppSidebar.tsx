@@ -51,17 +51,19 @@ export default function AppSidebar({ onNavigate }: AppSidebarProps) {
   const { signOut, user } = useAuth();
   const { tenant, tenants, setCurrentTenant } = useTenant();
   const { isAdmin } = usePlatformAdmin();
-  const { permissions } = useUserPermissions();
+  const { permissions, loading: permissionsLoading } = useUserPermissions();
 
   const handleNav = () => {
     onNavigate?.();
   };
 
-  const visibleItems = navItems.filter((item) => {
-    if (item.adminOnly && !permissions.isAdmin) return false;
-    if (item.permission && !permissions.isAdmin && !(permissions as any)[item.permission]) return false;
-    return true;
-  });
+  const visibleItems = permissionsLoading
+    ? navItems.filter((item) => !item.adminOnly && !item.permission)
+    : navItems.filter((item) => {
+        if (item.adminOnly && !permissions.isAdmin) return false;
+        if (item.permission && !permissions.isAdmin && !(permissions as any)[item.permission]) return false;
+        return true;
+      });
 
   return (
     <div className="flex h-full w-full flex-col bg-sidebar"
