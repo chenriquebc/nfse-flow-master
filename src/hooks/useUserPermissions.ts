@@ -21,10 +21,19 @@ const FULL_PERMISSIONS: UserPermissions = {
   can_view_reports: true,
 };
 
+const NO_PERMISSIONS: UserPermissions = {
+  isAdmin: false,
+  can_view: false,
+  can_emit_invoices: false,
+  can_cancel_invoices: false,
+  can_manage_companies: false,
+  can_view_reports: false,
+};
+
 export function useUserPermissions() {
   const { user } = useAuth();
   const { tenant } = useTenant();
-  const [permissions, setPermissions] = useState<UserPermissions>(FULL_PERMISSIONS);
+  const [permissions, setPermissions] = useState<UserPermissions>(NO_PERMISSIONS);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

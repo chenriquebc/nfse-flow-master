@@ -8,6 +8,7 @@ import { TenantProvider } from "@/contexts/TenantContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import TenantGate from "@/components/TenantGate";
 import ActivationGate from "@/components/ActivationGate";
+import PermissionGate from "@/components/PermissionGate";
 import AdminRoute from "@/components/AdminRoute";
 import Auth from "@/pages/Auth";
 import Activate from "@/pages/Activate";
@@ -49,17 +50,17 @@ const App = () => (
               <Route path="/activate" element={<ProtectedRoute><Activate /></ProtectedRoute>} />
               <Route path="/onboarding" element={<ProtectedRoute><ActivationGate><Onboarding /></ActivationGate></ProtectedRoute>} />
               <Route path="/dashboard" element={<ProtectedRoute><ActivationGate><TenantGate><Dashboard /></TenantGate></ActivationGate></ProtectedRoute>} />
-              <Route path="/companies" element={<ProtectedRoute><ActivationGate><TenantGate><Companies /></TenantGate></ActivationGate></ProtectedRoute>} />
-              <Route path="/companies/new" element={<ProtectedRoute><ActivationGate><TenantGate><CompanyForm /></TenantGate></ActivationGate></ProtectedRoute>} />
-              <Route path="/companies/:id" element={<ProtectedRoute><ActivationGate><TenantGate><CompanyForm /></TenantGate></ActivationGate></ProtectedRoute>} />
+              <Route path="/companies" element={<ProtectedRoute><ActivationGate><TenantGate><PermissionGate permission="can_manage_companies"><Companies /></PermissionGate></TenantGate></ActivationGate></ProtectedRoute>} />
+              <Route path="/companies/new" element={<ProtectedRoute><ActivationGate><TenantGate><PermissionGate permission="can_manage_companies"><CompanyForm /></PermissionGate></TenantGate></ActivationGate></ProtectedRoute>} />
+              <Route path="/companies/:id" element={<ProtectedRoute><ActivationGate><TenantGate><PermissionGate permission="can_manage_companies"><CompanyForm /></PermissionGate></TenantGate></ActivationGate></ProtectedRoute>} />
               <Route path="/invoices" element={<ProtectedRoute><ActivationGate><TenantGate><Invoices /></TenantGate></ActivationGate></ProtectedRoute>} />
               <Route path="/invoices/new" element={<ProtectedRoute><ActivationGate><TenantGate><InvoiceForm /></TenantGate></ActivationGate></ProtectedRoute>} />
               <Route path="/invoices/:id" element={<ProtectedRoute><ActivationGate><TenantGate><InvoiceForm /></TenantGate></ActivationGate></ProtectedRoute>} />
-              <Route path="/certificates" element={<ProtectedRoute><ActivationGate><TenantGate><Certificates /></TenantGate></ActivationGate></ProtectedRoute>} />
-              <Route path="/reports" element={<ProtectedRoute><ActivationGate><TenantGate><Reports /></TenantGate></ActivationGate></ProtectedRoute>} />
+              <Route path="/certificates" element={<ProtectedRoute><ActivationGate><TenantGate><PermissionGate permission="can_manage_companies"><Certificates /></PermissionGate></TenantGate></ActivationGate></ProtectedRoute>} />
+              <Route path="/reports" element={<ProtectedRoute><ActivationGate><TenantGate><PermissionGate permission="can_view_reports"><Reports /></PermissionGate></TenantGate></ActivationGate></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><ActivationGate><TenantGate><SettingsPage /></TenantGate></ActivationGate></ProtectedRoute>} />
-              <Route path="/subscription" element={<ProtectedRoute><ActivationGate><TenantGate><SubscriptionPage /></TenantGate></ActivationGate></ProtectedRoute>} />
-              <Route path="/users" element={<ProtectedRoute><ActivationGate><TenantGate><UserManagement /></TenantGate></ActivationGate></ProtectedRoute>} />
+              <Route path="/subscription" element={<ProtectedRoute><ActivationGate><TenantGate><PermissionGate adminOnly><SubscriptionPage /></PermissionGate></TenantGate></ActivationGate></ProtectedRoute>} />
+              <Route path="/users" element={<ProtectedRoute><ActivationGate><TenantGate><PermissionGate adminOnly><UserManagement /></PermissionGate></TenantGate></ActivationGate></ProtectedRoute>} />
 
               {/* Admin routes */}
               <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
