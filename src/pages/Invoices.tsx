@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import StatusBadge from "@/components/StatusBadge";
+import TablePagination from "@/components/TablePagination";
 import { useTenant } from "@/contexts/TenantContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -103,6 +104,8 @@ export default function Invoices() {
   const [events, setEvents] = useState<InvoiceEvent[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const fetchEvents = async (invoiceId: string) => {
     setLoadingEvents(true);
@@ -233,6 +236,8 @@ export default function Invoices() {
       i.taker_document.includes(search)
   );
 
+  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
+
   const formatCurrency = (v: number) =>
     v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -266,7 +271,7 @@ export default function Invoices() {
                 <Input
                   placeholder="Buscar por tomador ou CPF/CNPJ..."
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                   className="pl-9"
                 />
               </div>
@@ -301,6 +306,7 @@ export default function Invoices() {
                 </Link>
               </div>
             ) : (
+              <>
               <div className="rounded-lg border border-border overflow-x-auto">
                 <Table className="min-w-[740px]">
                   <TableHeader>
@@ -315,7 +321,7 @@ export default function Invoices() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filtered.map((inv) => (
+                    {paginated.map((inv) => (
                       <TableRow key={inv.id} className="hover:bg-muted/50">
                         <TableCell className="font-mono text-sm">
                           {inv.invoice_number || inv.rps_number || "—"}
@@ -398,7 +404,38 @@ export default function Invoices() {
                                   Visualizar
                                 </DropdownMenuItem>
                                 {inv.status === "authorized" && (
-                                  <DropdownMenuItem onClick={() => toast.info("Funcionalidade em desenvolvimento")}>
+                                  <DropdownMenuItem onClick={async () => {
+                                    // Substitute: cancel old note, create new editable one
+                                    const confirmed = window.confirm("Deseja substituir esta nota? A nota atual será cancelada e uma nova será criada com os mesmos dados para edição.");
+                                    if (!confirmed) return;
+                                    // Cancel original
+                                    try {
+                                      await supabase.functions.invoke("query-nfse", {
+                                        body: { action: "cancel", invoice_id: inv.id, reason: "Substituição de NFS-e" },
+                                      });
+                                    } catch { /* continue even if cancel fails */ }
+                                    // Create new invoice as draft with same data
+                                    const { data: original } = await supabase
+                                      .from("nfse_invoices")
+                                      .select("*")
+                                      .eq("id", inv.id)
+                                      .single();
+                                    if (original) {
+                                      const { id: _id, invoice_number: _in, rps_number: _rn, status: _s, protocol_number: _p, batch_number: _b, verification_code: _v, xml_rps: _xr, xml_signed: _xs, xml_response: _xresp, xml_authorized: _xa, danfse_path: _dp, issued_at: _ia, created_at: _ca, updated_at: _ua, metadata: _m, ...rest } = original as any;
+                                      const { data: newInv } = await supabase
+                                        .from("nfse_invoices")
+                                        .insert({ ...rest, status: "draft" as any, replaced_invoice_id: inv.id })
+                                        .select("id")
+                                        .single();
+                                      if (newInv) {
+                                        toast.success("Nova nota criada para edição");
+                                        navigate(`/invoices/${newInv.id}`);
+                                        return;
+                                      }
+                                    }
+                                    toast.error("Erro ao criar nota substituta");
+                                    await fetchInvoices();
+                                  }}>
                                     <ArrowUpDown className="h-4 w-4 mr-2" />
                                     Substituir
                                   </DropdownMenuItem>
@@ -417,22 +454,68 @@ export default function Invoices() {
                                   </>
                                 )}
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => {
-                                  if (inv.status === "authorized") {
-                                    // Download XML autorizado
-                                    toast.info("Download XML em desenvolvimento");
-                                  } else {
-                                    toast.info("XML disponível apenas para notas autorizadas");
+                                <DropdownMenuItem onClick={async () => {
+                                  if (inv.status !== "authorized" && inv.status !== "cancelled") {
+                                    toast.info("XML disponível apenas para notas autorizadas ou canceladas");
+                                    return;
                                   }
+                                  // Fetch full invoice data for XML
+                                  const { data: full } = await supabase
+                                    .from("nfse_invoices")
+                                    .select("xml_authorized, xml_signed, xml_rps")
+                                    .eq("id", inv.id)
+                                    .single();
+                                  const xml = full?.xml_authorized || full?.xml_signed || full?.xml_rps;
+                                  if (!xml) {
+                                    toast.error("XML não disponível para esta nota");
+                                    return;
+                                  }
+                                  const blob = new Blob([xml], { type: "application/xml" });
+                                  const url = URL.createObjectURL(blob);
+                                  const a = document.createElement("a");
+                                  a.href = url;
+                                  a.download = `nfse_${inv.invoice_number || inv.rps_number || inv.id}.xml`;
+                                  a.click();
+                                  URL.revokeObjectURL(url);
                                 }}>
                                   <Code className="h-4 w-4 mr-2" />
                                   Download XML
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => {
-                                  if (inv.status === "authorized") {
-                                    toast.info("Download DANFS-e em desenvolvimento");
-                                  } else {
+                                <DropdownMenuItem onClick={async () => {
+                                  if (inv.status !== "authorized" && inv.status !== "cancelled") {
                                     toast.info("DANFS-e disponível apenas para notas autorizadas");
+                                    return;
+                                  }
+                                  // Check if danfse_path exists
+                                  const { data: full } = await supabase
+                                    .from("nfse_invoices")
+                                    .select("danfse_path, xml_authorized")
+                                    .eq("id", inv.id)
+                                    .single();
+                                  if (full?.danfse_path) {
+                                    const { data: fileData } = await supabase.storage.from("certificates").download(full.danfse_path);
+                                    if (fileData) {
+                                      const url = URL.createObjectURL(fileData);
+                                      const a = document.createElement("a");
+                                      a.href = url;
+                                      a.download = `danfse_${inv.invoice_number || inv.id}.pdf`;
+                                      a.click();
+                                      URL.revokeObjectURL(url);
+                                      return;
+                                    }
+                                  }
+                                  // Fallback: generate simple DANFS-e from XML
+                                  if (full?.xml_authorized) {
+                                    const blob = new Blob([full.xml_authorized], { type: "application/xml" });
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement("a");
+                                    a.href = url;
+                                    a.download = `danfse_${inv.invoice_number || inv.id}.xml`;
+                                    a.click();
+                                    URL.revokeObjectURL(url);
+                                    toast.info("DANFS-e em PDF não disponível, XML autorizado baixado como alternativa");
+                                  } else {
+                                    toast.error("DANFS-e não disponível para esta nota");
                                   }
                                 }}>
                                   <FileText className="h-4 w-4 mr-2" />
@@ -452,6 +535,14 @@ export default function Invoices() {
                   </TableBody>
                 </Table>
               </div>
+              <TablePagination
+                total={filtered.length}
+                page={page}
+                pageSize={pageSize}
+                onPageChange={setPage}
+                onPageSizeChange={setPageSize}
+              />
+            </>
             )}
           </CardContent>
         </Card>

@@ -157,7 +157,7 @@
   }
 
   .status-cancelled {
-    @apply bg-secondary text-secondary-foreground;
+    @apply bg-[hsl(var(--destructive)/0.1)] text-destructive;
   }
 }
 

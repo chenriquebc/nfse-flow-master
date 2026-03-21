@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import AppLayout from "@/components/AppLayout";
+import TablePagination from "@/components/TablePagination";
 import { fetchCnpj, resolveIbgeCode } from "@/lib/api/brasilapi";
 import { useTenant } from "@/contexts/TenantContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,6 +48,8 @@ export default function Certificates() {
   const [uploading, setUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const dragCounter = useRef(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const [password, setPassword] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -411,62 +414,71 @@ export default function Certificates() {
                 </Button>
               </div>
             ) : (
-              <div className="rounded-lg border border-border overflow-x-auto">
-                <Table className="min-w-[540px]">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Empresa</TableHead>
-                      <TableHead>Arquivo</TableHead>
-                      <TableHead>Validade</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="w-10" />
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {certificates.map((cert) => (
-                      <TableRow key={cert.id}>
-                        <TableCell className="font-medium">
-                          {cert.companies?.legal_name || "—"}
-                        </TableCell>
-                        <TableCell className="text-sm font-mono">{cert.file_name}</TableCell>
-                        <TableCell className="text-sm">
-                          {cert.valid_until
-                            ? new Date(cert.valid_until).toLocaleDateString("pt-BR")
-                            : "Não informado"}
-                        </TableCell>
-                        <TableCell>
-                          {isExpired(cert.valid_until) ? (
-                            <span className="status-badge status-rejected flex items-center gap-1">
-                              <AlertTriangle className="h-3 w-3" />
-                              Vencido
-                            </span>
-                          ) : isExpiringSoon(cert.valid_until) ? (
-                            <span className="status-badge status-processing flex items-center gap-1">
-                              <AlertTriangle className="h-3 w-3" />
-                              Vence em breve
-                            </span>
-                          ) : (
-                            <span className="status-badge status-authorized flex items-center gap-1">
-                              <CheckCircle2 className="h-3 w-3" />
-                              Válido
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                            onClick={() => handleDelete(cert.id, cert.file_name)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
+              <>
+                <div className="rounded-lg border border-border overflow-x-auto">
+                  <Table className="min-w-[540px]">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Empresa</TableHead>
+                        <TableHead>Arquivo</TableHead>
+                        <TableHead>Validade</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="w-10" />
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {certificates.slice((page - 1) * pageSize, page * pageSize).map((cert) => (
+                        <TableRow key={cert.id}>
+                          <TableCell className="font-medium">
+                            {cert.companies?.legal_name || "—"}
+                          </TableCell>
+                          <TableCell className="text-sm font-mono">{cert.file_name}</TableCell>
+                          <TableCell className="text-sm">
+                            {cert.valid_until
+                              ? new Date(cert.valid_until).toLocaleDateString("pt-BR")
+                              : "Não informado"}
+                          </TableCell>
+                          <TableCell>
+                            {isExpired(cert.valid_until) ? (
+                              <span className="status-badge status-rejected flex items-center gap-1">
+                                <AlertTriangle className="h-3 w-3" />
+                                Vencido
+                              </span>
+                            ) : isExpiringSoon(cert.valid_until) ? (
+                              <span className="status-badge status-processing flex items-center gap-1">
+                                <AlertTriangle className="h-3 w-3" />
+                                Vence em breve
+                              </span>
+                            ) : (
+                              <span className="status-badge status-authorized flex items-center gap-1">
+                                <CheckCircle2 className="h-3 w-3" />
+                                Válido
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:text-destructive"
+                              onClick={() => handleDelete(cert.id, cert.file_name)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                <TablePagination
+                  total={certificates.length}
+                  page={page}
+                  pageSize={pageSize}
+                  onPageChange={setPage}
+                  onPageSizeChange={setPageSize}
+                />
+              </>
             )}
           </CardContent>
         </Card>

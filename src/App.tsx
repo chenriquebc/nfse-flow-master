@@ -22,6 +22,7 @@ import Certificates from "@/pages/Certificates";
 import Reports from "@/pages/Reports";
 import SettingsPage from "@/pages/SettingsPage";
 import SubscriptionPage from "@/pages/SubscriptionPage";
+import UserManagement from "@/pages/UserManagement";
 import AdminLayout from "@/pages/admin/AdminLayout";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminAccounts from "@/pages/admin/AdminAccounts";
@@ -58,6 +59,7 @@ const App = () => (
               <Route path="/reports" element={<ProtectedRoute><ActivationGate><TenantGate><Reports /></TenantGate></ActivationGate></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><ActivationGate><TenantGate><SettingsPage /></TenantGate></ActivationGate></ProtectedRoute>} />
               <Route path="/subscription" element={<ProtectedRoute><ActivationGate><TenantGate><SubscriptionPage /></TenantGate></ActivationGate></ProtectedRoute>} />
+              <Route path="/users" element={<ProtectedRoute><ActivationGate><TenantGate><UserManagement /></TenantGate></ActivationGate></ProtectedRoute>} />
 
               {/* Admin routes */}
               <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>

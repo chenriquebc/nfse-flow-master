@@ -14,7 +14,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Search, Building2, Pencil } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Plus, Search, Building2, Pencil, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import TablePagination from "@/components/TablePagination";
 
 interface Company {
   id: string;
@@ -32,26 +44,59 @@ export default function Companies() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<Company | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const fetchCompanies = async () => {
+    if (!tenant) return;
+    const { data } = await supabase
+      .from("companies")
+      .select("*")
+      .eq("tenant_id", tenant.id)
+      .order("legal_name");
+    setCompanies((data as Company[]) || []);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    if (!tenant) return;
-    const fetch = async () => {
-      const { data } = await supabase
-        .from("companies")
-        .select("*")
-        .eq("tenant_id", tenant.id)
-        .order("legal_name");
-      setCompanies((data as Company[]) || []);
-      setLoading(false);
-    };
-    fetch();
+    fetchCompanies();
   }, [tenant]);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    // Delete certificates first
+    const { data: certs } = await supabase
+      .from("certificates")
+      .select("id, file_path")
+      .eq("company_id", deleteTarget.id);
+    if (certs && certs.length > 0) {
+      await supabase.storage.from("certificates").remove(certs.map((c) => c.file_path));
+      await supabase.from("certificates").delete().eq("company_id", deleteTarget.id);
+    }
+    // Delete invoices
+    await supabase.from("nfse_invoices").delete().eq("company_id", deleteTarget.id);
+    // Delete company
+    const { error } = await supabase.from("companies").delete().eq("id", deleteTarget.id);
+    if (error) {
+      toast.error("Erro ao excluir empresa", { description: error.message });
+    } else {
+      toast.success("Empresa excluída com sucesso!");
+      fetchCompanies();
+    }
+    setDeleteTarget(null);
+    setDeleting(false);
+  };
 
   const filtered = companies.filter(
     (c) =>
       c.legal_name.toLowerCase().includes(search.toLowerCase()) ||
       c.document.includes(search)
   );
+
+  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   return (
     <AppLayout>
@@ -77,7 +122,7 @@ export default function Companies() {
                 <Input
                   placeholder="Buscar por nome ou CNPJ..."
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                   className="pl-9"
                 />
               </div>
@@ -99,55 +144,93 @@ export default function Companies() {
                 </Link>
               </div>
             ) : (
-              <div className="rounded-lg border border-border overflow-x-auto">
-                <Table className="min-w-[640px]">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Razão Social</TableHead>
-                      <TableHead>CNPJ</TableHead>
-                      <TableHead>E-mail</TableHead>
-                      <TableHead>Ambiente</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="w-10" />
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filtered.map((c) => (
-                      <TableRow key={c.id}>
-                        <TableCell className="font-medium">
-                          {c.legal_name}
-                          {c.trade_name && (
-                            <span className="block text-xs text-muted-foreground">{c.trade_name}</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="font-mono text-sm">{c.document}</TableCell>
-                        <TableCell>{c.email || "—"}</TableCell>
-                        <TableCell>
-                          <span className={`status-badge ${c.environment === 1 ? "status-authorized" : "status-processing"}`}>
-                            {c.environment === 1 ? "Produção" : "Homologação"}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <span className={`status-badge ${c.is_active ? "status-authorized" : "status-cancelled"}`}>
-                            {c.is_active ? "Ativa" : "Inativa"}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <Link to={`/companies/${c.id}`}>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                          </Link>
-                        </TableCell>
+              <>
+                <div className="rounded-lg border border-border overflow-x-auto">
+                  <Table className="min-w-[640px]">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Razão Social</TableHead>
+                        <TableHead>CNPJ</TableHead>
+                        <TableHead>E-mail</TableHead>
+                        <TableHead>Ambiente</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="w-20" />
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {paginated.map((c) => (
+                        <TableRow key={c.id}>
+                          <TableCell className="font-medium">
+                            {c.legal_name}
+                            {c.trade_name && (
+                              <span className="block text-xs text-muted-foreground">{c.trade_name}</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="font-mono text-sm">{c.document}</TableCell>
+                          <TableCell>{c.email || "—"}</TableCell>
+                          <TableCell>
+                            <span className={`status-badge ${c.environment === 1 ? "status-authorized" : "status-processing"}`}>
+                              {c.environment === 1 ? "Produção" : "Homologação"}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <span className={`status-badge ${c.is_active ? "status-authorized" : "status-cancelled"}`}>
+                              {c.is_active ? "Ativa" : "Inativa"}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Link to={`/companies/${c.id}`}>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                              </Link>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive hover:text-destructive"
+                                onClick={() => setDeleteTarget(c)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                <TablePagination
+                  total={filtered.length}
+                  page={page}
+                  pageSize={pageSize}
+                  onPageChange={setPage}
+                  onPageSizeChange={setPageSize}
+                />
+              </>
             )}
           </CardContent>
         </Card>
       </div>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Empresa</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir <strong>{deleteTarget?.legal_name}</strong>?
+              Esta ação é irreversível e excluirá também todos os certificados digitais e notas fiscais associados a esta empresa.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deleting ? "Excluindo..." : "Excluir empresa"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }
