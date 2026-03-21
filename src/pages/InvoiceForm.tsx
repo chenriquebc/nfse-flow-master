@@ -452,7 +452,7 @@ export default function InvoiceForm() {
               totalDeductions={totalDeductions}
               netValue={netValue}
               formatCurrency={formatCurrency}
-              onEmit={handleSaveAndEmit}
+              onEmit={canEmit ? handleSaveAndEmit : undefined}
               emitting={emitting}
             />
           )}
