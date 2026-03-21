@@ -24,9 +24,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, Building2, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, Building2, Pencil, Trash2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import TablePagination from "@/components/TablePagination";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Company {
   id: string;
