@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { useTenant } from "@/contexts/TenantContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, Send } from "lucide-react";
@@ -35,6 +36,8 @@ export default function InvoiceForm() {
   const isEditing = Boolean(id);
   const { tenant } = useTenant();
   const { user } = useAuth();
+  const { permissions } = useUserPermissions();
+  const canEmit = permissions.isAdmin || permissions.can_emit_invoices;
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingInvoice, setLoadingInvoice] = useState(false);
@@ -449,7 +452,7 @@ export default function InvoiceForm() {
               totalDeductions={totalDeductions}
               netValue={netValue}
               formatCurrency={formatCurrency}
-              onEmit={handleSaveAndEmit}
+              onEmit={canEmit ? handleSaveAndEmit : undefined}
               emitting={emitting}
             />
           )}

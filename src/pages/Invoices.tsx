@@ -4,6 +4,7 @@ import AppLayout from "@/components/AppLayout";
 import StatusBadge from "@/components/StatusBadge";
 import TablePagination from "@/components/TablePagination";
 import { useTenant } from "@/contexts/TenantContext";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,6 +88,9 @@ const EVENT_TYPE_CONFIG: Record<string, { label: string; icon: typeof Info; colo
 
 export default function Invoices() {
   const { tenant } = useTenant();
+  const { permissions } = useUserPermissions();
+  const canEmit = permissions.isAdmin || permissions.can_emit_invoices;
+  const canCancel = permissions.isAdmin || permissions.can_cancel_invoices;
   const navigate = useNavigate();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [search, setSearch] = useState("");
@@ -254,12 +258,14 @@ export default function Invoices() {
               <Download className="mr-2 h-4 w-4" />
               Exportar
             </Button>
-            <Link to="/invoices/new">
-              <Button size="sm">
-                <Plus className="mr-2 h-4 w-4" />
-                Nova Nota
-              </Button>
-            </Link>
+            {canEmit && (
+              <Link to="/invoices/new">
+                <Button size="sm">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nova Nota
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
 
@@ -347,7 +353,7 @@ export default function Invoices() {
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
                             {/* Primary action button */}
-                            {inv.status === "draft" && (
+                            {inv.status === "draft" && canEmit && (
                               <Button
                                 size="sm"
                                 variant="default"
@@ -366,7 +372,7 @@ export default function Invoices() {
                                 Emitir
                               </Button>
                             )}
-                            {(inv.status === "rejected" || inv.status === "error") && (
+                            {(inv.status === "rejected" || inv.status === "error") && canEmit && (
                               <Button
                                 size="icon"
                                 variant="default"
@@ -403,18 +409,15 @@ export default function Invoices() {
                                   <Eye className="h-4 w-4 mr-2" />
                                   Visualizar
                                 </DropdownMenuItem>
-                                {inv.status === "authorized" && (
+                                {inv.status === "authorized" && canCancel && (
                                   <DropdownMenuItem onClick={async () => {
-                                    // Substitute: cancel old note, create new editable one
                                     const confirmed = window.confirm("Deseja substituir esta nota? A nota atual será cancelada e uma nova será criada com os mesmos dados para edição.");
                                     if (!confirmed) return;
-                                    // Cancel original
                                     try {
                                       await supabase.functions.invoke("query-nfse", {
                                         body: { action: "cancel", invoice_id: inv.id, reason: "Substituição de NFS-e" },
                                       });
                                     } catch { /* continue even if cancel fails */ }
-                                    // Create new invoice as draft with same data
                                     const { data: original } = await supabase
                                       .from("nfse_invoices")
                                       .select("*")
@@ -440,7 +443,7 @@ export default function Invoices() {
                                     Substituir
                                   </DropdownMenuItem>
                                 )}
-                                {inv.status === "authorized" && (
+                                {inv.status === "authorized" && canCancel && (
                                   <>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem
