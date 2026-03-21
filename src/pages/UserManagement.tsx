@@ -52,6 +52,7 @@ const PERMISSION_LABELS: { key: string; label: string }[] = [
 export default function UserManagement() {
   const { tenant } = useTenant();
   const { user } = useAuth();
+  const { plan: subscriptionPlan, loading: subLoading } = useSubscription();
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
