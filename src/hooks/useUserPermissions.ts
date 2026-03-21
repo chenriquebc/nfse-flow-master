@@ -33,7 +33,7 @@ const NO_PERMISSIONS: UserPermissions = {
 export function useUserPermissions() {
   const { user } = useAuth();
   const { tenant } = useTenant();
-  const [permissions, setPermissions] = useState<UserPermissions>(FULL_PERMISSIONS);
+  const [permissions, setPermissions] = useState<UserPermissions>(NO_PERMISSIONS);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
