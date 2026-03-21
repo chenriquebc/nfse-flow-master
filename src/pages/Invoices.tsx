@@ -410,18 +410,15 @@ export default function Invoices() {
                                   <Eye className="h-4 w-4 mr-2" />
                                   Visualizar
                                 </DropdownMenuItem>
-                                {inv.status === "authorized" && (
+                                {inv.status === "authorized" && canCancel && (
                                   <DropdownMenuItem onClick={async () => {
-                                    // Substitute: cancel old note, create new editable one
                                     const confirmed = window.confirm("Deseja substituir esta nota? A nota atual será cancelada e uma nova será criada com os mesmos dados para edição.");
                                     if (!confirmed) return;
-                                    // Cancel original
                                     try {
                                       await supabase.functions.invoke("query-nfse", {
                                         body: { action: "cancel", invoice_id: inv.id, reason: "Substituição de NFS-e" },
                                       });
                                     } catch { /* continue even if cancel fails */ }
-                                    // Create new invoice as draft with same data
                                     const { data: original } = await supabase
                                       .from("nfse_invoices")
                                       .select("*")
