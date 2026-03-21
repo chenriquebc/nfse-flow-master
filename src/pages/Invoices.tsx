@@ -236,6 +236,8 @@ export default function Invoices() {
       i.taker_document.includes(search)
   );
 
+  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
+
   const formatCurrency = (v: number) =>
     v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
