@@ -12,6 +12,7 @@ import {
   CreditCard,
   Users,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTenant } from "@/contexts/TenantContext";
 import { usePlatformAdmin } from "@/hooks/usePlatformAdmin";
@@ -146,8 +147,9 @@ export default function AppSidebar({ onNavigate }: AppSidebarProps) {
         )}
       </nav>
 
-      {/* User footer */}
-      <div className="border-t border-[hsl(225,18%,16%)] px-3 py-3">
+      {/* Theme + User footer */}
+      <div className="border-t border-[hsl(225,18%,16%)] px-3 py-3 space-y-1">
+        <ThemeToggle className="w-full text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50" />
         <div className="flex items-center gap-3 rounded-lg px-3 py-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-full bg-sidebar-accent text-[11px] font-semibold text-sidebar-foreground shrink-0">
             {user?.email?.charAt(0).toUpperCase() || "U"}
