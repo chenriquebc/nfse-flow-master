@@ -38,7 +38,7 @@ export default function Auth() {
   if (user) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -50,12 +50,9 @@ export default function Auth() {
       return;
     }
     setLoading(true);
-
     await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
-
-    // Always show same message for security
     setForgotSent(true);
     toast.success("E-mail enviado!", {
       description: "Se este e-mail estiver cadastrado, você receberá um link para redefinir sua senha.",
@@ -74,7 +71,6 @@ export default function Auth() {
         setLoading(false);
         return;
       }
-
       if (mode === "admin") {
         const { data: { user: loggedUser } } = await supabase.auth.getUser();
         if (loggedUser) {
@@ -107,35 +103,27 @@ export default function Auth() {
   if (mode === "forgot") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background p-4">
-        <div className="w-full max-w-md animate-fade-in">
+        <div className="w-full max-w-[380px] animate-fade-in">
           <div className="mb-8 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary shadow-lg">
-              <Mail className="h-7 w-7 text-primary-foreground" />
+            <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-primary shadow-sm">
+              <Mail className="h-5 w-5 text-primary-foreground" />
             </div>
-            <h1 className="text-2xl font-bold text-foreground">Recuperar senha</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <h1 className="text-xl font-bold text-foreground" style={{ letterSpacing: "-0.025em" }}>
+              Recuperar senha
+            </h1>
+            <p className="mt-1.5 text-sm text-muted-foreground">
               {forgotSent
                 ? "Verifique sua caixa de entrada"
-                : "Informe seu e-mail para receber o link de recuperação"}
+                : "Informe seu e-mail para receber o link"}
             </p>
           </div>
 
-          <Card className="border-border shadow-lg">
-            <CardHeader className="text-center pb-4">
-              <CardTitle className="text-xl">
-                {forgotSent ? "E-mail enviado" : "Esqueci minha senha"}
-              </CardTitle>
-              <CardDescription>
-                {forgotSent
-                  ? "Se este e-mail estiver cadastrado, você receberá um link para criar uma nova senha. Verifique também a pasta de spam."
-                  : "Digite o e-mail associado à sua conta"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+          <Card className="shadow-md border-border/80">
+            <CardContent className="pt-5">
               {!forgotSent ? (
                 <form onSubmit={handleForgotPassword} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">E-mail</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="email" className="text-[0.8125rem]">E-mail</Label>
                     <Input
                       id="email"
                       type="email"
@@ -151,8 +139,8 @@ export default function Auth() {
                 </form>
               ) : (
                 <div className="text-center space-y-4">
-                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-                    <Mail className="h-6 w-6 text-green-600" />
+                  <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-accent/10">
+                    <Mail className="h-5 w-5 text-accent" />
                   </div>
                   <p className="text-sm text-muted-foreground">
                     O link expira em 1 hora. Caso não receba, tente novamente.
@@ -167,10 +155,10 @@ export default function Auth() {
                 </div>
               )}
 
-              <div className="mt-6 text-center text-sm">
+              <div className="mt-5 text-center text-sm">
                 <button
                   onClick={() => { setMode("login"); setForgotSent(false); }}
-                  className="font-medium text-primary hover:underline"
+                  className="font-medium text-primary hover:underline text-[0.8125rem]"
                 >
                   ← Voltar ao login
                 </button>
@@ -184,19 +172,19 @@ export default function Auth() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md animate-fade-in">
+      <div className="w-full max-w-[380px] animate-fade-in">
         {/* Logo */}
         <div className="mb-8 text-center">
           {mode === "admin" ? (
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-destructive shadow-lg">
-              <Shield className="h-7 w-7 text-destructive-foreground" />
+            <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-destructive shadow-sm">
+              <Shield className="h-5 w-5 text-destructive-foreground" />
             </div>
           ) : (
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary shadow-lg">
-              <FileText className="h-7 w-7 text-primary-foreground" />
+            <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-primary shadow-sm">
+              <FileText className="h-5 w-5 text-primary-foreground" />
             </div>
           )}
-          <h1 className="text-2xl font-bold text-foreground">
+          <h1 className="text-xl font-bold text-foreground" style={{ letterSpacing: "-0.025em" }}>
             {mode === "admin" ? "Admin" : "NFS-e Pro"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -204,12 +192,12 @@ export default function Auth() {
           </p>
         </div>
 
-        <Card className={`border-border shadow-lg ${mode === "admin" ? "border-destructive/30" : ""}`}>
-          <CardHeader className="text-center pb-4">
-            <CardTitle className="text-xl">
+        <Card className={`shadow-md border-border/80 ${mode === "admin" ? "border-destructive/20" : ""}`}>
+          <CardHeader className="text-center pb-2 pt-5 px-5">
+            <CardTitle className="text-lg">
               {mode === "admin" ? "Acesso Admin" : mode === "login" ? "Entrar" : "Criar conta"}
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-[0.8125rem]">
               {mode === "admin"
                 ? "Entre com suas credenciais de administrador"
                 : mode === "login"
@@ -217,11 +205,11 @@ export default function Auth() {
                   : "Crie uma conta para começar a emitir notas"}
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+          <CardContent className="px-5 pb-5">
+            <form onSubmit={handleSubmit} className="space-y-3.5">
               {mode === "register" && (
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Nome completo</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="fullName" className="text-[0.8125rem]">Nome completo</Label>
                   <Input
                     id="fullName"
                     value={fullName}
@@ -231,8 +219,8 @@ export default function Auth() {
                   />
                 </div>
               )}
-              <div className="space-y-2">
-                <Label htmlFor="email">E-mail</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="email" className="text-[0.8125rem]">E-mail</Label>
                 <Input
                   id="email"
                   type="email"
@@ -242,9 +230,9 @@ export default function Auth() {
                   required
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Senha</Label>
+                  <Label htmlFor="password" className="text-[0.8125rem]">Senha</Label>
                   {(mode === "login" || mode === "admin") && (
                     <button
                       type="button"
@@ -268,9 +256,9 @@ export default function Auth() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                   </button>
                 </div>
               </div>
@@ -285,7 +273,7 @@ export default function Auth() {
             </form>
 
             {mode !== "admin" && (
-              <div className="mt-6 text-center text-sm">
+              <div className="mt-5 text-center text-[0.8125rem]">
                 <span className="text-muted-foreground">
                   {mode === "login" ? "Não tem conta? " : "Já tem conta? "}
                 </span>
@@ -299,7 +287,7 @@ export default function Auth() {
             )}
 
             {mode === "admin" && (
-              <div className="mt-6 text-center text-sm">
+              <div className="mt-5 text-center text-[0.8125rem]">
                 <button
                   onClick={() => setMode("login")}
                   className="font-medium text-primary hover:underline"
@@ -312,17 +300,17 @@ export default function Auth() {
         </Card>
 
         {mode !== "admin" && (
-          <div className="mt-4 flex items-center justify-center gap-4">
+          <div className="mt-4 flex items-center justify-center gap-3">
             <a
               href="/"
-              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors duration-200"
             >
               ← Voltar para o site
             </a>
-            <span className="text-muted-foreground/40">|</span>
+            <span className="text-border">|</span>
             <button
               onClick={() => { setMode("admin"); setEmail(""); setPassword(""); }}
-              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors duration-200"
             >
               <Shield className="h-3 w-3" />
               Admin
