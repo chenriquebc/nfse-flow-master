@@ -570,33 +570,36 @@ export default function LandingPage() {
       </section>
 
       {/* ─── FEATURES ─── */}
-      <section id="features" className="py-20 sm:py-28 bg-card">
+      <section id="features" className="py-20 sm:py-28 bg-card/50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <FadeUp className="mx-auto max-w-3xl text-center mb-16">
-            <Badge variant="secondary" className="mb-4">Funcionalidades</Badge>
+          <FadeUp className="mx-auto max-w-3xl text-center mb-14">
+            <Badge variant="secondary" className="mb-4 text-xs font-medium">Funcionalidades</Badge>
             <h2 className="text-3xl font-bold sm:text-4xl">
-              9 Recursos de Emissão de NFS-e que{" "}
+              Recursos que{" "}
               <span className="text-primary">seu escritório precisa</span>
             </h2>
-            <p className="mt-4 text-lg text-muted-foreground">
-              Construído especificamente para escritórios de contabilidade que gerenciam múltiplas empresas.
+            <p className="mt-3 text-base text-muted-foreground max-w-2xl mx-auto">
+              Construído para escritórios de contabilidade que gerenciam múltiplas empresas.
             </p>
           </FadeUp>
-          <StaggerChildren className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <StaggerChildren className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map(f => (
-              <motion.div key={f.title} variants={staggerItem} className="group rounded-xl border border-border bg-background p-6 transition-all hover:border-primary/30 hover:shadow-md">
-                <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10">
-                  <f.icon className="h-5 w-5 text-primary" />
+              <motion.div
+                key={f.title}
+                variants={staggerItem}
+                className="group rounded-xl border border-border/80 bg-card p-5 transition-all duration-300 ease-premium hover:border-primary/20 hover:shadow-card-hover hover:-translate-y-0.5"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/8">
+                  <f.icon className="h-4 w-4 text-primary" />
                 </div>
-                <h3 className="mt-4 text-base font-semibold">{f.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+                <h3 className="mt-3.5 text-[0.9375rem] font-semibold" style={{ letterSpacing: "-0.015em" }}>{f.title}</h3>
+                <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
               </motion.div>
             ))}
           </StaggerChildren>
-          {/* CTA after features */}
-          <div className="mt-12 text-center">
-            <Button variant="outline" onClick={() => scrollTo("pricing")}>
-              Ver planos e começar agora <ArrowRight className="ml-2 h-4 w-4" />
+          <div className="mt-10 text-center">
+            <Button variant="outline" size="sm" onClick={() => scrollTo("pricing")}>
+              Ver planos <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
             </Button>
           </div>
         </div>
