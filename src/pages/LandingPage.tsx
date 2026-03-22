@@ -379,78 +379,77 @@ export default function LandingPage() {
       </nav>
 
       {/* ─── HERO ─── */}
-      <section className="relative pt-28 pb-16 sm:pt-36 sm:pb-24">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 h-[600px] w-[600px] rounded-full bg-primary/[0.07] blur-3xl" />
-          <div className="absolute -bottom-40 -left-40 h-[400px] w-[400px] rounded-full bg-accent/[0.05] blur-3xl" />
+      <section className="relative pt-28 pb-16 sm:pt-36 sm:pb-24 overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-primary/[0.04] blur-[100px]" />
+          <div className="absolute -bottom-40 -left-40 h-[350px] w-[350px] rounded-full bg-accent/[0.03] blur-[100px]" />
         </div>
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
            <div className="mx-auto max-w-4xl text-center">
             <FadeUp>
-            <Badge variant="secondary" className="mb-6 gap-1.5 px-4 py-1.5 text-sm">
-              <Rocket className="h-3.5 w-3.5" />
-              Plataforma NFS-e Nacional — 100% Cloud — Pronta para Reforma Tributária 2025
+            <Badge variant="secondary" className="mb-6 gap-1.5 px-3.5 py-1 text-xs font-medium">
+              <Rocket className="h-3 w-3" />
+              Plataforma NFS-e Nacional — 100% Cloud
             </Badge>
             </FadeUp>
             <FadeUp delay={0.1}>
-            <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-[62px] lg:leading-[1.1]">
-              Gerencie 50+ Empresas em 1 Dashboard.{" "}
-              <span className="bg-gradient-to-r from-primary to-[hsl(240,60%,55%)] bg-clip-text text-transparent">
-                Emita NFS-e sem Erros. Sem Multas. Sem Noites Perdidas.
+            <h1 className="text-4xl font-extrabold sm:text-5xl lg:text-6xl" style={{ letterSpacing: "-0.035em", lineHeight: "1.06" }}>
+              Gerencie 50+ Empresas.{" "}
+              <span className="bg-gradient-to-r from-primary to-[hsl(252,56%,48%)] bg-clip-text text-transparent">
+                Emita NFS-e sem Erros.
               </span>
             </h1>
             </FadeUp>
             <FadeUp delay={0.2}>
-            <p className="mt-6 text-lg text-muted-foreground sm:text-xl max-w-3xl mx-auto leading-relaxed">
-              O único sistema que emite <strong className="text-foreground">Nota Fiscal de Serviço</strong> para{" "}
-              <strong className="text-foreground">TODAS</strong> as suas empresas com{" "}
-              <strong className="text-foreground">3 cliques</strong>.
-              Alertas automáticos evitam multas. Integração total com sua rotina (API + CSV).
+            <p className="mt-5 text-base text-muted-foreground sm:text-lg max-w-2xl mx-auto" style={{ lineHeight: "1.7" }}>
+              O único sistema que emite <strong className="text-foreground font-semibold">Nota Fiscal de Serviço</strong> para{" "}
+              <strong className="text-foreground font-semibold">todas</strong> as suas empresas com{" "}
+              <strong className="text-foreground font-semibold">3 cliques</strong>.
+              Alertas automáticos evitam multas. Integração total com sua rotina.
             </p>
             </FadeUp>
 
             {/* CTAs */}
             <FadeUp delay={0.3}>
-            <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center relative">
+            <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center relative">
               <Button
                 size="lg"
-                className="h-14 px-10 text-lg font-semibold shadow-xl shadow-primary/25"
+                className="h-12 px-8 text-[0.9375rem] font-semibold shadow-md hover:shadow-lg transition-shadow duration-300"
                 onClick={() => scrollTo("lead-form")}
               >
-                ⚡ Liberar Acesso Grátis (5 min) <ArrowRight className="ml-2 h-5 w-5" />
+                Liberar Acesso Grátis <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              <Button variant="outline" size="lg" className="h-14 px-8 text-base" onClick={() => scrollTo("testimonials")}>
-                <Play className="mr-2 h-4 w-4" /> Ver Demo (3 min)
+              <Button variant="outline" size="lg" className="h-12 px-6 text-sm" onClick={() => scrollTo("testimonials")}>
+                <Play className="mr-2 h-3.5 w-3.5" /> Ver Demo
               </Button>
-              {/* Urgency tooltip */}
               {showUrgency && (
                 <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap animate-fade-in">
-                  <span className="text-xs text-muted-foreground bg-card border border-border px-3 py-1.5 rounded-full shadow-sm">
-                    ⚡ 230+ contadores já começaram. Seu turno?
+                  <span className="text-xs text-muted-foreground bg-card border border-border px-3 py-1.5 rounded-full shadow-xs">
+                    230+ contadores já começaram
                   </span>
                 </div>
               )}
             </div>
-
             </FadeUp>
+
             {/* Trust badges */}
-            <div className="mt-14 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-accent" /> Sem cartão de crédito</span>
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-accent" /> Setup em 5 minutos</span>
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-accent" /> Sem contrato ou fidelidade</span>
+            <div className="mt-14 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-accent" /> Sem cartão de crédito</span>
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-accent" /> Setup em 5 minutos</span>
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-accent" /> Sem fidelidade</span>
             </div>
-            <div className="mt-3 flex items-center justify-center gap-3 text-xs text-muted-foreground">
-              <Lock className="h-3.5 w-3.5" />
-              <span>ISO 27001 • Criptografia LGPD • Backup automático</span>
+            <div className="mt-2.5 flex items-center justify-center gap-2.5 text-[11px] text-muted-foreground/70">
+              <Lock className="h-3 w-3" />
+              <span>Criptografia LGPD • Backup automático</span>
             </div>
 
-            {/* Social proof lines */}
-            <div className="mt-10 space-y-2">
+            {/* Social proof */}
+            <div className="mt-10 space-y-1.5">
               <p className="text-sm font-medium text-foreground">
-                ⭐ <strong>230+ contadores</strong> já economizaram <strong>15h/semana</strong>
+                <strong>230+ contadores</strong> economizam <strong>15h/semana</strong>
               </p>
               <p className="text-sm font-medium text-accent">
-                💰 <strong>R$ 2.3M em multas evitadas</strong> por alertas automáticos
+                <strong>R$ 2.3M em multas evitadas</strong> por alertas automáticos
               </p>
             </div>
           </div>
