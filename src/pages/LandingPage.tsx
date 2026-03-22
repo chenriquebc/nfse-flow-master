@@ -337,41 +337,43 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       {/* ─── NAVBAR ─── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/95 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-              <FileText className="h-5 w-5 text-primary-foreground" />
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl backdrop-saturate-150">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary shadow-sm">
+              <FileText className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="text-lg font-bold tracking-tight">ContábilFlow</span>
+            <span className="text-[0.9375rem] font-bold" style={{ letterSpacing: "-0.03em" }}>ContábilFlow</span>
           </div>
-          <div className="hidden items-center gap-5 lg:flex">
-            <button onClick={() => scrollTo("features")} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Funcionalidades</button>
-            <button onClick={() => scrollTo("pricing")} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Preços</button>
-            <button onClick={() => scrollTo("comparison")} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Comparativo</button>
-            <button onClick={() => scrollTo("faq")} className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQ</button>
+          <div className="hidden items-center gap-6 lg:flex">
+            <button onClick={() => scrollTo("features")} className="text-[0.8125rem] text-muted-foreground hover:text-foreground transition-colors duration-200">Funcionalidades</button>
+            <button onClick={() => scrollTo("pricing")} className="text-[0.8125rem] text-muted-foreground hover:text-foreground transition-colors duration-200">Preços</button>
+            <button onClick={() => scrollTo("comparison")} className="text-[0.8125rem] text-muted-foreground hover:text-foreground transition-colors duration-200">Comparativo</button>
+            <button onClick={() => scrollTo("faq")} className="text-[0.8125rem] text-muted-foreground hover:text-foreground transition-colors duration-200">FAQ</button>
           </div>
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => navigate("/auth")} className="hidden sm:inline-flex">
+          <div className="flex items-center gap-2.5">
+            <Button variant="ghost" size="sm" onClick={() => navigate("/auth")} className="hidden sm:inline-flex text-muted-foreground">
               Entrar
             </Button>
-            <Button size="sm" onClick={() => scrollTo("lead-form")} className="shadow-lg shadow-primary/25 hidden sm:inline-flex">
-              Liberar Acesso Grátis <ArrowRight className="ml-1 h-4 w-4" />
+            <Button size="sm" onClick={() => scrollTo("lead-form")} className="hidden sm:inline-flex shadow-sm">
+              Liberar Acesso Grátis <ArrowRight className="ml-1 h-3.5 w-3.5" />
             </Button>
-            <button className="lg:hidden p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            <button className="lg:hidden p-2 text-muted-foreground hover:text-foreground transition-colors" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
         </div>
         {/* Mobile menu */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-border bg-background px-4 py-4 space-y-3">
-            <button onClick={() => scrollTo("features")} className="block w-full text-left text-sm py-2 text-muted-foreground">Funcionalidades</button>
-            <button onClick={() => scrollTo("pricing")} className="block w-full text-left text-sm py-2 text-muted-foreground">Preços</button>
-            <button onClick={() => scrollTo("comparison")} className="block w-full text-left text-sm py-2 text-muted-foreground">Comparativo</button>
-            <button onClick={() => scrollTo("faq")} className="block w-full text-left text-sm py-2 text-muted-foreground">FAQ</button>
-            <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => { setMobileMenuOpen(false); navigate("/auth"); }}>Entrar</Button>
-            <Button size="sm" className="w-full" onClick={() => scrollTo("lead-form")}>Liberar Acesso Grátis</Button>
+          <div className="lg:hidden border-t border-border/60 bg-card/95 backdrop-blur-xl px-4 py-4 space-y-1">
+            <button onClick={() => scrollTo("features")} className="block w-full text-left text-[0.8125rem] py-2.5 px-3 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors">Funcionalidades</button>
+            <button onClick={() => scrollTo("pricing")} className="block w-full text-left text-[0.8125rem] py-2.5 px-3 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors">Preços</button>
+            <button onClick={() => scrollTo("comparison")} className="block w-full text-left text-[0.8125rem] py-2.5 px-3 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors">Comparativo</button>
+            <button onClick={() => scrollTo("faq")} className="block w-full text-left text-[0.8125rem] py-2.5 px-3 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors">FAQ</button>
+            <div className="pt-2 space-y-2">
+              <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => { setMobileMenuOpen(false); navigate("/auth"); }}>Entrar</Button>
+              <Button size="sm" className="w-full" onClick={() => scrollTo("lead-form")}>Liberar Acesso Grátis</Button>
+            </div>
           </div>
         )}
       </nav>
