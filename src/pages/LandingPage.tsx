@@ -352,7 +352,8 @@ export default function LandingPage() {
             <button onClick={() => scrollTo("comparison")} className="text-[0.8125rem] text-muted-foreground hover:text-foreground transition-colors duration-200">Comparativo</button>
             <button onClick={() => scrollTo("faq")} className="text-[0.8125rem] text-muted-foreground hover:text-foreground transition-colors duration-200">FAQ</button>
           </div>
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
+            <ThemeToggle compact />
             <Button variant="ghost" size="sm" onClick={() => navigate("/auth")} className="hidden sm:inline-flex text-muted-foreground">
               Entrar
             </Button>
