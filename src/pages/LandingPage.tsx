@@ -457,28 +457,27 @@ export default function LandingPage() {
       </section>
 
       {/* ─── SOCIAL PROOF NUMBERS ─── */}
-      <section className="border-y border-border bg-card">
-        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6">
+      <section className="border-y border-border/60 bg-card/50">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
           <StaggerChildren className="grid grid-cols-2 gap-8 sm:grid-cols-4">
             {[
-              { value: 15000, suffix: "+", label: "HORAS ECONOMIZADAS", sub: "vs. emissão manual (1 nota = 8 min)", icon: "🕐" },
-              { value: 2.3, suffix: "M", prefix: "R$ ", label: "EVITADOS EM MULTAS", sub: "Por alertas automáticos de prazos", icon: "💰", decimals: 1 },
+              { value: 15000, suffix: "+", label: "HORAS ECONOMIZADAS", sub: "vs. emissão manual", icon: "🕐" },
+              { value: 2.3, suffix: "M", prefix: "R$ ", label: "EVITADOS EM MULTAS", sub: "Por alertas automáticos", icon: "💰", decimals: 1 },
               { value: 230, suffix: "+", label: "CONTADORES CONFIAM", sub: "Crescimento 40% a/a", icon: "👥" },
-              { value: 4.9, suffix: "/5", label: "STARS", sub: "Mais rápido que Omie. 1/3 do preço.", icon: "⭐", decimals: 1 },
+              { value: 4.9, suffix: "/5", label: "AVALIAÇÃO", sub: "Mais rápido. 1/3 do preço.", icon: "⭐", decimals: 1 },
             ].map(s => (
               <motion.div key={s.label} variants={staggerItem} className="text-center">
-                <p className="text-xs mb-1">{s.icon}</p>
-                <p className="text-2xl sm:text-3xl font-extrabold text-primary">
+                <p className="text-xs mb-1.5">{s.icon}</p>
+                <p className="text-2xl sm:text-3xl font-extrabold text-primary" style={{ letterSpacing: "-0.03em" }}>
                   <AnimatedNumber target={s.value} suffix={s.suffix} prefix={s.prefix || ""} decimals={s.decimals || 0} />
                 </p>
-                <p className="mt-1 text-xs font-bold uppercase tracking-wide text-foreground">{s.label}</p>
+                <p className="mt-1.5 text-[10px] font-bold uppercase text-foreground" style={{ letterSpacing: "0.08em" }}>{s.label}</p>
                 <p className="mt-0.5 text-[11px] text-muted-foreground">{s.sub}</p>
               </motion.div>
             ))}
           </StaggerChildren>
-          {/* Micro-CTA after numbers */}
           <div className="mt-8 text-center">
-            <button onClick={() => scrollTo("pricing")} className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1">
+            <button onClick={() => scrollTo("pricing")} className="text-[0.8125rem] text-muted-foreground hover:text-primary transition-colors duration-200 inline-flex items-center gap-1">
               Ver planos e economias <ArrowRight className="h-3 w-3" />
             </button>
           </div>
