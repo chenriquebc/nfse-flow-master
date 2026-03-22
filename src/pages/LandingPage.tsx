@@ -337,118 +337,119 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       {/* ─── NAVBAR ─── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/95 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-              <FileText className="h-5 w-5 text-primary-foreground" />
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl backdrop-saturate-150">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary shadow-sm">
+              <FileText className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="text-lg font-bold tracking-tight">ContábilFlow</span>
+            <span className="text-[0.9375rem] font-bold" style={{ letterSpacing: "-0.03em" }}>ContábilFlow</span>
           </div>
-          <div className="hidden items-center gap-5 lg:flex">
-            <button onClick={() => scrollTo("features")} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Funcionalidades</button>
-            <button onClick={() => scrollTo("pricing")} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Preços</button>
-            <button onClick={() => scrollTo("comparison")} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Comparativo</button>
-            <button onClick={() => scrollTo("faq")} className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQ</button>
+          <div className="hidden items-center gap-6 lg:flex">
+            <button onClick={() => scrollTo("features")} className="text-[0.8125rem] text-muted-foreground hover:text-foreground transition-colors duration-200">Funcionalidades</button>
+            <button onClick={() => scrollTo("pricing")} className="text-[0.8125rem] text-muted-foreground hover:text-foreground transition-colors duration-200">Preços</button>
+            <button onClick={() => scrollTo("comparison")} className="text-[0.8125rem] text-muted-foreground hover:text-foreground transition-colors duration-200">Comparativo</button>
+            <button onClick={() => scrollTo("faq")} className="text-[0.8125rem] text-muted-foreground hover:text-foreground transition-colors duration-200">FAQ</button>
           </div>
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => navigate("/auth")} className="hidden sm:inline-flex">
+          <div className="flex items-center gap-2.5">
+            <Button variant="ghost" size="sm" onClick={() => navigate("/auth")} className="hidden sm:inline-flex text-muted-foreground">
               Entrar
             </Button>
-            <Button size="sm" onClick={() => scrollTo("lead-form")} className="shadow-lg shadow-primary/25 hidden sm:inline-flex">
-              Liberar Acesso Grátis <ArrowRight className="ml-1 h-4 w-4" />
+            <Button size="sm" onClick={() => scrollTo("lead-form")} className="hidden sm:inline-flex shadow-sm">
+              Liberar Acesso Grátis <ArrowRight className="ml-1 h-3.5 w-3.5" />
             </Button>
-            <button className="lg:hidden p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            <button className="lg:hidden p-2 text-muted-foreground hover:text-foreground transition-colors" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
         </div>
         {/* Mobile menu */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-border bg-background px-4 py-4 space-y-3">
-            <button onClick={() => scrollTo("features")} className="block w-full text-left text-sm py-2 text-muted-foreground">Funcionalidades</button>
-            <button onClick={() => scrollTo("pricing")} className="block w-full text-left text-sm py-2 text-muted-foreground">Preços</button>
-            <button onClick={() => scrollTo("comparison")} className="block w-full text-left text-sm py-2 text-muted-foreground">Comparativo</button>
-            <button onClick={() => scrollTo("faq")} className="block w-full text-left text-sm py-2 text-muted-foreground">FAQ</button>
-            <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => { setMobileMenuOpen(false); navigate("/auth"); }}>Entrar</Button>
-            <Button size="sm" className="w-full" onClick={() => scrollTo("lead-form")}>Liberar Acesso Grátis</Button>
+          <div className="lg:hidden border-t border-border/60 bg-card/95 backdrop-blur-xl px-4 py-4 space-y-1">
+            <button onClick={() => scrollTo("features")} className="block w-full text-left text-[0.8125rem] py-2.5 px-3 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors">Funcionalidades</button>
+            <button onClick={() => scrollTo("pricing")} className="block w-full text-left text-[0.8125rem] py-2.5 px-3 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors">Preços</button>
+            <button onClick={() => scrollTo("comparison")} className="block w-full text-left text-[0.8125rem] py-2.5 px-3 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors">Comparativo</button>
+            <button onClick={() => scrollTo("faq")} className="block w-full text-left text-[0.8125rem] py-2.5 px-3 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors">FAQ</button>
+            <div className="pt-2 space-y-2">
+              <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => { setMobileMenuOpen(false); navigate("/auth"); }}>Entrar</Button>
+              <Button size="sm" className="w-full" onClick={() => scrollTo("lead-form")}>Liberar Acesso Grátis</Button>
+            </div>
           </div>
         )}
       </nav>
 
       {/* ─── HERO ─── */}
-      <section className="relative pt-28 pb-16 sm:pt-36 sm:pb-24">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 h-[600px] w-[600px] rounded-full bg-primary/[0.07] blur-3xl" />
-          <div className="absolute -bottom-40 -left-40 h-[400px] w-[400px] rounded-full bg-accent/[0.05] blur-3xl" />
+      <section className="relative pt-28 pb-16 sm:pt-36 sm:pb-24 overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-primary/[0.04] blur-[100px]" />
+          <div className="absolute -bottom-40 -left-40 h-[350px] w-[350px] rounded-full bg-accent/[0.03] blur-[100px]" />
         </div>
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
            <div className="mx-auto max-w-4xl text-center">
             <FadeUp>
-            <Badge variant="secondary" className="mb-6 gap-1.5 px-4 py-1.5 text-sm">
-              <Rocket className="h-3.5 w-3.5" />
-              Plataforma NFS-e Nacional — 100% Cloud — Pronta para Reforma Tributária 2025
+            <Badge variant="secondary" className="mb-6 gap-1.5 px-3.5 py-1 text-xs font-medium">
+              <Rocket className="h-3 w-3" />
+              Plataforma NFS-e Nacional — 100% Cloud
             </Badge>
             </FadeUp>
             <FadeUp delay={0.1}>
-            <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-[62px] lg:leading-[1.1]">
-              Gerencie 50+ Empresas em 1 Dashboard.{" "}
-              <span className="bg-gradient-to-r from-primary to-[hsl(240,60%,55%)] bg-clip-text text-transparent">
-                Emita NFS-e sem Erros. Sem Multas. Sem Noites Perdidas.
+            <h1 className="text-4xl font-extrabold sm:text-5xl lg:text-6xl" style={{ letterSpacing: "-0.035em", lineHeight: "1.06" }}>
+              Gerencie 50+ Empresas.{" "}
+              <span className="bg-gradient-to-r from-primary to-[hsl(252,56%,48%)] bg-clip-text text-transparent">
+                Emita NFS-e sem Erros.
               </span>
             </h1>
             </FadeUp>
             <FadeUp delay={0.2}>
-            <p className="mt-6 text-lg text-muted-foreground sm:text-xl max-w-3xl mx-auto leading-relaxed">
-              O único sistema que emite <strong className="text-foreground">Nota Fiscal de Serviço</strong> para{" "}
-              <strong className="text-foreground">TODAS</strong> as suas empresas com{" "}
-              <strong className="text-foreground">3 cliques</strong>.
-              Alertas automáticos evitam multas. Integração total com sua rotina (API + CSV).
+            <p className="mt-5 text-base text-muted-foreground sm:text-lg max-w-2xl mx-auto" style={{ lineHeight: "1.7" }}>
+              O único sistema que emite <strong className="text-foreground font-semibold">Nota Fiscal de Serviço</strong> para{" "}
+              <strong className="text-foreground font-semibold">todas</strong> as suas empresas com{" "}
+              <strong className="text-foreground font-semibold">3 cliques</strong>.
+              Alertas automáticos evitam multas. Integração total com sua rotina.
             </p>
             </FadeUp>
 
             {/* CTAs */}
             <FadeUp delay={0.3}>
-            <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center relative">
+            <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center relative">
               <Button
                 size="lg"
-                className="h-14 px-10 text-lg font-semibold shadow-xl shadow-primary/25"
+                className="h-12 px-8 text-[0.9375rem] font-semibold shadow-md hover:shadow-lg transition-shadow duration-300"
                 onClick={() => scrollTo("lead-form")}
               >
-                ⚡ Liberar Acesso Grátis (5 min) <ArrowRight className="ml-2 h-5 w-5" />
+                Liberar Acesso Grátis <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              <Button variant="outline" size="lg" className="h-14 px-8 text-base" onClick={() => scrollTo("testimonials")}>
-                <Play className="mr-2 h-4 w-4" /> Ver Demo (3 min)
+              <Button variant="outline" size="lg" className="h-12 px-6 text-sm" onClick={() => scrollTo("testimonials")}>
+                <Play className="mr-2 h-3.5 w-3.5" /> Ver Demo
               </Button>
-              {/* Urgency tooltip */}
               {showUrgency && (
                 <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap animate-fade-in">
-                  <span className="text-xs text-muted-foreground bg-card border border-border px-3 py-1.5 rounded-full shadow-sm">
-                    ⚡ 230+ contadores já começaram. Seu turno?
+                  <span className="text-xs text-muted-foreground bg-card border border-border px-3 py-1.5 rounded-full shadow-xs">
+                    230+ contadores já começaram
                   </span>
                 </div>
               )}
             </div>
-
             </FadeUp>
+
             {/* Trust badges */}
-            <div className="mt-14 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-accent" /> Sem cartão de crédito</span>
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-accent" /> Setup em 5 minutos</span>
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-accent" /> Sem contrato ou fidelidade</span>
+            <div className="mt-14 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-accent" /> Sem cartão de crédito</span>
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-accent" /> Setup em 5 minutos</span>
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-accent" /> Sem fidelidade</span>
             </div>
-            <div className="mt-3 flex items-center justify-center gap-3 text-xs text-muted-foreground">
-              <Lock className="h-3.5 w-3.5" />
-              <span>ISO 27001 • Criptografia LGPD • Backup automático</span>
+            <div className="mt-2.5 flex items-center justify-center gap-2.5 text-[11px] text-muted-foreground/70">
+              <Lock className="h-3 w-3" />
+              <span>Criptografia LGPD • Backup automático</span>
             </div>
 
-            {/* Social proof lines */}
-            <div className="mt-10 space-y-2">
+            {/* Social proof */}
+            <div className="mt-10 space-y-1.5">
               <p className="text-sm font-medium text-foreground">
-                ⭐ <strong>230+ contadores</strong> já economizaram <strong>15h/semana</strong>
+                <strong>230+ contadores</strong> economizam <strong>15h/semana</strong>
               </p>
               <p className="text-sm font-medium text-accent">
-                💰 <strong>R$ 2.3M em multas evitadas</strong> por alertas automáticos
+                <strong>R$ 2.3M em multas evitadas</strong> por alertas automáticos
               </p>
             </div>
           </div>
@@ -456,28 +457,27 @@ export default function LandingPage() {
       </section>
 
       {/* ─── SOCIAL PROOF NUMBERS ─── */}
-      <section className="border-y border-border bg-card">
-        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6">
+      <section className="border-y border-border/60 bg-card/50">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
           <StaggerChildren className="grid grid-cols-2 gap-8 sm:grid-cols-4">
             {[
-              { value: 15000, suffix: "+", label: "HORAS ECONOMIZADAS", sub: "vs. emissão manual (1 nota = 8 min)", icon: "🕐" },
-              { value: 2.3, suffix: "M", prefix: "R$ ", label: "EVITADOS EM MULTAS", sub: "Por alertas automáticos de prazos", icon: "💰", decimals: 1 },
+              { value: 15000, suffix: "+", label: "HORAS ECONOMIZADAS", sub: "vs. emissão manual", icon: "🕐" },
+              { value: 2.3, suffix: "M", prefix: "R$ ", label: "EVITADOS EM MULTAS", sub: "Por alertas automáticos", icon: "💰", decimals: 1 },
               { value: 230, suffix: "+", label: "CONTADORES CONFIAM", sub: "Crescimento 40% a/a", icon: "👥" },
-              { value: 4.9, suffix: "/5", label: "STARS", sub: "Mais rápido que Omie. 1/3 do preço.", icon: "⭐", decimals: 1 },
+              { value: 4.9, suffix: "/5", label: "AVALIAÇÃO", sub: "Mais rápido. 1/3 do preço.", icon: "⭐", decimals: 1 },
             ].map(s => (
               <motion.div key={s.label} variants={staggerItem} className="text-center">
-                <p className="text-xs mb-1">{s.icon}</p>
-                <p className="text-2xl sm:text-3xl font-extrabold text-primary">
+                <p className="text-xs mb-1.5">{s.icon}</p>
+                <p className="text-2xl sm:text-3xl font-extrabold text-primary" style={{ letterSpacing: "-0.03em" }}>
                   <AnimatedNumber target={s.value} suffix={s.suffix} prefix={s.prefix || ""} decimals={s.decimals || 0} />
                 </p>
-                <p className="mt-1 text-xs font-bold uppercase tracking-wide text-foreground">{s.label}</p>
+                <p className="mt-1.5 text-[10px] font-bold uppercase text-foreground" style={{ letterSpacing: "0.08em" }}>{s.label}</p>
                 <p className="mt-0.5 text-[11px] text-muted-foreground">{s.sub}</p>
               </motion.div>
             ))}
           </StaggerChildren>
-          {/* Micro-CTA after numbers */}
           <div className="mt-8 text-center">
-            <button onClick={() => scrollTo("pricing")} className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1">
+            <button onClick={() => scrollTo("pricing")} className="text-[0.8125rem] text-muted-foreground hover:text-primary transition-colors duration-200 inline-flex items-center gap-1">
               Ver planos e economias <ArrowRight className="h-3 w-3" />
             </button>
           </div>
@@ -570,33 +570,36 @@ export default function LandingPage() {
       </section>
 
       {/* ─── FEATURES ─── */}
-      <section id="features" className="py-20 sm:py-28 bg-card">
+      <section id="features" className="py-20 sm:py-28 bg-card/50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <FadeUp className="mx-auto max-w-3xl text-center mb-16">
-            <Badge variant="secondary" className="mb-4">Funcionalidades</Badge>
+          <FadeUp className="mx-auto max-w-3xl text-center mb-14">
+            <Badge variant="secondary" className="mb-4 text-xs font-medium">Funcionalidades</Badge>
             <h2 className="text-3xl font-bold sm:text-4xl">
-              9 Recursos de Emissão de NFS-e que{" "}
+              Recursos que{" "}
               <span className="text-primary">seu escritório precisa</span>
             </h2>
-            <p className="mt-4 text-lg text-muted-foreground">
-              Construído especificamente para escritórios de contabilidade que gerenciam múltiplas empresas.
+            <p className="mt-3 text-base text-muted-foreground max-w-2xl mx-auto">
+              Construído para escritórios de contabilidade que gerenciam múltiplas empresas.
             </p>
           </FadeUp>
-          <StaggerChildren className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <StaggerChildren className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map(f => (
-              <motion.div key={f.title} variants={staggerItem} className="group rounded-xl border border-border bg-background p-6 transition-all hover:border-primary/30 hover:shadow-md">
-                <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10">
-                  <f.icon className="h-5 w-5 text-primary" />
+              <motion.div
+                key={f.title}
+                variants={staggerItem}
+                className="group rounded-xl border border-border/80 bg-card p-5 transition-all duration-300 ease-premium hover:border-primary/20 hover:shadow-card-hover hover:-translate-y-0.5"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/8">
+                  <f.icon className="h-4 w-4 text-primary" />
                 </div>
-                <h3 className="mt-4 text-base font-semibold">{f.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+                <h3 className="mt-3.5 text-[0.9375rem] font-semibold" style={{ letterSpacing: "-0.015em" }}>{f.title}</h3>
+                <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
               </motion.div>
             ))}
           </StaggerChildren>
-          {/* CTA after features */}
-          <div className="mt-12 text-center">
-            <Button variant="outline" onClick={() => scrollTo("pricing")}>
-              Ver planos e começar agora <ArrowRight className="ml-2 h-4 w-4" />
+          <div className="mt-10 text-center">
+            <Button variant="outline" size="sm" onClick={() => scrollTo("pricing")}>
+              Ver planos <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
             </Button>
           </div>
         </div>

@@ -29,42 +29,44 @@ export default function AdminLayout() {
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
-      <aside className="hidden w-64 flex-col border-r border-border bg-card md:flex">
-        <div className="flex items-center gap-2.5 px-5 py-5 border-b border-border">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-destructive">
-            <Shield className="h-5 w-5 text-destructive-foreground" />
+      <aside className="hidden w-[15.5rem] flex-col border-r border-border bg-card md:flex">
+        <div className="flex items-center gap-3 px-5 py-5 border-b border-border">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-destructive shadow-sm">
+            <Shield className="h-4 w-4 text-destructive-foreground" />
           </div>
           <div>
-            <h1 className="text-base font-bold text-foreground tracking-tight">Admin</h1>
-            <p className="text-[11px] text-muted-foreground">Painel da Plataforma</p>
+            <h1 className="text-[0.8125rem] font-bold text-foreground" style={{ letterSpacing: "-0.02em" }}>
+              Admin
+            </h1>
+            <p className="text-[10px] text-muted-foreground font-medium">Painel da Plataforma</p>
           </div>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
           {adminNav.map((item) => {
             const isActive = location.pathname === item.href;
             return (
               <Link
                 key={item.href}
                 to={item.href}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${
+                className={`group flex items-center gap-3 rounded-lg px-3 py-2 text-[0.8125rem] font-medium transition-all duration-200 ease-premium ${
                   isActive
                     ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                 }`}
               >
-                <item.icon className="h-[18px] w-[18px] shrink-0" />
+                <item.icon className="h-[16px] w-[16px] shrink-0" />
                 {item.label}
               </Link>
             );
           })}
 
-          <div className="pt-4 border-t border-border mt-4">
+          <div className="pt-3 border-t border-border mt-3">
             <Link
               to="/dashboard"
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted"
+              className="group flex items-center gap-3 rounded-lg px-3 py-2 text-[0.8125rem] font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-all duration-200"
             >
-              <ArrowLeft className="h-[18px] w-[18px] shrink-0" />
+              <ArrowLeft className="h-[16px] w-[16px] shrink-0" />
               Voltar ao App
             </Link>
           </div>
@@ -72,15 +74,15 @@ export default function AdminLayout() {
 
         <div className="border-t border-border px-3 py-3">
           <div className="flex items-center gap-3 rounded-lg px-3 py-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground shrink-0">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-[11px] font-semibold text-foreground shrink-0">
               {user?.email?.charAt(0).toUpperCase() || "A"}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">Administrador</p>
-              <p className="text-[11px] text-muted-foreground truncate">{user?.email}</p>
+              <p className="text-[0.8125rem] font-medium text-foreground truncate">Administrador</p>
+              <p className="text-[10px] text-muted-foreground truncate">{user?.email}</p>
             </div>
-            <button onClick={signOut} className="shrink-0 rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted" title="Sair">
-              <LogOut className="h-4 w-4" />
+            <button onClick={signOut} className="shrink-0 rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors duration-200" title="Sair">
+              <LogOut className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
@@ -91,7 +93,7 @@ export default function AdminLayout() {
         <div className="flex items-center justify-end gap-2 border-b border-border px-6 py-3 lg:px-8">
           <AdminNotifications />
         </div>
-        <div className="p-6 lg:p-8">
+        <div className="p-6 lg:p-8 xl:p-10">
           <Outlet />
         </div>
       </main>
