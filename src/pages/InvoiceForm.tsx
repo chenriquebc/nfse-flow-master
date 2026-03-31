@@ -481,7 +481,7 @@ export default function InvoiceForm() {
   };
 
   const handleSaveDraft = () => {
-    // sessionStorage already has the draft from the persist effect
+    clearGuard();
     setShowExitDialog(false);
     if (pendingNavigation) pendingNavigation();
     else navigate("/invoices");
@@ -489,6 +489,7 @@ export default function InvoiceForm() {
 
   const handleDiscard = () => {
     sessionStorage.removeItem(INVOICE_DRAFT_STORAGE_KEY);
+    clearGuard();
     setShowExitDialog(false);
     if (pendingNavigation) pendingNavigation();
     else navigate("/invoices");
