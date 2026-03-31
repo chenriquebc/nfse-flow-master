@@ -261,9 +261,9 @@ export default function Invoices() {
               <Download className="mr-2 h-4 w-4" />
               Exportar
             </Button>
-            {canEmit && (
+            {(permissions.isAdmin || permissions.can_emit_invoices) && (
               <Link to="/invoices/new">
-                <Button size="sm">
+                <Button size="sm" disabled={isSubscriptionInactive}>
                   <Plus className="mr-2 h-4 w-4" />
                   Nova Nota
                 </Button>
@@ -271,6 +271,12 @@ export default function Invoices() {
             )}
           </div>
         </div>
+        {isSubscriptionInactive && (
+          <div className="mb-4 flex items-center gap-2 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md px-3 py-2">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            Sua assinatura está inativa. Não é possível emitir ou reenviar notas fiscais.
+          </div>
+        )}
 
         <Card>
           <CardContent className="pt-6">
