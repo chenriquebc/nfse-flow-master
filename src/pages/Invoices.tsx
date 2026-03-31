@@ -93,6 +93,7 @@ export default function Invoices() {
   const { subscribed, loading: subLoading } = useSubscription();
   const canEmit = (permissions.isAdmin || permissions.can_emit_invoices) && (subLoading || subscribed);
   const canCancel = permissions.isAdmin || permissions.can_cancel_invoices;
+  const canDelete = permissions.isAdmin || permissions.can_delete_invoices;
   const isSubscriptionInactive = !subLoading && !subscribed;
   const navigate = useNavigate();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -535,13 +536,14 @@ export default function Invoices() {
                                   <AlertTriangle className="h-4 w-4 mr-2" />
                                   Ver Log de Eventos
                                 </DropdownMenuItem>
-                                {(inv.status === "rejected" || inv.status === "draft") && (
+                                {canDelete && (
                                   <>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem
                                       className="text-destructive focus:text-destructive"
                                       onClick={async () => {
-                                        const confirmed = window.confirm("Tem certeza que deseja excluir esta nota? Esta ação não pode ser desfeita.");
+                                        const statusLabel = inv.status === "authorized" ? "autorizada" : inv.status === "cancelled" ? "cancelada" : inv.status === "rejected" ? "rejeitada" : "rascunho";
+                                        const confirmed = window.confirm(`Tem certeza que deseja excluir esta nota ${statusLabel}? Esta ação não pode ser desfeita.`);
                                         if (!confirmed) return;
                                         const { error } = await supabase.from("nfse_invoices").delete().eq("id", inv.id);
                                         if (error) {

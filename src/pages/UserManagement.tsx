@@ -29,6 +29,7 @@ interface MemberRow {
     can_view: boolean;
     can_emit_invoices: boolean;
     can_cancel_invoices: boolean;
+    can_delete_invoices: boolean;
     can_manage_companies: boolean;
     can_view_reports: boolean;
   }[] | null;
@@ -45,6 +46,7 @@ const PERMISSION_LABELS: { key: string; label: string }[] = [
   { key: "can_view", label: "Consultar informações (somente leitura)" },
   { key: "can_emit_invoices", label: "Emitir notas fiscais" },
   { key: "can_cancel_invoices", label: "Cancelar notas fiscais" },
+  { key: "can_delete_invoices", label: "Excluir notas fiscais" },
   { key: "can_manage_companies", label: "Cadastrar/editar empresas" },
   { key: "can_view_reports", label: "Acessar relatórios" },
 ];
@@ -70,6 +72,7 @@ export default function UserManagement() {
     can_view: true,
     can_emit_invoices: false,
     can_cancel_invoices: false,
+    can_delete_invoices: false,
     can_manage_companies: false,
     can_view_reports: false,
   });
@@ -104,7 +107,7 @@ export default function UserManagement() {
     const [profilesRes, rolesRes, permsRes] = await Promise.all([
       supabase.from("profiles").select("user_id, full_name, email").in("user_id", userIds),
       supabase.from("user_roles").select("user_id, role").eq("tenant_id", tenant.id).in("user_id", userIds),
-      supabase.from("user_permissions").select("user_id, can_view, can_emit_invoices, can_cancel_invoices, can_manage_companies, can_view_reports").eq("tenant_id", tenant.id).in("user_id", userIds),
+      supabase.from("user_permissions").select("user_id, can_view, can_emit_invoices, can_cancel_invoices, can_delete_invoices, can_manage_companies, can_view_reports").eq("tenant_id", tenant.id).in("user_id", userIds),
     ]);
 
     const profileMap = new Map((profilesRes.data || []).map((p: any) => [p.user_id, p]));
@@ -139,6 +142,7 @@ export default function UserManagement() {
       can_view: true,
       can_emit_invoices: false,
       can_cancel_invoices: false,
+      can_delete_invoices: false,
       can_manage_companies: false,
       can_view_reports: false,
     });
@@ -168,6 +172,7 @@ export default function UserManagement() {
       can_view: perms?.can_view ?? true,
       can_emit_invoices: perms?.can_emit_invoices ?? false,
       can_cancel_invoices: perms?.can_cancel_invoices ?? false,
+      can_delete_invoices: perms?.can_delete_invoices ?? false,
       can_manage_companies: perms?.can_manage_companies ?? false,
       can_view_reports: perms?.can_view_reports ?? false,
     });

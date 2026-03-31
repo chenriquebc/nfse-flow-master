@@ -782,6 +782,7 @@ export type Database = {
       user_permissions: {
         Row: {
           can_cancel_invoices: boolean
+          can_delete_invoices: boolean
           can_emit_invoices: boolean
           can_manage_companies: boolean
           can_view: boolean
@@ -794,6 +795,7 @@ export type Database = {
         }
         Insert: {
           can_cancel_invoices?: boolean
+          can_delete_invoices?: boolean
           can_emit_invoices?: boolean
           can_manage_companies?: boolean
           can_view?: boolean
@@ -806,6 +808,7 @@ export type Database = {
         }
         Update: {
           can_cancel_invoices?: boolean
+          can_delete_invoices?: boolean
           can_emit_invoices?: boolean
           can_manage_companies?: boolean
           can_view?: boolean
@@ -860,6 +863,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_user_delete_invoices: {
+        Args: { _tenant_id: string; _user_id: string }
+        Returns: boolean
+      }
       create_tenant_for_user: {
         Args: {
           _tenant_document?: string
