@@ -17,6 +17,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTenant } from "@/contexts/TenantContext";
 import { usePlatformAdmin } from "@/hooks/usePlatformAdmin";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { useNavigationGuard } from "@/contexts/NavigationGuardContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
