@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { useNavigate, useParams, useBlocker } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { useTenant } from "@/contexts/TenantContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -128,18 +128,16 @@ export default function InvoiceForm() {
     return JSON.stringify(form) !== initialFormSnapshot;
   }, [form, initialFormSnapshot]);
 
-  // Block navigation via router (sidebar links, etc.)
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      hasChanges && currentLocation.pathname !== nextLocation.pathname
-  );
-
+  // Warn on browser tab close/refresh if there are changes
   useEffect(() => {
-    if (blocker.state === "blocked") {
-      setShowExitDialog(true);
-      setPendingNavigation(() => () => blocker.proceed());
-    }
-  }, [blocker.state]);
+    if (!hasChanges) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [hasChanges]);
 
   useEffect(() => {
     if (isEditing) return;
@@ -469,15 +467,13 @@ export default function InvoiceForm() {
   const handleDiscard = () => {
     sessionStorage.removeItem(INVOICE_DRAFT_STORAGE_KEY);
     setShowExitDialog(false);
-    if (blocker.state === "blocked") blocker.proceed();
-    else if (pendingNavigation) pendingNavigation();
+    if (pendingNavigation) pendingNavigation();
     else navigate("/invoices");
   };
 
   const handleCancelDialog = () => {
     setShowExitDialog(false);
     setPendingNavigation(null);
-    if (blocker.state === "blocked") blocker.reset();
   };
 
   const isLastStep = currentStep === STEPS.length - 1;
