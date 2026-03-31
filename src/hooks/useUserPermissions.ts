@@ -84,7 +84,7 @@ export function useUserPermissions() {
       } else {
         const { data: permData } = await supabase
           .from("user_permissions")
-          .select("can_view, can_emit_invoices, can_cancel_invoices, can_manage_companies, can_view_reports")
+          .select("can_view, can_emit_invoices, can_cancel_invoices, can_delete_invoices, can_manage_companies, can_view_reports")
           .eq("user_id", user.id)
           .eq("tenant_id", tenant.id)
           .maybeSingle();
@@ -94,6 +94,7 @@ export function useUserPermissions() {
           can_view: permData?.can_view ?? true,
           can_emit_invoices: permData?.can_emit_invoices ?? false,
           can_cancel_invoices: permData?.can_cancel_invoices ?? false,
+          can_delete_invoices: permData?.can_delete_invoices ?? false,
           can_manage_companies: permData?.can_manage_companies ?? false,
           can_view_reports: permData?.can_view_reports ?? false,
         };
