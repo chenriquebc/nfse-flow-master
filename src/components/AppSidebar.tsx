@@ -50,13 +50,19 @@ interface AppSidebarProps {
 
 export default function AppSidebar({ onNavigate }: AppSidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const { tenant, tenants, setCurrentTenant } = useTenant();
   const { isAdmin } = usePlatformAdmin();
   const { permissions, loading: permissionsLoading } = useUserPermissions();
+  const { requestNavigation } = useNavigationGuard();
 
-  const handleNav = () => {
-    onNavigate?.();
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    e.preventDefault();
+    const navigated = requestNavigation(() => {
+      navigate(href);
+      onNavigate?.();
+    });
   };
 
   const visibleItems = permissionsLoading
