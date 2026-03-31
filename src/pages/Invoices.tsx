@@ -93,6 +93,7 @@ export default function Invoices() {
   const { subscribed, loading: subLoading } = useSubscription();
   const canEmit = (permissions.isAdmin || permissions.can_emit_invoices) && (subLoading || subscribed);
   const canCancel = permissions.isAdmin || permissions.can_cancel_invoices;
+  const canDelete = permissions.isAdmin || permissions.can_delete_invoices;
   const isSubscriptionInactive = !subLoading && !subscribed;
   const navigate = useNavigate();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
