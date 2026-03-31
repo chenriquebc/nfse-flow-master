@@ -103,6 +103,22 @@ export default function StepTomador({ form, set }: StepTomadorProps) {
       });
   }, [tenant]);
 
+  const applyDbTaker = (t: ServiceTakerBase) => {
+    set("taker_document", t.document);
+    set("taker_name", t.name);
+    set("taker_email", t.email || "");
+    set("taker_phone", t.phone || "");
+    set("taker_address_street", t.address_street || "");
+    set("taker_address_number", t.address_number || "");
+    set("taker_address_city", t.address_city || "");
+    set("taker_address_city_code", t.address_city_code || "");
+    set("taker_address_state", t.address_state || "");
+    set("taker_address_zip", t.address_zip || "");
+    if (t.document) set("taker_location", "brasil");
+    setDbOpen(false);
+    toast.success("Tomador selecionado da base!");
+  };
+
   const applyRecentTaker = (t: RecentTaker) => {
     set("taker_document", t.taker_document);
     set("taker_name", t.taker_name);
