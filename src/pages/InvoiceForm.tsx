@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigationGuard } from "@/contexts/NavigationGuardContext";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
