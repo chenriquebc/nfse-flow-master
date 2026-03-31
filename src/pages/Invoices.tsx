@@ -46,7 +46,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Search, FileText, Download, Send, XCircle, Loader2, AlertTriangle, CheckCircle2, Clock, Info, ChevronDown, ChevronUp, RotateCcw, MoreVertical, Eye, ArrowUpDown, Code } from "lucide-react";
+import { Plus, Search, FileText, Download, Send, XCircle, Loader2, AlertTriangle, CheckCircle2, Clock, Info, ChevronDown, ChevronUp, RotateCcw, MoreVertical, Eye, ArrowUpDown, Code, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface Invoice {
@@ -535,6 +535,28 @@ export default function Invoices() {
                                   <AlertTriangle className="h-4 w-4 mr-2" />
                                   Ver Log de Eventos
                                 </DropdownMenuItem>
+                                {(inv.status === "rejected" || inv.status === "draft") && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      className="text-destructive focus:text-destructive"
+                                      onClick={async () => {
+                                        const confirmed = window.confirm("Tem certeza que deseja excluir esta nota? Esta ação não pode ser desfeita.");
+                                        if (!confirmed) return;
+                                        const { error } = await supabase.from("nfse_invoices").delete().eq("id", inv.id);
+                                        if (error) {
+                                          toast.error("Erro ao excluir nota", { description: error.message });
+                                        } else {
+                                          toast.success("Nota excluída com sucesso");
+                                          fetchInvoices();
+                                        }
+                                      }}
+                                    >
+                                      <Trash2 className="h-4 w-4 mr-2" />
+                                      Excluir
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
