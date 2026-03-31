@@ -48,12 +48,15 @@ export default function InvoiceForm() {
   const { tenant } = useTenant();
   const { user } = useAuth();
   const { permissions } = useUserPermissions();
+  const { subscribed, loading: subLoading } = useSubscription();
   const canEmit = permissions.isAdmin || permissions.can_emit_invoices;
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingInvoice, setLoadingInvoice] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [draftHydrated, setDraftHydrated] = useState(isEditing);
+  const [showExitDialog, setShowExitDialog] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null);
 
   const [form, setForm] = useState({
     company_id: "",
