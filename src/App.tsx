@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { TenantProvider } from "@/contexts/TenantContext";
+import { NavigationGuardProvider } from "@/contexts/NavigationGuardContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import TenantGate from "@/components/TenantGate";
 import ActivationGate from "@/components/ActivationGate";
