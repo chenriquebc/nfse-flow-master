@@ -107,7 +107,7 @@ export default function UserManagement() {
     const [profilesRes, rolesRes, permsRes] = await Promise.all([
       supabase.from("profiles").select("user_id, full_name, email").in("user_id", userIds),
       supabase.from("user_roles").select("user_id, role").eq("tenant_id", tenant.id).in("user_id", userIds),
-      supabase.from("user_permissions").select("user_id, can_view, can_emit_invoices, can_cancel_invoices, can_manage_companies, can_view_reports").eq("tenant_id", tenant.id).in("user_id", userIds),
+      supabase.from("user_permissions").select("user_id, can_view, can_emit_invoices, can_cancel_invoices, can_delete_invoices, can_manage_companies, can_view_reports").eq("tenant_id", tenant.id).in("user_id", userIds),
     ]);
 
     const profileMap = new Map((profilesRes.data || []).map((p: any) => [p.user_id, p]));
