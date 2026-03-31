@@ -154,7 +154,7 @@ export default function Takers() {
                               </Badge>
                             ) : (
                               <Badge variant="secondary" className="gap-1 text-xs">
-                                <MailOff className="h-3 w-3" /> Não
+                                <MailX className="h-3 w-3" /> Não
                               </Badge>
                             )}
                           </TableCell>
