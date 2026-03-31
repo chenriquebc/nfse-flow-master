@@ -1,12 +1,23 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useNavigate, useParams, useBlocker } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { useTenant } from "@/contexts/TenantContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, Send } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import { ArrowLeft, ArrowRight, Send, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import InvoiceWizardStepper from "@/components/invoice/InvoiceWizardStepper";
 import StepEmpresa from "@/components/invoice/StepEmpresa";

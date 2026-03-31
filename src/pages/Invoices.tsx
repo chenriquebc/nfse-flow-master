@@ -330,7 +330,16 @@ export default function Invoices() {
                     {paginated.map((inv) => (
                       <TableRow key={inv.id} className="hover:bg-muted/50">
                         <TableCell className="font-mono text-sm">
-                          {inv.invoice_number || inv.rps_number || "—"}
+                          {inv.invoice_number ? (
+                            <div>
+                              <span className="font-semibold">{inv.invoice_number}</span>
+                              {inv.rps_number && (
+                                <p className="text-[10px] text-muted-foreground">DPS {inv.rps_number}</p>
+                              )}
+                            </div>
+                          ) : inv.rps_number ? (
+                            <span className="text-muted-foreground">DPS {inv.rps_number}</span>
+                          ) : "—"}
                         </TableCell>
                         <TableCell>
                           <div>

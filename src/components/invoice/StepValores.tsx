@@ -277,7 +277,7 @@ export default function StepValores({ form, set, baseValue, issValue, totalDeduc
               <Label>Valor ISSQN</Label>
               <div className="flex">
                 <span className="inline-flex items-center px-3 bg-muted border border-r-0 border-input rounded-l-md text-sm text-muted-foreground">R$</span>
-                <Input type="text" readOnly className="h-10 rounded-l-none bg-muted/50" value={issValue.toFixed(2)} />
+                <Input type="text" readOnly className="h-10 rounded-l-none bg-muted/50" value={issValue.toFixed(2)} title="Calculado automaticamente (Alíquota × BC)" />
               </div>
             </div>
           </div>
