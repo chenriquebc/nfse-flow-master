@@ -507,36 +507,24 @@ export default function Invoices() {
                                     toast.info("DANFS-e disponível apenas para notas autorizadas");
                                     return;
                                   }
-                                  // Check if danfse_path exists
-                                  const { data: full } = await supabase
-                                    .from("nfse_invoices")
-                                    .select("danfse_path, xml_authorized")
-                                    .eq("id", inv.id)
-                                    .single();
-                                  if (full?.danfse_path) {
-                                    const { data: fileData } = await supabase.storage.from("certificates").download(full.danfse_path);
-                                    if (fileData) {
-                                      const url = URL.createObjectURL(fileData);
-                                      const a = document.createElement("a");
-                                      a.href = url;
-                                      a.download = `danfse_${inv.invoice_number || inv.id}.pdf`;
-                                      a.click();
-                                      URL.revokeObjectURL(url);
-                                      return;
-                                    }
-                                  }
-                                  // Fallback: generate simple DANFS-e from XML
-                                  if (full?.xml_authorized) {
-                                    const blob = new Blob([full.xml_authorized], { type: "application/xml" });
+                                  try {
+                                    toast.info("Gerando DANFS-e em PDF...");
+                                    const { data: html, error: fnErr } = await supabase.functions.invoke("generate-danfse", {
+                                      body: { invoice_id: inv.id },
+                                    });
+                                    if (fnErr) throw fnErr;
+                                    // Open HTML in a new window for printing/saving as PDF
+                                    const blob = new Blob([html], { type: "text/html" });
                                     const url = URL.createObjectURL(blob);
-                                    const a = document.createElement("a");
-                                    a.href = url;
-                                    a.download = `danfse_${inv.invoice_number || inv.id}.xml`;
-                                    a.click();
-                                    URL.revokeObjectURL(url);
-                                    toast.info("DANFS-e em PDF não disponível, XML autorizado baixado como alternativa");
-                                  } else {
-                                    toast.error("DANFS-e não disponível para esta nota");
+                                    const printWin = window.open(url, "_blank");
+                                    if (printWin) {
+                                      printWin.onload = () => {
+                                        setTimeout(() => printWin.print(), 500);
+                                      };
+                                    }
+                                    setTimeout(() => URL.revokeObjectURL(url), 10000);
+                                  } catch (err: any) {
+                                    toast.error("Erro ao gerar DANFS-e", { description: err?.message });
                                   }
                                 }}>
                                   <FileText className="h-4 w-4 mr-2" />
