@@ -128,18 +128,16 @@ export default function InvoiceForm() {
     return JSON.stringify(form) !== initialFormSnapshot;
   }, [form, initialFormSnapshot]);
 
-  // Block navigation via router (sidebar links, etc.)
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      hasChanges && currentLocation.pathname !== nextLocation.pathname
-  );
-
+  // Warn on browser tab close/refresh if there are changes
   useEffect(() => {
-    if (blocker.state === "blocked") {
-      setShowExitDialog(true);
-      setPendingNavigation(() => () => blocker.proceed());
-    }
-  }, [blocker.state]);
+    if (!hasChanges) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [hasChanges]);
 
   useEffect(() => {
     if (isEditing) return;
