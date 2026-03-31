@@ -46,6 +46,7 @@ const PERMISSION_LABELS: { key: string; label: string }[] = [
   { key: "can_view", label: "Consultar informações (somente leitura)" },
   { key: "can_emit_invoices", label: "Emitir notas fiscais" },
   { key: "can_cancel_invoices", label: "Cancelar notas fiscais" },
+  { key: "can_delete_invoices", label: "Excluir notas fiscais" },
   { key: "can_manage_companies", label: "Cadastrar/editar empresas" },
   { key: "can_view_reports", label: "Acessar relatórios" },
 ];
