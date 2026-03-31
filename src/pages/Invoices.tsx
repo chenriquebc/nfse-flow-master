@@ -46,7 +46,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Search, FileText, Download, Send, XCircle, Loader2, AlertTriangle, CheckCircle2, Clock, Info, ChevronDown, ChevronUp, RotateCcw, MoreVertical, Eye, ArrowUpDown, Code } from "lucide-react";
+import { Plus, Search, FileText, Download, Send, XCircle, Loader2, AlertTriangle, CheckCircle2, Clock, Info, ChevronDown, ChevronUp, RotateCcw, MoreVertical, Eye, ArrowUpDown, Code, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface Invoice {
