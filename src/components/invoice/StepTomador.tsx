@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { UserRound, Search, Loader2, History } from "lucide-react";
+import { UserRound, Search, Loader2, History, Database } from "lucide-react";
 import { fetchCnpj, fetchCep, resolveIbgeCode } from "@/lib/api/brasilapi";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
