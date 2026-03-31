@@ -8,6 +8,7 @@ export interface UserPermissions {
   can_view: boolean;
   can_emit_invoices: boolean;
   can_cancel_invoices: boolean;
+  can_delete_invoices: boolean;
   can_manage_companies: boolean;
   can_view_reports: boolean;
 }
@@ -17,6 +18,7 @@ const FULL_PERMISSIONS: UserPermissions = {
   can_view: true,
   can_emit_invoices: true,
   can_cancel_invoices: true,
+  can_delete_invoices: true,
   can_manage_companies: true,
   can_view_reports: true,
 };
@@ -26,6 +28,7 @@ const NO_PERMISSIONS: UserPermissions = {
   can_view: false,
   can_emit_invoices: false,
   can_cancel_invoices: false,
+  can_delete_invoices: false,
   can_manage_companies: false,
   can_view_reports: false,
 };
