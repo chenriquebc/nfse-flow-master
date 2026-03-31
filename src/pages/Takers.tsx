@@ -13,7 +13,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, UserRound, Pencil, Trash2, Mail, MailOff } from "lucide-react";
+import { Plus, Search, UserRound, Pencil, Trash2, Mail, MailX } from "lucide-react";
 import { toast } from "sonner";
 import TablePagination from "@/components/TablePagination";
 import { Badge } from "@/components/ui/badge";
