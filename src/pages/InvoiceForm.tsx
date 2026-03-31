@@ -50,6 +50,7 @@ export default function InvoiceForm() {
   const { user } = useAuth();
   const { permissions } = useUserPermissions();
   const { subscribed, loading: subLoading } = useSubscription();
+  const { setGuard, clearGuard } = useNavigationGuard();
   const canEmit = permissions.isAdmin || permissions.can_emit_invoices;
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(false);
