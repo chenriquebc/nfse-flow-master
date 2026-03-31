@@ -73,6 +73,7 @@ export default function StepTomador({ form, set }: StepTomadorProps) {
 
   useEffect(() => {
     if (!tenant) return;
+    // Fetch recent takers from invoices
     supabase
       .from("nfse_invoices")
       .select(
@@ -90,6 +91,15 @@ export default function StepTomador({ form, set }: StepTomadorProps) {
           }
         }
         setRecentTakers(Array.from(unique.values()).slice(0, 10));
+      });
+    // Fetch from service_takers table
+    supabase
+      .from("service_takers")
+      .select("id, document, name, email, phone, address_street, address_number, address_city, address_city_code, address_state, address_zip")
+      .eq("tenant_id", tenant.id)
+      .order("name")
+      .then(({ data }) => {
+        setDbTakers((data as ServiceTakerBase[]) || []);
       });
   }, [tenant]);
 
