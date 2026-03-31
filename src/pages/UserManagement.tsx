@@ -29,6 +29,7 @@ interface MemberRow {
     can_view: boolean;
     can_emit_invoices: boolean;
     can_cancel_invoices: boolean;
+    can_delete_invoices: boolean;
     can_manage_companies: boolean;
     can_view_reports: boolean;
   }[] | null;
