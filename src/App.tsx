@@ -25,6 +25,8 @@ import Reports from "@/pages/Reports";
 import SettingsPage from "@/pages/SettingsPage";
 import SubscriptionPage from "@/pages/SubscriptionPage";
 import UserManagement from "@/pages/UserManagement";
+import Takers from "@/pages/Takers";
+import TakerForm from "@/pages/TakerForm";
 import AdminLayout from "@/pages/admin/AdminLayout";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminAccounts from "@/pages/admin/AdminAccounts";
