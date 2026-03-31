@@ -58,6 +58,9 @@ const App = () => (
               <Route path="/companies/new" element={<ProtectedRoute><ActivationGate><TenantGate><PermissionGate permission="can_manage_companies"><CompanyForm /></PermissionGate></TenantGate></ActivationGate></ProtectedRoute>} />
               <Route path="/companies/:id" element={<ProtectedRoute><ActivationGate><TenantGate><PermissionGate permission="can_manage_companies"><CompanyForm /></PermissionGate></TenantGate></ActivationGate></ProtectedRoute>} />
               <Route path="/invoices" element={<ProtectedRoute><ActivationGate><TenantGate><Invoices /></TenantGate></ActivationGate></ProtectedRoute>} />
+              <Route path="/takers" element={<ProtectedRoute><ActivationGate><TenantGate><PermissionGate permission="can_manage_companies"><Takers /></PermissionGate></TenantGate></ActivationGate></ProtectedRoute>} />
+              <Route path="/takers/new" element={<ProtectedRoute><ActivationGate><TenantGate><PermissionGate permission="can_manage_companies"><TakerForm /></PermissionGate></TenantGate></ActivationGate></ProtectedRoute>} />
+              <Route path="/takers/:id" element={<ProtectedRoute><ActivationGate><TenantGate><PermissionGate permission="can_manage_companies"><TakerForm /></PermissionGate></TenantGate></ActivationGate></ProtectedRoute>} />
               <Route path="/invoices/new" element={<ProtectedRoute><ActivationGate><TenantGate><PermissionGate permission="can_emit_invoices"><InvoiceForm /></PermissionGate></TenantGate></ActivationGate></ProtectedRoute>} />
               <Route path="/invoices/:id" element={<ProtectedRoute><ActivationGate><TenantGate><InvoiceForm /></TenantGate></ActivationGate></ProtectedRoute>} />
               <Route path="/certificates" element={<ProtectedRoute><ActivationGate><TenantGate><PermissionGate permission="can_manage_companies"><Certificates /></PermissionGate></TenantGate></ActivationGate></ProtectedRoute>} />
