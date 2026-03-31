@@ -467,15 +467,13 @@ export default function InvoiceForm() {
   const handleDiscard = () => {
     sessionStorage.removeItem(INVOICE_DRAFT_STORAGE_KEY);
     setShowExitDialog(false);
-    if (blocker.state === "blocked") blocker.proceed();
-    else if (pendingNavigation) pendingNavigation();
+    if (pendingNavigation) pendingNavigation();
     else navigate("/invoices");
   };
 
   const handleCancelDialog = () => {
     setShowExitDialog(false);
     setPendingNavigation(null);
-    if (blocker.state === "blocked") blocker.reset();
   };
 
   const isLastStep = currentStep === STEPS.length - 1;
