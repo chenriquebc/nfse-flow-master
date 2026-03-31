@@ -142,6 +142,7 @@ export default function UserManagement() {
       can_view: true,
       can_emit_invoices: false,
       can_cancel_invoices: false,
+      can_delete_invoices: false,
       can_manage_companies: false,
       can_view_reports: false,
     });
