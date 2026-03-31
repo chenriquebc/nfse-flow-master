@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { UserRound, Search, Loader2, History } from "lucide-react";
+import { UserRound, Search, Loader2, History, Database } from "lucide-react";
 import { fetchCnpj, fetchCep, resolveIbgeCode } from "@/lib/api/brasilapi";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,15 +48,32 @@ interface RecentTaker {
   taker_address_zip: string | null;
 }
 
+interface ServiceTakerBase {
+  id: string;
+  document: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  address_street: string | null;
+  address_number: string | null;
+  address_city: string | null;
+  address_city_code: string | null;
+  address_state: string | null;
+  address_zip: string | null;
+}
+
 export default function StepTomador({ form, set }: StepTomadorProps) {
   const [searching, setSearching] = useState(false);
   const [searchingCep, setSearchingCep] = useState(false);
   const [recentTakers, setRecentTakers] = useState<RecentTaker[]>([]);
   const [recentOpen, setRecentOpen] = useState(false);
+  const [dbTakers, setDbTakers] = useState<ServiceTakerBase[]>([]);
+  const [dbOpen, setDbOpen] = useState(false);
   const { tenant } = useTenant();
 
   useEffect(() => {
     if (!tenant) return;
+    // Fetch recent takers from invoices
     supabase
       .from("nfse_invoices")
       .select(
@@ -75,7 +92,32 @@ export default function StepTomador({ form, set }: StepTomadorProps) {
         }
         setRecentTakers(Array.from(unique.values()).slice(0, 10));
       });
+    // Fetch from service_takers table
+    supabase
+      .from("service_takers")
+      .select("id, document, name, email, phone, address_street, address_number, address_city, address_city_code, address_state, address_zip")
+      .eq("tenant_id", tenant.id)
+      .order("name")
+      .then(({ data }) => {
+        setDbTakers((data as ServiceTakerBase[]) || []);
+      });
   }, [tenant]);
+
+  const applyDbTaker = (t: ServiceTakerBase) => {
+    set("taker_document", t.document);
+    set("taker_name", t.name);
+    set("taker_email", t.email || "");
+    set("taker_phone", t.phone || "");
+    set("taker_address_street", t.address_street || "");
+    set("taker_address_number", t.address_number || "");
+    set("taker_address_city", t.address_city || "");
+    set("taker_address_city_code", t.address_city_code || "");
+    set("taker_address_state", t.address_state || "");
+    set("taker_address_zip", t.address_zip || "");
+    if (t.document) set("taker_location", "brasil");
+    setDbOpen(false);
+    toast.success("Tomador selecionado da base!");
+  };
 
   const applyRecentTaker = (t: RecentTaker) => {
     set("taker_document", t.taker_document);
@@ -183,34 +225,64 @@ export default function StepTomador({ form, set }: StepTomadorProps) {
             </RadioGroup>
           </div>
 
-          {showTakerFields && recentTakers.length > 0 && (
-            <div className="flex justify-end">
-              <Popover open={recentOpen} onOpenChange={setRecentOpen}>
-                <PopoverTrigger asChild>
-                  <Button type="button" variant="outline" size="sm" className="gap-2">
-                    <History className="h-4 w-4" />
-                    Últimos tomadores
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80 p-0" align="end">
-                  <Command>
-                    <CommandInput placeholder="Buscar tomador..." />
-                    <CommandList>
-                      <CommandEmpty>Nenhum tomador encontrado.</CommandEmpty>
-                      <CommandGroup>
-                        {recentTakers.map((t) => (
-                          <CommandItem key={t.taker_document} onSelect={() => applyRecentTaker(t)}>
-                            <div className="flex flex-col">
-                              <span className="font-medium text-sm">{t.taker_name}</span>
-                              <span className="text-xs">{t.taker_document}</span>
-                            </div>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+          {showTakerFields && (
+            <div className="flex justify-end gap-2 flex-wrap">
+              {dbTakers.length > 0 && (
+                <Popover open={dbOpen} onOpenChange={setDbOpen}>
+                  <PopoverTrigger asChild>
+                    <Button type="button" variant="outline" size="sm" className="gap-2">
+                      <Database className="h-4 w-4" />
+                      Buscar da base
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 p-0" align="end">
+                    <Command>
+                      <CommandInput placeholder="Buscar tomador cadastrado..." />
+                      <CommandList>
+                        <CommandEmpty>Nenhum tomador encontrado.</CommandEmpty>
+                        <CommandGroup>
+                          {dbTakers.map((t) => (
+                            <CommandItem key={t.id} onSelect={() => applyDbTaker(t)}>
+                              <div className="flex flex-col">
+                                <span className="font-medium text-sm">{t.name}</span>
+                                <span className="text-xs text-muted-foreground">{t.document}</span>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              )}
+              {recentTakers.length > 0 && (
+                <Popover open={recentOpen} onOpenChange={setRecentOpen}>
+                  <PopoverTrigger asChild>
+                    <Button type="button" variant="outline" size="sm" className="gap-2">
+                      <History className="h-4 w-4" />
+                      Últimos tomadores
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 p-0" align="end">
+                    <Command>
+                      <CommandInput placeholder="Buscar tomador..." />
+                      <CommandList>
+                        <CommandEmpty>Nenhum tomador encontrado.</CommandEmpty>
+                        <CommandGroup>
+                          {recentTakers.map((t) => (
+                            <CommandItem key={t.taker_document} onSelect={() => applyRecentTaker(t)}>
+                              <div className="flex flex-col">
+                                <span className="font-medium text-sm">{t.taker_name}</span>
+                                <span className="text-xs">{t.taker_document}</span>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              )}
             </div>
           )}
         </CardContent>

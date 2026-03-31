@@ -167,6 +167,23 @@ export default function Invoices() {
         toast.success("NFS-e autorizada com sucesso!", {
           description: data.chave_acesso ? `Chave: ${data.chave_acesso}` : undefined,
         });
+        // Check auto_send_email for the taker
+        try {
+          const invoice = invoices.find((i) => i.id === invoiceId);
+          if (invoice?.taker_document) {
+            const { data: taker } = await supabase
+              .from("service_takers")
+              .select("auto_send_email, email")
+              .eq("tenant_id", tenant!.id)
+              .eq("document", invoice.taker_document)
+              .maybeSingle();
+            if (taker?.auto_send_email && taker?.email) {
+              toast.info("📧 Envio automático de e-mail pendente", {
+                description: `O XML/PDF será enviado para ${taker.email} quando o domínio de e-mail estiver configurado.`,
+              });
+            }
+          }
+        } catch { /* ignore auto-email check errors */ }
       } else {
         toast.error("Nota rejeitada", {
           description: data?.error_message || "Verifique os dados e tente novamente",

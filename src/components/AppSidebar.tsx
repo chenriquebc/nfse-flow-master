@@ -11,6 +11,7 @@ import {
   Shield,
   CreditCard,
   Users,
+  UserRound,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,6 +38,7 @@ const navItems: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Notas Fiscais", href: "/invoices", icon: FileText },
   { label: "Empresas", href: "/companies", icon: Building2, permission: "can_manage_companies" },
+  { label: "Tomadores", href: "/takers", icon: UserRound, permission: "can_manage_companies" },
   { label: "Certificados", href: "/certificates", icon: ShieldCheck, permission: "can_manage_companies" },
   { label: "Relatórios", href: "/reports", icon: Receipt, permission: "can_view_reports" },
   { label: "Usuários", href: "/users", icon: Users, adminOnly: true },
