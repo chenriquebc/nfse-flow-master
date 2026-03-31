@@ -119,10 +119,10 @@ export default function AppSidebar({ onNavigate }: AppSidebarProps) {
         {visibleItems.map((item) => {
           const isActive = location.pathname === item.href || location.pathname.startsWith(item.href + "/");
           return (
-            <Link
+            <a
               key={item.href}
-              to={item.href}
-              onClick={handleNav}
+              href={item.href}
+              onClick={(e) => handleNavClick(e, item.href)}
               className={`group flex items-center gap-3 rounded-lg px-3 py-2 text-[0.8125rem] font-medium transition-all duration-200 ease-premium ${
                 isActive
                   ? "bg-sidebar-primary/15 text-sidebar-primary-foreground shadow-sm"
@@ -136,7 +136,7 @@ export default function AppSidebar({ onNavigate }: AppSidebarProps) {
               {isActive && (
                 <div className="ml-auto h-1.5 w-1.5 rounded-full bg-sidebar-primary" />
               )}
-            </Link>
+            </a>
           );
         })}
 
