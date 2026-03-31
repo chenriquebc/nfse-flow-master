@@ -167,13 +167,15 @@ export default function StepValores({ form, set, baseValue, issValue, totalDeduc
         </CardContent>
       </Card>
 
-      {/* Info banner */}
-      <Alert className="border-primary/20 bg-primary/5">
-        <Info className="h-4 w-4 text-primary" />
-        <AlertDescription className="text-sm text-muted-foreground">
-          As informações de Tributação Municipal abaixo, exceto retenção, não podem ser alteradas pois o tributo (ISSQN) será apurado pelo Simples Nacional. Para alguns serviços, dedução/redução pode ser alterada.
-        </AlertDescription>
-      </Alert>
+      {/* Info banner - only show for non-Simples Nacional */}
+      {form.tax_assessment_regime !== "1" && form.tax_assessment_regime !== "2" && (
+        <Alert className="border-primary/20 bg-primary/5">
+          <Info className="h-4 w-4 text-primary" />
+          <AlertDescription className="text-sm text-muted-foreground">
+            As informações de Tributação Municipal abaixo, exceto retenção, não podem ser alteradas pois o tributo (ISSQN) será apurado pelo regime tributário selecionado.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* TRIBUTAÇÃO MUNICIPAL */}
       <Card>
@@ -275,7 +277,7 @@ export default function StepValores({ form, set, baseValue, issValue, totalDeduc
               <Label>Valor ISSQN</Label>
               <div className="flex">
                 <span className="inline-flex items-center px-3 bg-muted border border-r-0 border-input rounded-l-md text-sm text-muted-foreground">R$</span>
-                <Input type="text" readOnly className="h-10 rounded-l-none bg-muted/50" value={issValue.toFixed(2)} />
+                <Input type="text" readOnly className="h-10 rounded-l-none bg-muted/50" value={issValue.toFixed(2)} title="Calculado automaticamente (Alíquota × BC)" />
               </div>
             </div>
           </div>

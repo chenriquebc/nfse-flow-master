@@ -5,6 +5,7 @@ import StatusBadge from "@/components/StatusBadge";
 import TablePagination from "@/components/TablePagination";
 import { useTenant } from "@/contexts/TenantContext";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -89,8 +90,10 @@ const EVENT_TYPE_CONFIG: Record<string, { label: string; icon: typeof Info; colo
 export default function Invoices() {
   const { tenant } = useTenant();
   const { permissions } = useUserPermissions();
-  const canEmit = permissions.isAdmin || permissions.can_emit_invoices;
+  const { subscribed, loading: subLoading } = useSubscription();
+  const canEmit = (permissions.isAdmin || permissions.can_emit_invoices) && (subLoading || subscribed);
   const canCancel = permissions.isAdmin || permissions.can_cancel_invoices;
+  const isSubscriptionInactive = !subLoading && !subscribed;
   const navigate = useNavigate();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [search, setSearch] = useState("");
@@ -258,9 +261,9 @@ export default function Invoices() {
               <Download className="mr-2 h-4 w-4" />
               Exportar
             </Button>
-            {canEmit && (
+            {(permissions.isAdmin || permissions.can_emit_invoices) && (
               <Link to="/invoices/new">
-                <Button size="sm">
+                <Button size="sm" disabled={isSubscriptionInactive}>
                   <Plus className="mr-2 h-4 w-4" />
                   Nova Nota
                 </Button>
@@ -268,6 +271,12 @@ export default function Invoices() {
             )}
           </div>
         </div>
+        {isSubscriptionInactive && (
+          <div className="mb-4 flex items-center gap-2 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md px-3 py-2">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            Sua assinatura está inativa. Não é possível emitir ou reenviar notas fiscais.
+          </div>
+        )}
 
         <Card>
           <CardContent className="pt-6">
@@ -330,7 +339,16 @@ export default function Invoices() {
                     {paginated.map((inv) => (
                       <TableRow key={inv.id} className="hover:bg-muted/50">
                         <TableCell className="font-mono text-sm">
-                          {inv.invoice_number || inv.rps_number || "—"}
+                          {inv.invoice_number ? (
+                            <div>
+                              <span className="font-semibold">{inv.invoice_number}</span>
+                              {inv.rps_number && (
+                                <p className="text-[10px] text-muted-foreground">DPS {inv.rps_number}</p>
+                              )}
+                            </div>
+                          ) : inv.rps_number ? (
+                            <span className="text-muted-foreground">DPS {inv.rps_number}</span>
+                          ) : "—"}
                         </TableCell>
                         <TableCell>
                           <div>
@@ -489,36 +507,24 @@ export default function Invoices() {
                                     toast.info("DANFS-e disponível apenas para notas autorizadas");
                                     return;
                                   }
-                                  // Check if danfse_path exists
-                                  const { data: full } = await supabase
-                                    .from("nfse_invoices")
-                                    .select("danfse_path, xml_authorized")
-                                    .eq("id", inv.id)
-                                    .single();
-                                  if (full?.danfse_path) {
-                                    const { data: fileData } = await supabase.storage.from("certificates").download(full.danfse_path);
-                                    if (fileData) {
-                                      const url = URL.createObjectURL(fileData);
-                                      const a = document.createElement("a");
-                                      a.href = url;
-                                      a.download = `danfse_${inv.invoice_number || inv.id}.pdf`;
-                                      a.click();
-                                      URL.revokeObjectURL(url);
-                                      return;
-                                    }
-                                  }
-                                  // Fallback: generate simple DANFS-e from XML
-                                  if (full?.xml_authorized) {
-                                    const blob = new Blob([full.xml_authorized], { type: "application/xml" });
+                                  try {
+                                    toast.info("Gerando DANFS-e em PDF...");
+                                    const { data: html, error: fnErr } = await supabase.functions.invoke("generate-danfse", {
+                                      body: { invoice_id: inv.id },
+                                    });
+                                    if (fnErr) throw fnErr;
+                                    // Open HTML in a new window for printing/saving as PDF
+                                    const blob = new Blob([html], { type: "text/html" });
                                     const url = URL.createObjectURL(blob);
-                                    const a = document.createElement("a");
-                                    a.href = url;
-                                    a.download = `danfse_${inv.invoice_number || inv.id}.xml`;
-                                    a.click();
-                                    URL.revokeObjectURL(url);
-                                    toast.info("DANFS-e em PDF não disponível, XML autorizado baixado como alternativa");
-                                  } else {
-                                    toast.error("DANFS-e não disponível para esta nota");
+                                    const printWin = window.open(url, "_blank");
+                                    if (printWin) {
+                                      printWin.onload = () => {
+                                        setTimeout(() => printWin.print(), 500);
+                                      };
+                                    }
+                                    setTimeout(() => URL.revokeObjectURL(url), 10000);
+                                  } catch (err: any) {
+                                    toast.error("Erro ao gerar DANFS-e", { description: err?.message });
                                   }
                                 }}>
                                   <FileText className="h-4 w-4 mr-2" />

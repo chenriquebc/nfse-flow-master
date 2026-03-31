@@ -1,12 +1,23 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useNavigate, useParams, useBlocker } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { useTenant } from "@/contexts/TenantContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, Send } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import { ArrowLeft, ArrowRight, Send, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import InvoiceWizardStepper from "@/components/invoice/InvoiceWizardStepper";
 import StepEmpresa from "@/components/invoice/StepEmpresa";
@@ -37,12 +48,15 @@ export default function InvoiceForm() {
   const { tenant } = useTenant();
   const { user } = useAuth();
   const { permissions } = useUserPermissions();
+  const { subscribed, loading: subLoading } = useSubscription();
   const canEmit = permissions.isAdmin || permissions.can_emit_invoices;
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingInvoice, setLoadingInvoice] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [draftHydrated, setDraftHydrated] = useState(isEditing);
+  const [showExitDialog, setShowExitDialog] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null);
 
   const [form, setForm] = useState({
     company_id: "",
@@ -100,6 +114,32 @@ export default function InvoiceForm() {
     csll_value: "0",
     notes: "",
   });
+
+  // Track if user has made changes
+  const [initialFormSnapshot, setInitialFormSnapshot] = useState<string>("");
+  useEffect(() => {
+    if (!initialFormSnapshot && draftHydrated) {
+      setInitialFormSnapshot(JSON.stringify(form));
+    }
+  }, [draftHydrated]);
+
+  const hasChanges = useMemo(() => {
+    if (!initialFormSnapshot) return false;
+    return JSON.stringify(form) !== initialFormSnapshot;
+  }, [form, initialFormSnapshot]);
+
+  // Block navigation via router (sidebar links, etc.)
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      hasChanges && currentLocation.pathname !== nextLocation.pathname
+  );
+
+  useEffect(() => {
+    if (blocker.state === "blocked") {
+      setShowExitDialog(true);
+      setPendingNavigation(() => () => blocker.proceed());
+    }
+  }, [blocker.state]);
 
   useEffect(() => {
     if (isEditing) return;
@@ -410,19 +450,56 @@ export default function InvoiceForm() {
     setEmitting(false);
   };
 
+  const handleExitClick = () => {
+    if (hasChanges) {
+      setShowExitDialog(true);
+      setPendingNavigation(() => () => navigate("/invoices"));
+    } else {
+      navigate("/invoices");
+    }
+  };
+
+  const handleSaveDraft = () => {
+    // sessionStorage already has the draft from the persist effect
+    setShowExitDialog(false);
+    if (pendingNavigation) pendingNavigation();
+    else navigate("/invoices");
+  };
+
+  const handleDiscard = () => {
+    sessionStorage.removeItem(INVOICE_DRAFT_STORAGE_KEY);
+    setShowExitDialog(false);
+    if (blocker.state === "blocked") blocker.proceed();
+    else if (pendingNavigation) pendingNavigation();
+    else navigate("/invoices");
+  };
+
+  const handleCancelDialog = () => {
+    setShowExitDialog(false);
+    setPendingNavigation(null);
+    if (blocker.state === "blocked") blocker.reset();
+  };
+
   const isLastStep = currentStep === STEPS.length - 1;
+  const isSubscriptionInactive = !subLoading && !subscribed;
 
   return (
     <AppLayout>
       <div className="animate-fade-in max-w-3xl mx-auto">
         <div className="mb-6">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/invoices")} className="mb-4">
+          <Button variant="ghost" size="sm" onClick={handleExitClick} className="mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar
           </Button>
           <h1 className="text-xl sm:text-2xl font-bold text-foreground">
             {isEditing ? "Editar Nota Fiscal" : "Nova Nota Fiscal de Serviço"}
           </h1>
+          {isSubscriptionInactive && (
+            <div className="mt-2 flex items-center gap-2 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md px-3 py-2">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              Sua assinatura está inativa. Não é possível salvar ou emitir notas.
+            </div>
+          )}
         </div>
 
         <InvoiceWizardStepper steps={STEPS} currentStep={currentStep} />
@@ -452,7 +529,7 @@ export default function InvoiceForm() {
               totalDeductions={totalDeductions}
               netValue={netValue}
               formatCurrency={formatCurrency}
-              onEmit={canEmit ? handleSaveAndEmit : undefined}
+              onEmit={canEmit && !isSubscriptionInactive ? handleSaveAndEmit : undefined}
               emitting={emitting}
             />
           )}
@@ -463,7 +540,7 @@ export default function InvoiceForm() {
           <Button
             type="button"
             variant="outline"
-            onClick={currentStep === 0 ? () => navigate("/invoices") : goBack}
+            onClick={currentStep === 0 ? handleExitClick : goBack}
             className="w-auto"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -471,7 +548,7 @@ export default function InvoiceForm() {
           </Button>
 
           {isLastStep ? (
-            <Button onClick={handleSubmit} disabled={loading} className="w-auto">
+            <Button onClick={handleSubmit} disabled={loading || isSubscriptionInactive} className="w-auto">
               <Send className="mr-2 h-4 w-4" />
               {loading ? "Salvando..." : "Salvar Rascunho"}
             </Button>
@@ -483,6 +560,23 @@ export default function InvoiceForm() {
           )}
         </div>
       </div>
+
+      {/* Exit confirmation dialog */}
+      <AlertDialog open={showExitDialog} onOpenChange={(open) => { if (!open) handleCancelDialog(); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sair do formulário?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você tem alterações não salvas. Deseja salvar como rascunho para continuar depois ou descartar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel onClick={handleCancelDialog}>Continuar Editando</AlertDialogCancel>
+            <Button variant="outline" onClick={handleDiscard}>Descartar</Button>
+            <AlertDialogAction onClick={handleSaveDraft}>Salvar Rascunho</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }
