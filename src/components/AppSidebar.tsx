@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   FileText,
@@ -17,6 +17,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTenant } from "@/contexts/TenantContext";
 import { usePlatformAdmin } from "@/hooks/usePlatformAdmin";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { useNavigationGuard } from "@/contexts/NavigationGuardContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,13 +50,19 @@ interface AppSidebarProps {
 
 export default function AppSidebar({ onNavigate }: AppSidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const { tenant, tenants, setCurrentTenant } = useTenant();
   const { isAdmin } = usePlatformAdmin();
   const { permissions, loading: permissionsLoading } = useUserPermissions();
+  const { requestNavigation } = useNavigationGuard();
 
-  const handleNav = () => {
-    onNavigate?.();
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    e.preventDefault();
+    const navigated = requestNavigation(() => {
+      navigate(href);
+      onNavigate?.();
+    });
   };
 
   const visibleItems = permissionsLoading
@@ -112,10 +119,10 @@ export default function AppSidebar({ onNavigate }: AppSidebarProps) {
         {visibleItems.map((item) => {
           const isActive = location.pathname === item.href || location.pathname.startsWith(item.href + "/");
           return (
-            <Link
+            <a
               key={item.href}
-              to={item.href}
-              onClick={handleNav}
+              href={item.href}
+              onClick={(e) => handleNavClick(e, item.href)}
               className={`group flex items-center gap-3 rounded-lg px-3 py-2 text-[0.8125rem] font-medium transition-all duration-200 ease-premium ${
                 isActive
                   ? "bg-sidebar-primary/15 text-sidebar-primary-foreground shadow-sm"
@@ -129,20 +136,20 @@ export default function AppSidebar({ onNavigate }: AppSidebarProps) {
               {isActive && (
                 <div className="ml-auto h-1.5 w-1.5 rounded-full bg-sidebar-primary" />
               )}
-            </Link>
+            </a>
           );
         })}
 
         {isAdmin && (
           <div className="pt-3 mt-3 border-t border-[hsl(225,18%,16%)]">
-            <Link
-              to="/admin"
-              onClick={handleNav}
+            <a
+              href="/admin"
+              onClick={(e) => handleNavClick(e, "/admin")}
               className="group flex items-center gap-3 rounded-lg px-3 py-2 text-[0.8125rem] font-medium text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-all duration-200"
             >
               <Shield className="h-[16px] w-[16px] shrink-0 text-sidebar-muted group-hover:text-sidebar-foreground/70 transition-colors duration-200" />
               Painel Admin
-            </Link>
+            </a>
           </div>
         )}
       </nav>

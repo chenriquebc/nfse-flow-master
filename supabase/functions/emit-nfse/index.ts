@@ -759,12 +759,16 @@ Deno.serve(async (req) => {
     }
     const { cert, key, certPem, keyPem } = certData;
 
-    // Generate RPS number
-    const { count } = await supabase
+    // Generate RPS number using MAX to avoid duplicates (E0014)
+    const { data: maxRpsRow } = await supabase
       .from("nfse_invoices")
-      .select("id", { count: "exact", head: true })
-      .eq("company_id", company.id);
-    const rpsNumber = (count || 0) + 1;
+      .select("rps_number")
+      .eq("company_id", company.id)
+      .not("rps_number", "is", null)
+      .order("rps_number", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const rpsNumber = (maxRpsRow?.rps_number || 0) + 1;
 
     const invoiceForEmission = {
       ...invoice,

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { useTenant } from "@/contexts/TenantContext";
@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigationGuard } from "@/contexts/NavigationGuardContext";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -49,6 +50,7 @@ export default function InvoiceForm() {
   const { user } = useAuth();
   const { permissions } = useUserPermissions();
   const { subscribed, loading: subLoading } = useSubscription();
+  const { setGuard, clearGuard } = useNavigationGuard();
   const canEmit = permissions.isAdmin || permissions.can_emit_invoices;
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(false);
@@ -127,6 +129,27 @@ export default function InvoiceForm() {
     if (!initialFormSnapshot) return false;
     return JSON.stringify(form) !== initialFormSnapshot;
   }, [form, initialFormSnapshot]);
+
+  // Register navigation guard
+  useEffect(() => {
+    if (hasChanges) {
+      setGuard(true, () => {});
+    } else {
+      clearGuard();
+    }
+    return () => clearGuard();
+  }, [hasChanges, setGuard, clearGuard]);
+
+  // Listen for blocked navigation from sidebar
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const navFn = (e as CustomEvent).detail as () => void;
+      setShowExitDialog(true);
+      setPendingNavigation(() => navFn);
+    };
+    window.addEventListener("nav-guard-blocked", handler);
+    return () => window.removeEventListener("nav-guard-blocked", handler);
+  }, []);
 
   // Warn on browser tab close/refresh if there are changes
   useEffect(() => {
@@ -458,7 +481,7 @@ export default function InvoiceForm() {
   };
 
   const handleSaveDraft = () => {
-    // sessionStorage already has the draft from the persist effect
+    clearGuard();
     setShowExitDialog(false);
     if (pendingNavigation) pendingNavigation();
     else navigate("/invoices");
@@ -466,6 +489,7 @@ export default function InvoiceForm() {
 
   const handleDiscard = () => {
     sessionStorage.removeItem(INVOICE_DRAFT_STORAGE_KEY);
+    clearGuard();
     setShowExitDialog(false);
     if (pendingNavigation) pendingNavigation();
     else navigate("/invoices");
