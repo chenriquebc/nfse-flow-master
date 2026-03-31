@@ -652,7 +652,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Load invoice
     const { data: invoice, error: invError } = await supabase
       .from("nfse_invoices")
       .select("*, companies(*)")
@@ -671,6 +670,23 @@ Deno.serve(async (req) => {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // ─── Server-side subscription check ─────────────────────────────────
+    const { data: tenantData } = await supabase
+      .from("tenants")
+      .select("subscription_status, is_active")
+      .eq("id", invoice.tenant_id)
+      .single();
+
+    if (tenantData) {
+      const inactiveStatuses = ["canceled", "unpaid", "past_due"];
+      if (!tenantData.is_active || inactiveStatuses.includes(tenantData.subscription_status)) {
+        return new Response(JSON.stringify({ error: "Assinatura inativa. Não é possível emitir notas fiscais." }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     const company = invoice.companies;
