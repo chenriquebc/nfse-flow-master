@@ -59,7 +59,9 @@ export default function StepTomador({ form, set }: StepTomadorProps) {
     if (!tenant) return;
     supabase
       .from("nfse_invoices")
-      .select("taker_document, taker_name, taker_email, taker_phone, taker_address_street, taker_address_number, taker_address_city, taker_address_city_code, taker_address_state, taker_address_zip")
+      .select(
+        "taker_document, taker_name, taker_email, taker_phone, taker_address_street, taker_address_number, taker_address_city, taker_address_city_code, taker_address_state, taker_address_zip",
+      )
       .eq("tenant_id", tenant.id)
       .order("created_at", { ascending: false })
       .limit(50)
@@ -121,7 +123,10 @@ export default function StepTomador({ form, set }: StepTomadorProps) {
 
   const handleSearchCep = async () => {
     const cep = form.taker_address_zip.replace(/\D/g, "");
-    if (cep.length !== 8) { toast.error("CEP inválido"); return; }
+    if (cep.length !== 8) {
+      toast.error("CEP inválido");
+      return;
+    }
     setSearchingCep(true);
     try {
       const data = await fetchCep(cep);
@@ -149,7 +154,7 @@ export default function StepTomador({ form, set }: StepTomadorProps) {
       <Card>
         <CardContent className="pt-6 space-y-4">
           <h3 className="text-sm font-semibold text-primary uppercase tracking-wide">Tomador do Serviço</h3>
-          
+
           <div className="space-y-3">
             <Label>Onde está localizado o estabelecimento/domicílio? *</Label>
             <RadioGroup
@@ -159,15 +164,21 @@ export default function StepTomador({ form, set }: StepTomadorProps) {
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="nao_informado" id="taker-nao" />
-                <Label htmlFor="taker-nao" className="font-normal cursor-pointer">Tomador não informado</Label>
+                <Label htmlFor="taker-nao" className="font-normal cursor-pointer">
+                  Tomador não informado
+                </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="brasil" id="taker-brasil" />
-                <Label htmlFor="taker-brasil" className="font-normal cursor-pointer">Brasil</Label>
+                <Label htmlFor="taker-brasil" className="font-normal cursor-pointer">
+                  Brasil
+                </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="exterior" id="taker-exterior" />
-                <Label htmlFor="taker-exterior" className="font-normal cursor-pointer">Exterior</Label>
+                <Label htmlFor="taker-exterior" className="font-normal cursor-pointer">
+                  Exterior
+                </Label>
               </div>
             </RadioGroup>
           </div>
@@ -191,7 +202,7 @@ export default function StepTomador({ form, set }: StepTomadorProps) {
                           <CommandItem key={t.taker_document} onSelect={() => applyRecentTaker(t)}>
                             <div className="flex flex-col">
                               <span className="font-medium text-sm">{t.taker_name}</span>
-                              <span className="text-xs text-muted-foreground">{t.taker_document}</span>
+                              <span className="text-xs">{t.taker_document}</span>
                             </div>
                           </CommandItem>
                         ))}
@@ -219,7 +230,13 @@ export default function StepTomador({ form, set }: StepTomadorProps) {
                     onChange={(e) => set("taker_document", e.target.value)}
                     placeholder="00.000.000/0000-00"
                   />
-                  <Button type="button" variant="outline" className="h-12 px-3" onClick={handleSearchDoc} disabled={searching}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-12 px-3"
+                    onClick={handleSearchDoc}
+                    disabled={searching}
+                  >
                     {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
                   </Button>
                 </div>
@@ -256,7 +273,13 @@ export default function StepTomador({ form, set }: StepTomadorProps) {
                     onChange={(e) => set("taker_address_zip", e.target.value)}
                     placeholder="00000-000"
                   />
-                  <Button type="button" variant="outline" className="h-12 px-3" onClick={handleSearchCep} disabled={searchingCep}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-12 px-3"
+                    onClick={handleSearchCep}
+                    disabled={searchingCep}
+                  >
                     {searchingCep ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
                   </Button>
                 </div>
@@ -265,11 +288,17 @@ export default function StepTomador({ form, set }: StepTomadorProps) {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-2 sm:col-span-2">
                   <Label>Logradouro</Label>
-                  <Input value={form.taker_address_street} onChange={(e) => set("taker_address_street", e.target.value)} />
+                  <Input
+                    value={form.taker_address_street}
+                    onChange={(e) => set("taker_address_street", e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Número</Label>
-                  <Input value={form.taker_address_number} onChange={(e) => set("taker_address_number", e.target.value)} />
+                  <Input
+                    value={form.taker_address_number}
+                    onChange={(e) => set("taker_address_number", e.target.value)}
+                  />
                 </div>
               </div>
 
@@ -280,11 +309,18 @@ export default function StepTomador({ form, set }: StepTomadorProps) {
                 </div>
                 <div className="space-y-2">
                   <Label>UF</Label>
-                  <Input value={form.taker_address_state} onChange={(e) => set("taker_address_state", e.target.value)} maxLength={2} />
+                  <Input
+                    value={form.taker_address_state}
+                    onChange={(e) => set("taker_address_state", e.target.value)}
+                    maxLength={2}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Cód. Município</Label>
-                  <Input value={form.taker_address_city_code} onChange={(e) => set("taker_address_city_code", e.target.value)} />
+                  <Input
+                    value={form.taker_address_city_code}
+                    onChange={(e) => set("taker_address_city_code", e.target.value)}
+                  />
                 </div>
               </div>
             </CardContent>
@@ -306,15 +342,21 @@ export default function StepTomador({ form, set }: StepTomadorProps) {
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="none" id="int-none" />
-                <Label htmlFor="int-none" className="font-normal cursor-pointer">Intermediário não informado</Label>
+                <Label htmlFor="int-none" className="font-normal cursor-pointer">
+                  Intermediário não informado
+                </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="brasil" id="int-brasil" />
-                <Label htmlFor="int-brasil" className="font-normal cursor-pointer">Brasil</Label>
+                <Label htmlFor="int-brasil" className="font-normal cursor-pointer">
+                  Brasil
+                </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="exterior" id="int-exterior" />
-                <Label htmlFor="int-exterior" className="font-normal cursor-pointer">Exterior</Label>
+                <Label htmlFor="int-exterior" className="font-normal cursor-pointer">
+                  Exterior
+                </Label>
               </div>
             </RadioGroup>
           </div>
@@ -323,11 +365,20 @@ export default function StepTomador({ form, set }: StepTomadorProps) {
             <div className="space-y-4 pt-2 animate-fade-in">
               <div className="space-y-2">
                 <Label>CPF/CNPJ do Intermediário *</Label>
-                <Input className="h-12" value={form.intermediary_document} onChange={(e) => set("intermediary_document", e.target.value)} placeholder="Documento do intermediário" />
+                <Input
+                  className="h-12"
+                  value={form.intermediary_document}
+                  onChange={(e) => set("intermediary_document", e.target.value)}
+                  placeholder="Documento do intermediário"
+                />
               </div>
               <div className="space-y-2">
                 <Label>Nome / Razão Social *</Label>
-                <Input className="h-12" value={form.intermediary_name} onChange={(e) => set("intermediary_name", e.target.value)} />
+                <Input
+                  className="h-12"
+                  value={form.intermediary_name}
+                  onChange={(e) => set("intermediary_name", e.target.value)}
+                />
               </div>
               {form.intermediary_type === "brasil" && (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -337,11 +388,18 @@ export default function StepTomador({ form, set }: StepTomadorProps) {
                   </div>
                   <div className="space-y-2">
                     <Label>UF</Label>
-                    <Input value={form.intermediary_state} onChange={(e) => set("intermediary_state", e.target.value)} maxLength={2} />
+                    <Input
+                      value={form.intermediary_state}
+                      onChange={(e) => set("intermediary_state", e.target.value)}
+                      maxLength={2}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Cód. Município</Label>
-                    <Input value={form.intermediary_city_code} onChange={(e) => set("intermediary_city_code", e.target.value)} />
+                    <Input
+                      value={form.intermediary_city_code}
+                      onChange={(e) => set("intermediary_city_code", e.target.value)}
+                    />
                   </div>
                 </div>
               )}
