@@ -225,34 +225,64 @@ export default function StepTomador({ form, set }: StepTomadorProps) {
             </RadioGroup>
           </div>
 
-          {showTakerFields && recentTakers.length > 0 && (
-            <div className="flex justify-end">
-              <Popover open={recentOpen} onOpenChange={setRecentOpen}>
-                <PopoverTrigger asChild>
-                  <Button type="button" variant="outline" size="sm" className="gap-2">
-                    <History className="h-4 w-4" />
-                    Últimos tomadores
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80 p-0" align="end">
-                  <Command>
-                    <CommandInput placeholder="Buscar tomador..." />
-                    <CommandList>
-                      <CommandEmpty>Nenhum tomador encontrado.</CommandEmpty>
-                      <CommandGroup>
-                        {recentTakers.map((t) => (
-                          <CommandItem key={t.taker_document} onSelect={() => applyRecentTaker(t)}>
-                            <div className="flex flex-col">
-                              <span className="font-medium text-sm">{t.taker_name}</span>
-                              <span className="text-xs">{t.taker_document}</span>
-                            </div>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+          {showTakerFields && (
+            <div className="flex justify-end gap-2 flex-wrap">
+              {dbTakers.length > 0 && (
+                <Popover open={dbOpen} onOpenChange={setDbOpen}>
+                  <PopoverTrigger asChild>
+                    <Button type="button" variant="outline" size="sm" className="gap-2">
+                      <Database className="h-4 w-4" />
+                      Buscar da base
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 p-0" align="end">
+                    <Command>
+                      <CommandInput placeholder="Buscar tomador cadastrado..." />
+                      <CommandList>
+                        <CommandEmpty>Nenhum tomador encontrado.</CommandEmpty>
+                        <CommandGroup>
+                          {dbTakers.map((t) => (
+                            <CommandItem key={t.id} onSelect={() => applyDbTaker(t)}>
+                              <div className="flex flex-col">
+                                <span className="font-medium text-sm">{t.name}</span>
+                                <span className="text-xs text-muted-foreground">{t.document}</span>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              )}
+              {recentTakers.length > 0 && (
+                <Popover open={recentOpen} onOpenChange={setRecentOpen}>
+                  <PopoverTrigger asChild>
+                    <Button type="button" variant="outline" size="sm" className="gap-2">
+                      <History className="h-4 w-4" />
+                      Últimos tomadores
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 p-0" align="end">
+                    <Command>
+                      <CommandInput placeholder="Buscar tomador..." />
+                      <CommandList>
+                        <CommandEmpty>Nenhum tomador encontrado.</CommandEmpty>
+                        <CommandGroup>
+                          {recentTakers.map((t) => (
+                            <CommandItem key={t.taker_document} onSelect={() => applyRecentTaker(t)}>
+                              <div className="flex flex-col">
+                                <span className="font-medium text-sm">{t.taker_name}</span>
+                                <span className="text-xs">{t.taker_document}</span>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              )}
             </div>
           )}
         </CardContent>
