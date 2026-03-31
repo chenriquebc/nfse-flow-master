@@ -142,14 +142,14 @@ export default function AppSidebar({ onNavigate }: AppSidebarProps) {
 
         {isAdmin && (
           <div className="pt-3 mt-3 border-t border-[hsl(225,18%,16%)]">
-            <Link
-              to="/admin"
-              onClick={handleNav}
+            <a
+              href="/admin"
+              onClick={(e) => handleNavClick(e, "/admin")}
               className="group flex items-center gap-3 rounded-lg px-3 py-2 text-[0.8125rem] font-medium text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-all duration-200"
             >
               <Shield className="h-[16px] w-[16px] shrink-0 text-sidebar-muted group-hover:text-sidebar-foreground/70 transition-colors duration-200" />
               Painel Admin
-            </Link>
+            </a>
           </div>
         )}
       </nav>
