@@ -130,6 +130,27 @@ export default function InvoiceForm() {
     return JSON.stringify(form) !== initialFormSnapshot;
   }, [form, initialFormSnapshot]);
 
+  // Register navigation guard
+  useEffect(() => {
+    if (hasChanges) {
+      setGuard(true, () => {});
+    } else {
+      clearGuard();
+    }
+    return () => clearGuard();
+  }, [hasChanges, setGuard, clearGuard]);
+
+  // Listen for blocked navigation from sidebar
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const navFn = (e as CustomEvent).detail as () => void;
+      setShowExitDialog(true);
+      setPendingNavigation(() => navFn);
+    };
+    window.addEventListener("nav-guard-blocked", handler);
+    return () => window.removeEventListener("nav-guard-blocked", handler);
+  }, []);
+
   // Warn on browser tab close/refresh if there are changes
   useEffect(() => {
     if (!hasChanges) return;
