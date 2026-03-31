@@ -115,6 +115,32 @@ export default function InvoiceForm() {
     notes: "",
   });
 
+  // Track if user has made changes
+  const [initialFormSnapshot, setInitialFormSnapshot] = useState<string>("");
+  useEffect(() => {
+    if (!initialFormSnapshot && draftHydrated) {
+      setInitialFormSnapshot(JSON.stringify(form));
+    }
+  }, [draftHydrated]);
+
+  const hasChanges = useMemo(() => {
+    if (!initialFormSnapshot) return false;
+    return JSON.stringify(form) !== initialFormSnapshot;
+  }, [form, initialFormSnapshot]);
+
+  // Block navigation via router (sidebar links, etc.)
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      hasChanges && currentLocation.pathname !== nextLocation.pathname
+  );
+
+  useEffect(() => {
+    if (blocker.state === "blocked") {
+      setShowExitDialog(true);
+      setPendingNavigation(() => () => blocker.proceed());
+    }
+  }, [blocker.state]);
+
   useEffect(() => {
     if (isEditing) return;
 
