@@ -11,6 +11,7 @@ import {
   Shield,
   CreditCard,
   Users,
+  UserRound,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
