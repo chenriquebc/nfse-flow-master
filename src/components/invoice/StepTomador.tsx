@@ -48,11 +48,27 @@ interface RecentTaker {
   taker_address_zip: string | null;
 }
 
+interface ServiceTakerBase {
+  id: string;
+  document: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  address_street: string | null;
+  address_number: string | null;
+  address_city: string | null;
+  address_city_code: string | null;
+  address_state: string | null;
+  address_zip: string | null;
+}
+
 export default function StepTomador({ form, set }: StepTomadorProps) {
   const [searching, setSearching] = useState(false);
   const [searchingCep, setSearchingCep] = useState(false);
   const [recentTakers, setRecentTakers] = useState<RecentTaker[]>([]);
   const [recentOpen, setRecentOpen] = useState(false);
+  const [dbTakers, setDbTakers] = useState<ServiceTakerBase[]>([]);
+  const [dbOpen, setDbOpen] = useState(false);
   const { tenant } = useTenant();
 
   useEffect(() => {
