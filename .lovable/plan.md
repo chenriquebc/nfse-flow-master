@@ -1,75 +1,68 @@
 
 
-## Plano de Implementação — 5 Melhorias na Emissão de NFS-e
+## Plano: Base de Tomadores de Serviço + Envio automático de e-mail com XML/PDF
 
-### 1. Aviso ao sair do formulário de nova nota (salvar rascunho ou descartar)
+### Visão Geral
 
-**Problema:** Ao clicar no botão "Voltar" do topo ou navegar para outro menu durante o preenchimento, o rascunho é salvo silenciosamente no sessionStorage sem perguntar ao usuário.
-
-**Solução:**
-- Em `src/pages/InvoiceForm.tsx`:
-  - Adicionar state `showExitDialog` para controlar um AlertDialog.
-  - No botão "Voltar" do topo (linha 419), em vez de `navigate("/invoices")` direto, verificar se o formulário foi preenchido (algum campo alterado) e abrir o dialog.
-  - O dialog terá 3 opções: "Salvar Rascunho" (mantém sessionStorage e navega), "Descartar" (limpa sessionStorage e navega), "Continuar Editando" (fecha dialog).
-  - Usar `useBlocker` do react-router-dom para interceptar navegação via sidebar/links externos ao formulário, exibindo o mesmo dialog.
-
-**Arquivos:** `src/pages/InvoiceForm.tsx`
+Criar um cadastro dedicado de Tomadores de Serviço (separado das notas fiscais), com tela de gerenciamento CRUD e opção de disparo automático de e-mail com XML/PDF ao emitir nota contra o tomador.
 
 ---
 
-### 2. Campos de tributação municipal livres para Simples Nacional
+### 1. Tabela `service_takers` no banco de dados
 
-**Problema:** Quando a empresa é do Simples Nacional, os campos Alíquota (%), BC ISSQN e Valor ISSQN estão sendo preenchidos automaticamente, mas deveriam ficar livres para preenchimento manual.
+Nova tabela com os campos:
+- `id`, `tenant_id`, `document` (CPF/CNPJ), `name`, `email`, `phone`
+- Endereço: `address_street`, `address_number`, `address_complement`, `address_neighborhood`, `address_city`, `address_city_code`, `address_state`, `address_zip`
+- `auto_send_email` (boolean, default false) — flag para envio automático de e-mail ao emitir nota
+- `created_at`, `updated_at`
+- Unique constraint em `(tenant_id, document)`
 
-**Solução:**
-- Em `src/components/invoice/StepValores.tsx`:
-  - Remover o `readOnly` do campo Valor ISSQN (linha 278) — atualmente é readOnly com valor calculado.
-  - Para empresas do Simples Nacional (`tax_assessment_regime === "1"` ou `"2"`), os campos Alíquota, BC ISSQN e Valor ISSQN devem ser editáveis e iniciar vazios/zerados em vez de auto-calculados.
-  - Alterar o banner informativo (linhas 171-176) para exibi-lo somente quando NÃO for Simples Nacional, ou ajustar o texto.
-
-**Arquivos:** `src/components/invoice/StepValores.tsx`, possivelmente `src/pages/InvoiceForm.tsx` (valores default)
-
----
-
-### 3. Download direto em PDF (DANFS-e) após emissão
-
-**Problema:** Após emissão, o download DANFS-e só baixa XML. Não há geração de PDF real.
-
-**Solução:**
-- Criar uma edge function `generate-danfse` que recebe o `invoice_id`, busca os dados da nota no banco, e gera um PDF usando uma lib disponível no Deno (como jsPDF ou html-to-pdf).
-- O PDF terá layout padrão DANFS-e com: dados do emitente, tomador, serviço, valores, número da nota, chave de acesso, etc.
-- Em `src/pages/Invoices.tsx`, o menu "Download DANFS-e" chamará essa edge function e fará o download do blob PDF.
-- Após emissão bem-sucedida no `InvoiceForm.tsx`, adicionar botão/toast com link para download do PDF.
-
-**Arquivos:** `supabase/functions/generate-danfse/index.ts` (nova), `src/pages/Invoices.tsx`, `src/pages/InvoiceForm.tsx`
+RLS: acesso restrito por `get_user_tenant_ids()`.
 
 ---
 
-### 4. Coluna de número da nota fiscal na listagem
+### 2. Página de Gerenciamento de Tomadores (`/takers`)
 
-**Problema:** A coluna "Nº" mostra `invoice_number || rps_number`, mas não diferencia entre DPS e nota emitida. O número da NFS-e emitida deve ter destaque.
-
-**Solução:**
-- Em `src/pages/Invoices.tsx`, separar a coluna em duas informações:
-  - Exibir o `invoice_number` como número principal quando existir (nota emitida).
-  - Exibir o `rps_number` como informação secundária menor (DPS).
-  - Se só houver `rps_number`, mostrar como "DPS nº X" em estilo diferenciado.
-
-**Arquivos:** `src/pages/Invoices.tsx`
+- Nova página `src/pages/Takers.tsx` com listagem, busca, e ações (editar, excluir)
+- Nova página `src/pages/TakerForm.tsx` para criar/editar tomador (com busca de CNPJ via BrasilAPI e CEP)
+- Toggle "Enviar e-mail automaticamente ao emitir nota" visível no formulário
+- Menu no sidebar: "Tomadores" com ícone `UserRound`
 
 ---
 
-### 5. Bloquear emissão com plano inativo
+### 3. Integração com o Wizard de emissão (StepTomador)
 
-**Problema:** Mesmo com plano inativo, o usuário consegue emitir notas.
+- No passo "Tomador do Serviço", além do botão "Últimos tomadores" (que busca de notas anteriores), adicionar botão **"Buscar da base"** que abre a lista de tomadores cadastrados para seleção rápida
+- Ao selecionar, preenche automaticamente todos os campos
 
-**Solução:**
-- Em `src/pages/InvoiceForm.tsx`:
-  - Importar `useSubscription` e verificar `subscribed`.
-  - Se não subscrito, desabilitar o botão "Salvar e Emitir" e "Salvar Rascunho", exibindo mensagem.
-- Em `src/pages/Invoices.tsx`:
-  - Se não subscrito, desabilitar os botões "Emitir" e "Reenviar".
-- Na edge function `emit-nfse`, adicionar validação server-side: verificar se o tenant tem assinatura ativa antes de processar a emissão (proteção backend).
+---
 
-**Arquivos:** `src/pages/InvoiceForm.tsx`, `src/pages/Invoices.tsx`, `supabase/functions/emit-nfse/index.ts`
+### 4. Envio automático de e-mail após emissão
+
+- Na edge function `emit-nfse` (ou no fluxo pós-emissão no frontend), após emissão autorizada:
+  - Verificar se o tomador existe na tabela `service_takers` com `auto_send_email = true`
+  - Se sim, disparar e-mail para o tomador contendo links/anexos do XML e PDF da nota
+
+- **Implementação do e-mail**: Será necessário configurar o domínio de e-mail via Cloud → Emails. Se ainda não configurado, prepararemos a lógica e o template, mas o disparo real dependerá da configuração do domínio.
+
+---
+
+### 5. Permissões
+
+- Reutilizar `can_manage_companies` para acesso à tela de tomadores (ou criar permissão dedicada se preferir)
+- Rota protegida por `PermissionGate`
+
+---
+
+### Arquivos envolvidos
+
+| Ação | Arquivo |
+|------|---------|
+| Criar | `src/pages/Takers.tsx` |
+| Criar | `src/pages/TakerForm.tsx` |
+| Editar | `src/components/AppSidebar.tsx` (novo menu) |
+| Editar | `src/App.tsx` (novas rotas) |
+| Editar | `src/components/invoice/StepTomador.tsx` (botão buscar da base) |
+| Editar | `src/pages/Invoices.tsx` ou `emit-nfse` (lógica pós-emissão) |
+| Migration | Nova tabela `service_takers` |
 
