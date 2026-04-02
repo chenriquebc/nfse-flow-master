@@ -54,6 +54,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           {children}
         </div>
       </main>
+      <SupportChatWidget />
     </div>
   );
 }

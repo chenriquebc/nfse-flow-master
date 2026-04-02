@@ -11,6 +11,7 @@ import {
   LogOut,
   ArrowLeft,
   Shield,
+  MessageCircle,
 } from "lucide-react";
 
 const adminNav = [
@@ -19,6 +20,7 @@ const adminNav = [
   { label: "Leads", href: "/admin/leads", icon: UserPlus },
   { label: "Financeiro", href: "/admin/financial", icon: DollarSign },
   { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
+  { label: "Contato", href: "/admin/messages", icon: MessageCircle },
   { label: "Logs", href: "/admin/logs", icon: ScrollText },
 ];
 
