@@ -4,6 +4,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import AppSidebar from "./AppSidebar";
 import SubscriptionBanner from "./SubscriptionBanner";
+import SupportChatWidget from "./SupportChatWidget";
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const isMobile = useIsMobile();
@@ -37,6 +38,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             {children}
           </div>
         </main>
+        <SupportChatWidget />
       </div>
     );
   }
@@ -52,6 +54,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           {children}
         </div>
       </main>
+      <SupportChatWidget />
     </div>
   );
 }

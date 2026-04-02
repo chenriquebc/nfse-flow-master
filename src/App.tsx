@@ -34,6 +34,7 @@ import AdminFinancial from "@/pages/admin/AdminFinancial";
 import AdminAnalytics from "@/pages/admin/AdminAnalytics";
 import AdminAuditLogs from "@/pages/admin/AdminAuditLogs";
 import AdminLeads from "@/pages/admin/AdminLeads";
+import AdminMessages from "@/pages/admin/AdminMessages";
 import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/NotFound";
 
@@ -76,6 +77,7 @@ const App = () => (
                 <Route path="financial" element={<AdminFinancial />} />
                 <Route path="analytics" element={<AdminAnalytics />} />
                 <Route path="leads" element={<AdminLeads />} />
+                <Route path="messages" element={<AdminMessages />} />
                 <Route path="logs" element={<AdminAuditLogs />} />
               </Route>
 
